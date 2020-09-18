@@ -25,6 +25,7 @@ dt = timedelta( seconds=dtsec )
 
 # Figure x range
 stime_ = datetime( 2020, 8, 24, 12, 0 )
+stime_ = datetime( 2020, 8, 25, 0, 0 )
 etime_ = datetime( 2020, 9, 7,  0, 0 )
 
 # JMA
@@ -143,7 +144,7 @@ def plot( ftime_l, lt_l ):
 
     ymin_ = 0
     ymax_ = 30
-    dy_ = 5
+    dy_ = 3
     ax1.set_ylim( ymin_, ymax_ )
     
     ylab = "Forecast lead time (min)"
@@ -220,10 +221,12 @@ def plot( ftime_l, lt_l ):
     
     ymin = 0.0
     ymax = 30.0
-    dy = 2.0
+    dy = 3.0
  
     ft_l = 30.0 - lt_l
-    ft_l[ ft_l > 30.0 ] = np.nan 
+    ft_l[ ( ft_l > 30.0 ) | ( ftime_l < stime_ ) | ( ftime_l > etime_) ] = np.nan 
+    ft_l = 30.0 - ft_l # lead time
+    
 
     fac = 0.001
     wgt_l = np.ones( ft_l.shape ) * fac   
@@ -244,7 +247,7 @@ def plot( ftime_l, lt_l ):
     xlab = r'Count (x10$^' + str( pow10 ) + '$)' 
     ax2.set_xlabel( xlab, fontsize=12 )
     
-    ylab = "Process time for 30-min forecast (min)"
+    #ylab = "Process time for 30-min forecast (min)"
     ax2.set_ylabel( ylab, fontsize=12 )
     
     ax2.set_ylim( ymin, ymax )
@@ -252,17 +255,18 @@ def plot( ftime_l, lt_l ):
     ax2.set_xticks( np.arange( 0, xmax, 2000*fac ) )
     ax2.set_xlim( x.min(), xmax )
     
-    yobs = 10.0 / 60.0
-    ax2.hlines( y=yobs, xmin=0, xmax=xmax, color='r', ls='solid', lw=1.0)
-    
-    arrow_dict = dict(arrowstyle = "->", color = "r", )
-    
-    ax2.annotate("Obs\nreceived(10s)", xy=(8, yobs), size=10, xytext=( 10, yobs+1.5 ),
-                color="r", arrowprops=arrow_dict )
+#    yobs = 10.0 / 60.0
+#    ax2.hlines( y=yobs, xmin=0, xmax=xmax, color='r', ls='solid', lw=1.0)
+#    
+#    arrow_dict = dict(arrowstyle = "->", color = "r", )
+#    
+#    ax2.annotate("Obs\nreceived(10s)", xy=(8, yobs), size=10, xytext=( 10, yobs+1.5 ),
+#                color="r", arrowprops=arrow_dict )
     
     ylabs_ = np.arange( ymin, ymax, 1 )
     ax2.hlines( y=ylabs_, xmin=0, xmax=xmax, color='gray', ls='dotted', lw=0.3)
-    
+ 
+
     total = len( ft_l[ ~np.isnan(ft_l) ] )
     total_nan = len( ft_l[ np.isnan(ft_l) ] )
     rdtime = timedelta( seconds=30*total )
@@ -270,11 +274,12 @@ def plot( ftime_l, lt_l ):
     period = "Total: {0:}\n(active for {1:})\nFrom {2:}\nto {3:}".format( total, rdtime,
                                     stime.strftime('%H:%M:%SJST %m/%d'),
                                     etime.strftime('%H:%M:%SJST %m/%d'))
-    ax2.text( 0.95, 0.95, period,
+    ax2.text( 0.95, 0.35, period,
               fontsize=10, transform=ax2.transAxes,
               ha='right', va="top" )
     
-    tit2 = "Process time for 30-min forecast (min)"
+    #tit2 = "Process time for 30-min forecast (min)"
+    tit2 = "Forecast lead time (min)"
     ax2.text( 0.5, 1.01, tit2,
               fontsize=12, transform=ax2.transAxes,
               horizontalalignment='center',

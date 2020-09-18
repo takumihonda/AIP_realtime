@@ -8,4 +8,4 @@ for dbz in dbz_l:
 
    z = np.power( 10.0, dbz/10.0 )
 
-   print( "DBZ:{0:}, Z:{1:}".format(dbz, z ))
+   print( "DBZ:{0:.1f}, Z:{1:.1f}".format(dbz, z ))

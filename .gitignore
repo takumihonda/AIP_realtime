@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 realtime_20200825/ts_npz/*
+*.png
+log*
+*.npz

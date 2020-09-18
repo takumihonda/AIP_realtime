@@ -6,16 +6,16 @@ from netCDF4 import Dataset
 from datetime import datetime, timedelta
 
 PLOT = True
-#PLOT = False
+PLOT = False
 quick = False
-quick = True
+#quick = True
 
 def read_obs( utime=datetime(2019,9,3,2,0,0) ):
 
     jtime = utime + timedelta(hours=9)
 
     OBS_EXIST = False
-    for sec in range( -15, 16, 1 ):
+    for sec in range( 0, 30, 1 ):
         jtime2 = jtime + timedelta( seconds=sec )
         fn = os.path.join("/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m/",
                           jtime2.strftime('%Y/%m/%d/%H/%M/%S'),
@@ -27,7 +27,7 @@ def read_obs( utime=datetime(2019,9,3,2,0,0) ):
 
     if not OBS_EXIST:
        print( "Not found OBS ", fn)
-       sys.exit()
+       return( None, False )
 
     try:
        nc = Dataset( fn, "r", format="NETCDF4" )
@@ -93,14 +93,6 @@ def get_obs_grid( ):
     obsz = np.arange( 0, gz*obs_dz, obs_dz ) 
 
     return( obsz, olon2d, olat2d ) 
-
-
-
-
-
-
-
-
 
 
 def read_CZ( ):
@@ -180,7 +172,7 @@ def read_fcst_grads( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True, ):
     except: 
        print("Failed to open")
        print( fn )
-       return( _, False )
+       return( None, False )
        sys.exit()
     
     # tlev starts from "0" (not from "1")
@@ -198,11 +190,16 @@ def read_fcst_grads( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True, ):
     else:
       rec = rec3d * nv * ( tlev - 1 )
 
-    infile.seek(rec*4)
-    tmp3d = np.fromfile(infile, dtype=np.dtype('>f4'), count=rec3d)  # big endian   
-    input3d = np.reshape( tmp3d, (gz,gy,gx) )
+    try:
+       infile.seek(rec*4)
+       tmp3d = np.fromfile(infile, dtype=np.dtype('>f4'), count=rec3d)  # big endian   
+       input3d = np.reshape( tmp3d, (gz,gy,gx) )
+       fstat = True
+    except:
+       input3d = None
+       fstat = False
 
-    return( input3d, True ) 
+    return( input3d, fstat ) 
 
 def get_ts_bs( fcst2d, obs2d, thrs=10.0 ):
 
@@ -241,13 +238,13 @@ def main( INFO, itime=datetime(2019,9,3,2,0), tlev=0, theight=3000, dbz_thrs_l=[
     obs3d, ostat = read_obs( utime=ftime )
 
     if not ostat:
-       return( _, _, ostat)
+       return( None, None, ostat)
 
     fcst3d, fstat,= read_fcst_grads( INFO, itime=itime, tlev=tlev, )
 
     if not fstat:
        print( "No fcst" )
-       return( _, _, fstat)
+       return( None, None, fstat)
 
     ifcst2d = vint_fcst( hgt3d, fcst3d, theight=theight )
     #iobs2d = vint_fcst( ohgt3d, obs3d, theight=theight )
@@ -441,8 +438,42 @@ etime = datetime( 2020, 8, 31, 10, 0, 0 )
 
 #stime = datetime( 2020, 9, 1, 0, 0, 0 )
 #etime = datetime( 2020, 9, 2, 0, 0, 0 )
-stime = datetime( 2020, 9, 6, 0, 0, 0 )
+
+stime = datetime( 2020, 9, 5, 22, 42, 0 )
 etime = datetime( 2020, 9, 6, 0, 0, 0 )
+
+stime = datetime( 2020, 9, 1, 0, 0, 0 )
+etime = datetime( 2020, 9, 2, 0, 0, 0 )
+stime = datetime( 2020, 9, 2, 0, 0, 30 )
+etime = datetime( 2020, 9, 3, 0, 0, 0 )
+
+stime = datetime( 2020, 9, 3, 0, 0, 30 )
+etime = datetime( 2020, 9, 4, 0, 0, 0 )
+
+stime = datetime( 2020, 8, 31, 0, 0, 30 )
+etime = datetime( 2020, 9, 1, 0, 0, 0 )
+
+stime = datetime( 2020, 8, 30, 0, 0, 30 )
+etime = datetime( 2020, 8, 31, 0, 0, 0 )
+
+stime = datetime( 2020, 8, 29, 0, 0, 30 )
+etime = datetime( 2020, 8, 30, 0, 0, 0 )
+
+stime = datetime( 2020, 8, 28, 0, 0, 30 )
+etime = datetime( 2020, 8, 29, 0, 0, 0 )
+
+stime = datetime( 2020, 8, 27, 0, 0, 30 )
+etime = datetime( 2020, 8, 28, 0, 0, 0 )
+
+stime = datetime( 2020, 8, 26, 0, 0, 30 )
+etime = datetime( 2020, 8, 27, 0, 0, 0 )
+
+stime = datetime( 2020, 8, 25, 2, 26, 0 )
+etime = datetime( 2020, 8, 26, 0, 0, 0 )
+
+stime = datetime( 2020, 8, 24, 15, 36, 0 )
+etime = datetime( 2020, 8, 25, 0, 0, 0 )
+
 #etime = stime
 
 tmin = 0
