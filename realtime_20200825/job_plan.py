@@ -5,6 +5,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 
 quick = False
+#quick = True
 
 def prep_dat( stime=datetime( 2020, 8, 27, 0, 0 ), etime=datetime( 2020, 8, 28, 0, 0 ), 
               dtmin=1 ):
@@ -20,8 +21,8 @@ def prep_dat( stime=datetime( 2020, 8, 27, 0, 0 ), etime=datetime( 2020, 8, 28, 
     return( times, dat1d )    
 
 
-stime = datetime( 2020, 8, 27, 0, 0 )
-etime = datetime( 2020, 8, 28, 0, 0 )
+stime = datetime( 2020, 8, 27, 3, 0 )
+etime = datetime( 2020, 8, 28, 3, 0 )
 
 ymin = 0
 ymax = 1200
@@ -43,7 +44,7 @@ while time <= etime:
     times3h.append( time )
     time += timedelta( minutes=180 )
 
-lw = 1.0
+lw = 0.5
 ec = 'k'
 
 fig, (ax1) = plt.subplots( 1, 1, figsize=( 10,5 ) )
@@ -65,7 +66,7 @@ ax1.vlines( ymin=ymin, ymax=ymax, x=times3h,
        ls='dashed', lw=0.5 )
 
 ylab = "Node"
-ax1.set_ylabel( ylab, fontsize=12 )
+ax1.set_ylabel( ylab, fontsize=13 )
 
 alp = 0.6
 
@@ -97,15 +98,15 @@ for i in range( 2 ):
 min_d1c = 20
 d1c_node = 156
 
-stime1 = stime + timedelta( hours=3 )
+stime1 = stime + timedelta( minutes=40 )
 
 # D1/D2 fcst
-min_d12 = 30
+min_d12 = 45
 d12_node = 182
 d12it = 2
 
 # D3 fcst
-min_d3 = 40
+min_d3 = 45
 d3_node = 208
 d3it = 1
 
@@ -168,7 +169,7 @@ for i in range( 4 ):
                            facecolor=c4i, alpha=alp, label=labd4i,
                            edgecolor=ec, lw=lw )
     
-ax1.legend( loc="lower left", fontsize=12 )
+ax1.legend( loc="lower left", fontsize=11, framealpha=0.9 )
 
 tit = "Job schedule"
 ax1.text( 0.5, 1.01, tit,
