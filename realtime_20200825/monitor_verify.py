@@ -10,6 +10,15 @@ PLOT = False
 quick = False
 #quick = True
 
+def read_mask():
+    fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/shadow/mask.nc"
+    nc = Dataset( fn, "r", format="NETCDF4" )
+    mask = nc.variables['mask'][0,:,:,:]
+
+    nc.close()
+
+    return( mask )
+
 def read_obs( utime=datetime(2019,9,3,2,0,0) ):
 
     jtime = utime + timedelta(hours=9)
@@ -17,7 +26,7 @@ def read_obs( utime=datetime(2019,9,3,2,0,0) ):
     OBS_EXIST = False
     for sec in range( 0, 30, 1 ):
         jtime2 = jtime + timedelta( seconds=sec )
-        fn = os.path.join("/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m/",
+        fn = os.path.join("/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/",
                           jtime2.strftime('%Y/%m/%d/%H/%M/%S'),
                           "rain_cart_0002.nc")
 
@@ -37,6 +46,9 @@ def read_obs( utime=datetime(2019,9,3,2,0,0) ):
        sys.exit()
 
     obs = nc.variables['rain'][0,:,:,:]
+    nc.close()
+
+    obs = np.where( mask > 0.0, np.nan, obs )
 
     return( obs, True )
 
@@ -52,7 +64,7 @@ def read_obs_grads_latlon( ):
     lonlat = {"lon":None, "lat":None}
 
     for tvar in ["lon", "lat"]:
-        fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m/" + tvar + ".bin"
+        fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/" + tvar + ".bin"
 
         try:
            infile = open(fn)
@@ -326,7 +338,7 @@ def plot( lon2d, lat2d, data2d, itime=datetime(2019, 6, 10, 8,0), tit="Fcst", ft
                                        'purple'])
 #    cmap_dbz = plt.cm.get_cmap("jet")
     cmap_dbz.set_over('gray', alpha=1.0)
-    cmap_dbz.set_under('w', alpha=1.0)
+    cmap_dbz.set_under('k', alpha=1.0)
 
     cmap = cmap_dbz
     levs = levs_dbz 
@@ -469,10 +481,13 @@ stime = datetime( 2020, 8, 26, 0, 0, 30 )
 etime = datetime( 2020, 8, 27, 0, 0, 0 )
 
 stime = datetime( 2020, 8, 25, 2, 26, 0 )
-etime = datetime( 2020, 8, 26, 0, 0, 0 )
 
 stime = datetime( 2020, 8, 24, 15, 36, 0 )
 etime = datetime( 2020, 8, 25, 0, 0, 0 )
+etime = datetime( 2020, 9, 1, 0, 0, 0 )
+
+stime = datetime( 2020, 9, 1, 0, 0, 0 )
+etime = datetime( 2020, 9, 7, 0, 0, 0 )
 
 #etime = stime
 
@@ -483,7 +498,10 @@ tmax = 61 # max time dimension includes FT=0
 obsz, olon2d, olat2d = read_obs_grads_latlon()
 lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz )
 
+mask = read_mask()
+
 INFO = { 
+         "mask": mask,
          "OBS_DIR": OBS_DIR,
          "FCST_DIR": FCST_DIR,
          "obsz": obsz,

@@ -79,14 +79,15 @@ c4i = 'orange'
 # D4
 d4_node = 992
 labd4 = "D4 DA cycle & fcst\n({0:} nodes)".format( d4_node )
-stime_ = stime
-etime_ = stime + timedelta( hours=4 ) - timedelta( minutes=5 )
+#stime_ = stime
+stime_ = datetime( 2020, 8, 27, 4, 0 ) - timedelta( hours=12 )
+etime_ = stime_ - timedelta( minutes=5 )
 times, dat1d = prep_dat( stime=stime_, etime=etime_, dtmin=1 )
 ax1.fill_between( times, dat1d, dat1d+d4_node, facecolor=c4, alpha=alp,
                   label=labd4,
                   edgecolor=ec, lw=lw )
 
-for i in range( 2 ):
+for i in range( 3 ):
     stime_ = etime_ + timedelta( minutes=5 )
     etime_ = stime_ + timedelta( hours=12 ) - timedelta( minutes=5 )
     times, dat1d = prep_dat( stime=stime_, etime=etime_, dtmin=1 )
@@ -118,7 +119,7 @@ d4it = 4
 for i in range( 4 ):
 
     if i == 0:
-       labd4i = "D4 init\n({0:} nodes, {1:}min x {2:})".format( d4i_node, min_d4i, d4it)
+       labd4i = "D4 boundary\n({0:} nodes, {1:}min x {2:})".format( d4i_node, min_d4i, d4it)
        labd3 = "D3 fcst\n({0:} nodes, {1:}min)".format( d3_node, min_d3 )
        labd12 = "D1&D2 fcst\n({0:} nodes, {1:}min x {2})".format( d12_node, min_d12, d12it )
        labd1 = "D1 DA cycle\n({0:} nodes, {1:}min)".format( d1c_node, min_d1c )

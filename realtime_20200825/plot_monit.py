@@ -33,7 +33,7 @@ tlev_max = np.shape( tlevs )[0]
 
 
 dbz = 15.0
-#dbz = 30.0
+dbz = 30.0
 
 ###########
 
