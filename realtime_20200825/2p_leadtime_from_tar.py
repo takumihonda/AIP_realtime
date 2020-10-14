@@ -33,7 +33,7 @@ rmin = 30.0 # mm/h
 #rmin = 20.0 # mm/h
 #rmin = 10.0 # mm/h
 
-def get_JMA_rmax():
+def get_JMA_rmax( rmin=30.0 ):
 
     of = "JMA_rmax_rmin{0:.0f}.npz".format( rmin )
     data = np.load( of, allow_pickle=True )
@@ -119,6 +119,7 @@ def prep_lt():
 
 def plot( ftime_l, lt_l ):
 
+    bbox = { 'facecolor':'w', 'alpha':0.95, 'pad':1.5, 'edgecolor':'w' }
 
     import matplotlib.pyplot as plt
     import matplotlib.ticker as ticker
@@ -186,30 +187,37 @@ def plot( ftime_l, lt_l ):
     ax1.vlines( x=ftime_l[ np.isnan( lt_l ) ], ymin=ymin_, ymax=ymax_, color='gray', ls='dashed', lw=0.01, alpha=0.5 )
 
 
-    rmax_l, rarea_l, jtime_l = get_JMA_rmax()
     ax2_ = ax1.twinx()
-    ax2_.plot( jtime_l, rarea_l/100.0, color='b', lw=0.5 ) #align='center' )
-    if rmin == 30: 
-       ymin2_ = 0.0
-       ymax2_ = 18.0
-       ylevs2 = [ 0, 1, 2, 3, 4, 5, 6, ]
-    elif rmin == 20: 
-       ymin2_ = 0.0
-       ymax2_ = 30.0
-       ylevs2 = [ 0, 2, 4, 6, 8, 10 ]
-    elif rmin == 10: 
-       ymin2_ = 0.0
-       ymax2_ = 30.0
-       ylevs2 = [ 0, 2, 4, 6, 8, 10 ]
 
-    ax2_.set_ylim( ymin2_, ymax2_ )
-    ax2_.set_xlim( stime_, etime_ )
-    ax2_.set_yticks( ylevs2 )
-    ax2_.tick_params( axis='y', labelsize=8 ) 
-    ax2_.yaxis.label.set_color( 'b' )
-    ax2_.set_xlim( stime_, etime_ )
+    ymin2_ = 0.0
+    ymax2_ = 18.0
+    ylevs2 = [ 0, 1, 2, 3, 4, 5, 6, ]
 
-    ylab2 = 'Precipitation area from JMA radar (x10$^2$km$^2$)\n(where >{0:.0f}mm h$^{{-1}}$)'.format( rmin )
+    ymin2_ = 0.0
+    ymax2_ = 80.0
+    ylevs2 = [ 0, 8, 16, 24, 32, 40 ]
+
+    rmin = 30.0
+    rmin_l = [ 1.0, 20.0, ]
+    cc_l = [ "cyan", "b", ]
+    for k, rmin in enumerate( rmin_l ):
+
+        rmax_l, rarea_l, jtime_l = get_JMA_rmax( rmin=rmin )
+        ax2_.plot( jtime_l, rarea_l/100.0, color=cc_l[k], lw=0.5, 
+            label='>={0:.0f}mm h$^{{-1}}$'.format( rmin ) )
+
+        ax2_.set_ylim( ymin2_, ymax2_ )
+        ax2_.set_xlim( stime_, etime_ )
+        ax2_.set_yticks( ylevs2 )
+        ax2_.tick_params( axis='y', labelsize=8 ) 
+        ax2_.yaxis.label.set_color( 'b' )
+        ax2_.set_xlim( stime_, etime_ )
+
+    ax2_.legend( bbox_to_anchor=( 0.05, 0.1), 
+                 loc='lower left', fontsize=9, ).get_frame().set_alpha( 1.0 )
+
+    #ylab2 = 'Precipitation area from JMA radar (x10$^2$km$^2$)\n(where >{0:.0f}mm h$^{{-1}}$)'.format( rmin )
+    ylab2 = 'Precipitation area from JMA radar (x10$^2$km$^2$)'
     ax2_.set_ylabel( ylab2, fontsize=9 )
     ax2_.xaxis.set_major_locator( mdates.HourLocator(interval=24) )
     ax2_.xaxis.set_major_formatter( mdates.DateFormatter('%H:%M\n%m/%d') )
@@ -223,9 +231,11 @@ def plot( ftime_l, lt_l ):
     ymax = 30.0
     dy = 3.0
  
-    ft_l = 30.0 - lt_l
-    ft_l[ ( ft_l > 30.0 ) | ( ftime_l < stime_ ) | ( ftime_l > etime_) ] = np.nan 
-    ft_l = 30.0 - ft_l # lead time
+#    ft_l = 30.0 - lt_l
+#    ft_l[ ( ft_l > 30.0 ) | ( ftime_l < stime_ ) | ( ftime_l > etime_) ] = np.nan 
+#    ft_l = 30.0 - ft_l # lead time
+    ft_l = np.copy( lt_l )
+    ft_l[ ( ft_l <= 0.0 ) | ( ftime_l < stime_ ) | ( ftime_l > etime_) ] = np.nan
     
 
     fac = 0.001
@@ -285,7 +295,6 @@ def plot( ftime_l, lt_l ):
               horizontalalignment='center',
               verticalalignment='bottom' )
     
-    bbox = { 'facecolor':'w', 'alpha':0.95, 'pad':1.5, 'edgecolor':'w' }
     pnum_l = [ "(a)", "(b)" ]
     ax_l = [ ax1, ax2 ] 
     for i, ax in enumerate( ax_l ):

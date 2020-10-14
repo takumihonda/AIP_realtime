@@ -48,7 +48,7 @@ lw = 0.5
 ec = 'k'
 
 fig, (ax1) = plt.subplots( 1, 1, figsize=( 10,5 ) )
-fig.subplots_adjust(left=0.08, bottom=0.07, right=0.97, top=0.94, )
+fig.subplots_adjust(left=0.08, bottom=0.1, right=0.97, top=0.94, )
 
 ax1.plot( times, dat1d )
 
@@ -59,11 +59,30 @@ ax1.set_yticks( ylevs )
 ax1.xaxis.set_major_formatter( mdates.DateFormatter('%HJST') )
 ax1.xaxis.set_major_locator( mdates.MinuteLocator( interval=180 ) )
 
+
+dat1d_ = np.copy( dat1d )
+dat1d_[:] = np.nan
+
+ax2 = ax1.twiny()
+#ax2.spines["right"].set_position(("axes", 1.2))
+#ax2.spines["right"].set_visible(True)
+ax2.plot( times, dat1d_ )
+ustime = stime - timedelta(hours=9)
+uetime = etime - timedelta(hours=9)
+ax2.set_xlim( ustime, uetime )
+ax2.xaxis.set_major_formatter( mdates.DateFormatter('(%HUTC)') )
+ax2.xaxis.set_major_locator( mdates.MinuteLocator( interval=180 ) )
+ax2.spines["top"].set_position(("axes", -0.12))
+ax2.spines["top"].set_visible( False )
+
+ax1.tick_params( axis='x', labelsize=10 )
+ax2.tick_params( axis='x', labelsize=9 )
+
 ax1.hlines( xmin=stime, xmax=etime, y=np.arange( 1000, 2000, 1000), 
-       ls='dashed', lw=0.5 )
+       ls='dotted', lw=0.4 )
 
 ax1.vlines( ymin=ymin, ymax=ymax, x=times3h,
-       ls='dashed', lw=0.5 )
+       ls='dotted', lw=0.4 )
 
 ylab = "Node"
 ax1.set_ylabel( ylab, fontsize=13 )
