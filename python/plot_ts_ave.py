@@ -215,7 +215,7 @@ LAB8 = None
 
 
 
-nexp = 3
+nexp = 1
 
 EXP1 = "D4_500m_CTRL"
 LAB1 = "D4_500m_CTRL"
@@ -254,20 +254,12 @@ thrs_dbz = 15.0
 thrs_dbz = 30.0
 
 
-#time = datetime(2019,9,3,2,50,0)
-#time = datetime(2019, 6, 10, 8, 20, 0)
 stime = datetime( 2019, 8, 24, 15, 0, 30)
-#stime = datetime( 2019, 8, 24, 15, 30, 30)
 etime = datetime( 2019, 8, 24, 16, 0, 0)
-#etime = datetime( 2019, 8, 24, 15, 50, 0)
 
-#etime = datetime( 2019, 8, 24, 15, 10, 0)
+stime = datetime( 2019, 8, 19, 13, 0, 30)
+etime = datetime( 2019, 8, 19, 14, 0, 0)
 
-#etime = datetime( 2019, 8, 24, 15, 30, 0)
-#stime = datetime( 2019, 8, 24, 15, 0, 30)
-
-#stime = datetime( 2019, 8, 24, 15, 0, 30)
-#etime = datetime( 2019, 8, 24, 15, 30, 0)
 
 main( INFO, stime=stime, etime=etime, theight=theight, thrs_dbz=thrs_dbz )
 

@@ -466,6 +466,29 @@ def read_obs_grads( INFO, itime=datetime(2019,9,10,9) ):
 
     lon2d, lat2d = np.meshgrid( lon1d, lat1d )
 
+    print( "debug" )
+    gx = 241
+    gy = 241
+#    gz = 241
+    for nvar in "lon", "lat":
+        fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_full/shadow/{0:}.bin".format( nvar )   
+        try:
+           infile = open(fn)
+        except:
+           print("Failed to open")
+           sys.exit()
+    
+        rec = gx * gy
+        tmp = np.fromfile( infile, dtype=np.dtype('<f8'), count=rec )
+        
+        if nvar == "lon":
+           lon2d = np.reshape( tmp, (gy,gx) )
+        elif nvar == "lat":
+           lat2d = np.reshape( tmp, (gy,gx) )
+
+
+
+
     return( input3d, lon2d, lat2d, z1d  )
 
 
@@ -482,6 +505,63 @@ def read_nc_topo( dom=1 ):
     nc.close()
 
     return( lon2d, lat2d, topo2d )
+
+def read_mask_grads():
+    fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/git/AIP_realtime/python/dat/saitama-shadow-mask.dat"
+
+    print( fn )
+    try:
+       infile = open(fn)
+    except:
+       print("Failed to open")
+       print( fn )
+       return( None, False )
+       sys.exit()
+
+    tmp = np.fromfile( infile, dtype=np.dtype('<i4'), count=2 ) 
+    dims = np.reshape( tmp, (2) )
+    gz = dims[0]
+    ga = dims[1]
+    print( dims )
+
+    infile.seek(2*4)
+    rec = gz*ga
+    tmp2d = np.fromfile( infile, dtype=np.dtype('<i2'), count=rec )
+    input2d = np.reshape( tmp2d, (gz,ga) )
+
+    return( input2d )
+
+def read_mask_full():
+    fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_full/shadow/mask.nc"   
+    nc = Dataset( fn, "r", format="NETCDF4" )
+    mask = nc.variables['mask'][0,:,:,:]
+       
+    nc.close()
+
+
+    gx = 241
+    gy = 241
+#    gz = 241
+    for nvar in "lon", "lat":
+        fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_full/shadow/{0:}.bin".format( nvar )   
+        try:
+           infile = open(fn)
+        except:
+           print("Failed to open")
+           sys.exit()
+    
+        rec = gx * gy
+        tmp = np.fromfile( infile, dtype=np.dtype('<f8'), count=rec )
+        
+        if nvar == "lon":
+           lon2d = np.reshape( tmp, (gy,gx) )
+        elif nvar == "lat":
+           lat2d = np.reshape( tmp, (gy,gx) )
+
+
+    return( mask, lon2d, lat2d )
+
+
 
 def read_mask():
     fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/shadow/mask.nc"   
@@ -577,3 +657,21 @@ def draw_rec( ax, m, lon2d, lat2d, lc='k', lw=1.0 ):
     x, y = m( lon2d[:,-1], lat2d[:,-1] )
     ax.plot( x, y, color=lc, lw=lw )
 
+def dist( rlon=130.0, rlat=30.0, lons=np.zeros(1), lats=np.zeros(1) ):
+    lon1 = rlon * np.pi / 180.0
+    lat1 = rlat * np.pi / 180.0
+
+    lon2 = lons * np.pi / 180.0
+    lat2 = lats * np.pi / 180.0
+
+    cosd = np.sin( lat1 ) * np.sin( lat2 ) + np.cos( lat1 ) * np.cos( lat2 ) * np.cos( lon2 - lon1 )
+
+    cosd[ cosd > 1.0 ] = 1.0
+    cosd[ cosd < -1.0 ] = -1.0
+
+    dist = np.arccos( cosd ) * 6371.3e3
+    return( dist )
+
+if __name__ == "__main__":
+    dist() 
+#    read_mask_full()

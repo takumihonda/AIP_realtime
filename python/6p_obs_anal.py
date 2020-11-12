@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime
-from tools_AIP import read_obs_grads, prep_proj_multi, read_nc_topo, read_mask, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat
+from tools_AIP import read_obs_grads, prep_proj_multi, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -10,17 +10,21 @@ from matplotlib.colors import BoundaryNorm
 
 from scipy.interpolate import griddata
 
+
+
 quick = True
 #quick = False
 
 def main( INFO, time_l=[], hgt=3000.0 ):
 
     lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
-    mz1d, mlon2d, mlat2d = read_obs_grads_latlon()
+    mz1d, _, _ = read_obs_grads_latlon()
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
-    mask = read_mask()
+    mask, mlon2d, mlat2d = read_mask_full()
     mask2d = mask[mzidx,:,:]
+
+    print( mask2d.shape, mlon2d.shape, mlat2d.shape)
 
     fig, (( ax1,ax2,ax3 ), (ax4,ax5,ax6) ) = plt.subplots( 2, 3, figsize=( 13, 9.0 ) )
     fig.subplots_adjust( left=0.03, bottom=0.03, right=0.97, top=0.97,
@@ -40,14 +44,14 @@ def main( INFO, time_l=[], hgt=3000.0 ):
     lats = lat2d_4[0,0]
     late = lat2d_4[-1,-1]
 
-    lon_0 = None
-    lat_0 = None
     method = "merc"
     lon_r = 139.609
     lat_r = 35.861
     contc = "palegreen"
     contc = "burlywood"
     oc = "w"
+    lon_0 = lon_r
+    lat_0 = lat_r
     if quick:
        res = 'l'
     else:
@@ -65,7 +69,8 @@ def main( INFO, time_l=[], hgt=3000.0 ):
 
     imask2d = griddata( ( mlon2d.ravel(), mlat2d.ravel() ), mask[mzidx,:,:].ravel(),
                        (olon2d, olat2d),
-                       method='cubic',
+                       #method='cubic',
+                       method='nearest',
                       )
 
     # for pcolormesh
@@ -74,6 +79,18 @@ def main( INFO, time_l=[], hgt=3000.0 ):
     mlon2d -= np.abs( mlon2d[1,0] - mlon2d[0,0] )
     mlat2d -= np.abs( mlat2d[0,1] - mlat2d[0,0] )
 
+    print( lon2d_4.shape )
+    print( " ref lon/lat ", lon2d_4[130,130], lat2d_4[130,130] )
+    print( " min lon/lat ", np.min( lon2d_4[130,:] ), np.min( lat2d_4[130,:] ) )
+    print( " max lon/lat ", np.max( lon2d_4[130,:] ), np.max( lat2d_4[130,:] ) )
+    print( "" )
+    print( " lon/lat min:", np.min( lon2d_4 ), np.min( lat2d_4 ) )
+    print( " lon/lat max:", np.max( lon2d_4 ), np.max( lat2d_4 ) )
+    print( "olon/lat min:", np.min( olon2d ), np.min( olat2d ) )
+    print( "olon/lat max:", np.max( olon2d ), np.max( olat2d ) )
+    print( "mlon/lat min:", np.min( mlon2d ), np.min( mlat2d ) )
+    print( "mlon/lat max:", np.max( mlon2d ), np.max( mlat2d ) )
+    sys.exit()
 
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
@@ -93,6 +110,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
                                        'purple'])
     cmap_dbz.set_over('gray', alpha=1.0)
     cmap_dbz.set_under('w', alpha=0.0)
+    cmap_dbz.set_bad( color='gray', alpha=0.5 )
 
 
     i1d = np.arange( lon2d_4.shape[0] ) + 1.0
@@ -105,7 +123,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
     j2d, i2d = np.meshgrid( i1d*0.5, j1d*0.5 )
 
     dist2d = np.sqrt( np.square(i2d) + np.square(j2d) )
-
+    dist2d_ = dist( lon_r, lat_r, lon2d_4, lat2d_4 ) * 0.001
 
     norm = BoundaryNorm( levs_dbz, ncolors=cmap_dbz.N, clip=False)
 
@@ -123,8 +141,8 @@ def main( INFO, time_l=[], hgt=3000.0 ):
           obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
           x2d = ox2d
           y2d = oy2d
-          var2d = obs3d[ozidx,:,: ]
-          #var2d = np.where( imask2d < 1.0, obs3d[ozidx,:,: ], 0.0 )
+          #var2d = obs3d[ozidx,:,: ]
+          var2d = np.where( imask2d < 1.0, obs3d[ozidx,:,: ], np.nan )
        else:
           fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=0 , FT0=True, )
           x2d = fx2d
@@ -142,8 +160,22 @@ def main( INFO, time_l=[], hgt=3000.0 ):
                           colors='k', linewidths=0.5,
                           linestyles='dashed',
                           )
+
        ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
                    fontsize=8, fmt='%.0fkm', colors="k" )
+
+       # DEBUG
+       CONT = ax.contour( x2d_, y2d_, dist2d_, 
+                          levels=[20, 40, 60], zorder=1,
+                          colors='r', linewidths=1.5,
+                          linestyles='dashed',
+                          )
+
+       ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
+                   fontsize=8, fmt='%.0fkm', colors="r" )
+
+
+
 
        ax.plot( x_r, y_r, ms=4.0, marker='o', color='r',
                  markeredgecolor='w' )
@@ -211,6 +243,10 @@ def main( INFO, time_l=[], hgt=3000.0 ):
     else:
        plt.show()
 
+    plt.contourf( dist2d )
+    plt.colorbar()
+    plt.show()
+    sys.exit()
 
 ############3
 
@@ -246,6 +282,15 @@ time_l = [
           datetime( 2019, 8, 24, 15, 20),
           datetime( 2019, 8, 24, 15, 40),
           datetime( 2019, 8, 24, 16,  0),
+         ]
+
+time_l = [
+          datetime( 2019, 8, 19, 13, 20),
+          datetime( 2019, 8, 19, 13, 40),
+          datetime( 2019, 8, 19, 14,  0),
+          datetime( 2019, 8, 19, 13, 20),
+          datetime( 2019, 8, 19, 13, 40),
+          datetime( 2019, 8, 19, 14,  0),
          ]
 
 hgt = 3000.0
