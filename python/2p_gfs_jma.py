@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 from matplotlib.colors import BoundaryNorm
 
-from tools_AIP import read_nc_topo, draw_rec
+from tools_AIP import read_nc_topo, prep_proj_multi, get_GFS_grads, get_grads_JMA
+
+from datetime import datetime, timedelta
 
 quick = False
 quick = True
@@ -35,9 +37,62 @@ def prep_map( ax, method='merc',lon_0=139.609, lat_0=35.861,
 
 
 
+def draw_rec( ax, m, lon2d, lat2d, lc='k', lw=1.0 ):
 
-def main( dom=1, bar=False ):
+    x, y = m( lon2d[0,:], lat2d[0,:] )
+    ax.plot( x, y, color=lc, lw=lw )
+
+    x, y = m( lon2d[-1,:], lat2d[-1,:] )
+    ax.plot( x, y, color=lc, lw=lw )
+
+    x, y = m( lon2d[:,0], lat2d[:,0] )
+    ax.plot( x, y, color=lc, lw=lw )
+
+    x, y = m( lon2d[:,-1], lat2d[:,-1] )
+    ax.plot( x, y, color=lc, lw=lw )
+
+def main( dom=1, bar=False, gtime=datetime( 2019, 8, 24, 12 ), jtime=datetime( 2019, 8, 24, 12 ), FT=1 ):
  
+    fig, (( ax1,ax2 )) = plt.subplots( 1, 2, figsize=( 10, 4.5 ) )
+    fig.subplots_adjust( left=0.05, bottom=0.01, right=0.96, top=0.95,
+                         wspace=0.15, hspace=0.02 )
+
+    ax_l = [ ax1, ax2, ]
+
+    if quick:
+       res = "c"
+    else:
+       res = "h"
+
+    m_l = prep_proj_multi('merc', ax_l, fs=7, res=res, 
+                           pdlon=0.5, pdlat=0.5 )
+#                           ll_lon=lons, ur_lon=lone, ll_lat=lats, ur_lat=late, lw=0.0 )
+    
+
+    # get MSLP
+    slp2d, glon2d, glat2d = get_GFS_grads( gtime, var="MSLETmsl", zdim=-1 )
+
+
+    clevs = np.arange( 800, 1200, 4 )
+    rlevs = np.array( [ 5, 10, 20, 30, 40, 50] )
+    x1, y1 = m_l[0]( glon2d, glat2d )
+    CONT1 = ax1.contour( x1, y1, slp2d*0.01, levels=clevs, 
+                 colors='k', linewidths=1.0 )
+    ax1.clabel( CONT1, fontsize=6, fmt='%.0f' )
+
+
+    rain2d, rlon2d, rlat2d = get_grads_JMA( jtime, FT=FT, ACUM=True )
+    jtime2 = jtime + timedelta( hours=FT )
+
+    x2, y2 = m_l[1]( rlon2d, rlat2d )
+    cmap = plt.cm.get_cmap("jet")
+    SHADE2 = ax2.contourf( x2, y2, rain2d, levels=rlevs,
+                       extend='max', cmap=cmap )
+
+    plt.show()
+    sys.exit()
+
+
     lon2d_1, lat2d_1, topo2d_1 = read_nc_topo( dom=dom )
 
     print( lon2d_1.shape )
@@ -174,6 +229,11 @@ def main( dom=1, bar=False ):
 
 ####
 
+gtime = datetime( 2019, 8, 24, 12 )
+jtime = datetime( 2019, 8, 24, 15 )
+FT = 1
+
+
 bar = True
 bar = False
 
@@ -181,5 +241,5 @@ dom = 3
 dom = 2
 dom = 1
 #dom = 4
-main( dom=dom, bar=bar )
+main( dom=dom, bar=bar, gtime=gtime, jtime=jtime, FT=FT )
 

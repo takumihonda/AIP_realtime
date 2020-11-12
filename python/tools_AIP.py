@@ -6,7 +6,7 @@ from netCDF4 import Dataset
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 def read_CZ( ):
     fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_20200825/topo/init.nc"
@@ -236,10 +236,10 @@ def read_JMA_nc(JMA_data_nc):
 
     return( JMArain2d, JMA_lon, JMA_lat )
 
-def get_GFS_grads(itime,var,zdim):
+def get_GFS_grads( itime, var, zdim ):
     print("get_GFS_grads",itime)
 
-    GFS_top = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/GFS/grads/20190824120000/mean"
+    GFS_top = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/GFS/grads/{0:}/mean".format( itime.strftime('%Y%m%d%H%M%S')  )
 
     GFS_hPa = [ 1000, 975, 950, 925, 900, 850, 800, 750, 700, 650,
                  600, 550, 500, 450, 400, 350, 300, 250, 200, 150,
@@ -319,18 +319,14 @@ def read_nc( dom=1 ):
 
 
 def prep_proj_multi( METHOD, axs, res="c", ll_lon=120, ur_lon=150, ll_lat=20, ur_lat=50,
-                     fs=10,zorder=2,contc='burlywood',cont_alp=0.2, lw=0.1, pdlon=0.1, pdlat=0.1 ):
+                     fs=10,zorder=2,contc='burlywood',cont_alp=0.2, lw=0.1, pdlon=0.1, pdlat=0.1, 
+                     blon=139.609, blat=35.861, oc="aqua" ):
 
 
     lat2 = 40.0
 
-    blon = 139.609
-    blat = 35.861
-
     m_l = []
     cc = "k"
-    #contc = 'lightgrey'
-    contc = contc
 
 
     lc = 'k'
@@ -346,8 +342,9 @@ def prep_proj_multi( METHOD, axs, res="c", ll_lon=120, ur_lon=150, ll_lat=20, ur
               ax = ax)
       m_l.append(m)
 
-      m.drawcoastlines(linewidth = 0.5, color = cc, zorder=zorder)
-      m.fillcontinents(color=contc,lake_color='w', zorder=0, alpha =cont_alp)
+      m.drawcoastlines( linewidth = 0.5, color=cc, zorder=zorder)
+#      m.fillcontinents(color=contc,lake_color='w', zorder=0, alpha=cont_alp)
+      m.drawlsmask( land_color=contc, ocean_color=oc, lakes=True, alpha=0.2 )
       m.drawparallels(np.arange(0,70,pdlat),labels=[1,0,0,0],fontsize=fs,color=lc,linewidth=lw)
       m.drawmeridians(np.arange(0,180,pdlon),labels=[0,0,0,1],fontsize=fs,color=lc,linewidth=lw)
 
@@ -394,3 +391,189 @@ def desroz_diag_R( dat_a, dat_b ):
     dat = ( dat_a - np.mean(dat_a) ) * ( dat_b - np.mean(dat_b) )
 
     return( np.sqrt( np.mean(dat) ) )
+
+def read_obs( utime=datetime(2019,9,3,2,0,0), mask=np.array([]) ):
+
+    jtime = utime + timedelta(hours=9)
+    jsec = jtime.second
+
+    if jsec == 30:
+       itime = datetime( jtime.year, jtime.month, jtime.day, jtime.hour, jtime.minute, 15 )
+    elif jsec == 0:
+       itime = datetime( jtime.year, jtime.month, jtime.day, jtime.hour, jtime.minute, 45 ) - timedelta( minutes=1 )
+
+
+    OBS_EXIST = False
+    for sec in range( 0, 30, 1 ):
+        jtime2 = itime + timedelta( seconds=sec )
+        fn = os.path.join("/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/",
+                          jtime2.strftime('%Y/%m/%d/%H/%M/%S'),
+                          "rain_cart_0002.nc")
+
+        if os.path.isfile( fn ):
+           OBS_EXIST = True
+           break
+
+    if not OBS_EXIST:
+       print( "Not found OBS ", fn, jtime)
+       return( None, False )
+
+    try:
+       nc = Dataset( fn, "r", format="NETCDF4" )
+    except:
+       print("Failed to open")
+       print( fn )
+       sys.exit()
+
+    obs = nc.variables['rain'][0,:,:,:]
+    nc.close()
+
+    obs = np.where( mask > 0.0, np.nan, obs )
+
+    return( obs, True )
+
+def read_obs_grads( INFO, itime=datetime(2019,9,10,9) ):
+    fn = os.path.join( INFO["TOP"], INFO["EXP"],
+                       INFO["time0"].strftime('%Y%m%d%H0000'),  "pawr_grads/pawr_ref3d_" +
+                       itime.strftime('%Y%m%d-%H%M%S.grd') )
+
+    try:
+       infile = open(fn)
+    except:
+       print("Failed to open")
+       print( fn )
+       sys.exit()
+
+    gx = 241
+    gy = 241
+    gz = 22
+    rec3d = gx*gy*gz
+
+    nv = 1
+    rec = 0
+
+    infile.seek(rec*4)
+    tmp3d = np.fromfile(infile, dtype=np.dtype('>f4'), count=rec3d)  # big endian   
+    input3d = np.reshape( tmp3d, (gz,gy,gx) )
+
+    lons = 138.94319715
+    lats = 35.32193244
+    dlon = 0.00554812
+    dlat = 0.00449640
+    lon1d = np.arange( lons, lons+dlon*gx, dlon )
+    lat1d = np.arange( lats, lats+dlat*gx, dlat )
+    z1d = np.arange( 0.0, gz*500.0, 500.0 )
+
+    lon2d, lat2d = np.meshgrid( lon1d, lat1d )
+
+    return( input3d, lon2d, lat2d, z1d  )
+
+
+def read_nc_topo( dom=1 ):
+
+    top = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/domains"
+
+    fn = os.path.join( top, "topo.d" + str(dom) + ".nc") 
+
+    nc = Dataset(fn, "r", format="NETCDF4")
+    lon2d = nc.variables["lon"][:]
+    lat2d = nc.variables["lat"][:]
+    topo2d = nc.variables["TOPO"][:]
+    nc.close()
+
+    return( lon2d, lat2d, topo2d )
+
+def read_mask():
+    fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/shadow/mask.nc"   
+    nc = Dataset( fn, "r", format="NETCDF4" )
+    mask = nc.variables['mask'][0,:,:,:]
+       
+    nc.close()
+
+    return( mask )
+
+def read_fcst_grads( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True, ):
+
+    fn = os.path.join( INFO["FCST_DIR"],
+                       itime.strftime('%Y%m%d-%H%M%S.grd') )
+
+    print( fn )
+    try:
+       infile = open(fn)
+    except:
+       print("Failed to open")
+       print( fn )
+       return( None, False )
+       sys.exit()
+
+    # tlev starts from "0" (not from "1")
+    #gz = 43 # only below 15km is stored in fcst
+    gz = INFO["gz"]
+    gx = INFO["gx"]
+    gy = INFO["gy"]
+
+    rec3d = gx*gy*gz
+
+    nv = 1
+
+    if FT0:
+      rec = rec3d * nv * tlev
+    else:
+      rec = rec3d * nv * ( tlev - 1 )
+
+    try:
+       infile.seek(rec*4)
+       tmp3d = np.fromfile(infile, dtype=np.dtype('>f4'), count=rec3d)  # big endian   
+       input3d = np.reshape( tmp3d, (gz,gy,gx) )
+       fstat = True
+    except:
+       input3d = None
+       fstat = False
+
+    return( input3d, fstat )
+
+def read_obs_grads_latlon( ):
+
+    # tlev starts from "0" (not from "1")
+    gx = 161
+    gy = 161
+    gz = 29
+
+    count = gx*gy
+
+    lonlat = {"lon":None, "lat":None}
+
+    for tvar in ["lon", "lat"]:
+        fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/" + tvar + ".bin"
+
+        try:
+           infile = open(fn)
+        except:
+           print("Failed to open")
+           print( fn )
+           sys.exit()
+
+        tmp2d = np.fromfile(infile, dtype=np.dtype('<f8'), count=count)  # big endian   
+        input2d = np.reshape( tmp2d, (gy,gx) )
+
+        lonlat[tvar] = input2d
+
+    dz = 500.0
+    oz = np.arange( 0.0, dz*gz, dz )
+
+    return( oz, lonlat["lon"], lonlat["lat"] )
+
+def draw_rec( ax, m, lon2d, lat2d, lc='k', lw=1.0 ):
+
+    x, y = m( lon2d[0,:], lat2d[0,:] )
+    ax.plot( x, y, color=lc, lw=lw )
+
+    x, y = m( lon2d[-1,:], lat2d[-1,:] )
+    ax.plot( x, y, color=lc, lw=lw )
+
+    x, y = m( lon2d[:,0], lat2d[:,0] )
+    ax.plot( x, y, color=lc, lw=lw )
+
+    x, y = m( lon2d[:,-1], lat2d[:,-1] )
+    ax.plot( x, y, color=lc, lw=lw )
+

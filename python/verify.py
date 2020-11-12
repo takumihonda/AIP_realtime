@@ -5,215 +5,34 @@ from netCDF4 import Dataset
 
 from datetime import datetime, timedelta
 
-#PLOT = True
+from tools_AIP import read_obs, read_mask, read_nc_lonlat, read_fcst_grads, read_obs_grads_latlon
+
+PLOT = True
+#quick = True
 PLOT = False
 quick = False
-#quick = True
-
-#FT0 = False
-FT0 = True
-
-NETCDF = True
-NETCDF = False
-
-def read_CZ( Kobe=False ):
-    if Kobe:
-       fn = "/data_honda01/honda/SCALE-LETKF/AIP_SAFE/DEBUG256p/D4_500m20191206_np256/20190610080000/anal/0001/init_20190610-080000.000.pe000000.nc"
-    else:
-       fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/TEST_INPUT/D4/20190910130000/anal/mean/init_20190910-130000.000.pe000000.nc"
-
-    HALO = 2
-    nc = Dataset( fn, "r", format="NETCDF4" )
-    cz = nc.variables['CZ'][HALO:-HALO]
-    nc.close()
-
-    #return( cz )
-    return( cz[0:43] )
-
-def read_nc_lonlat( Kobe=False ) :
-    if Kobe:
-       fn = "/data_honda01/honda/SCALE-LETKF/AIP_SAFE/DEBUG256p/D4_500m20191206_np256/const/topo_sno_np00001/topo.pe000000.nc"
-    else:
-       fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/domains/topo.d4.nc"
-
-    HALO = 2
-    nc = Dataset( fn, "r", format="NETCDF4" ) 
-    lon = nc.variables['lon'][HALO:-HALO,HALO:-HALO]
-    lat = nc.variables['lat'][HALO:-HALO,HALO:-HALO]
-    topo = nc.variables['TOPO'][HALO:-HALO,HALO:-HALO]
-    nc.close()
-
-    cz = read_CZ( Kobe=Kobe ) 
-
-    hgt3d = np.zeros( ( cz.shape[0], topo.shape[0],topo.shape[1]) )
-    for k in range( cz.shape[0] ):
-        hgt3d[k,:,:] = topo[:,:] + cz[k]
-
-    return( lon, lat, hgt3d, cz )
-
-def read_obs_grads( INFO, itime=datetime(2019,9,10,9) ):
-    fn = os.path.join( INFO["TOP"], INFO["EXP"],
-                       itime.strftime('%Y%m%d%H0000'),  "pawr_grads/pawr_ref3d_" +
-                       itime.strftime('%Y%m%d-%H%M%S.000.grd') )
-    
-    try:
-       infile = open(fn)
-    except: 
-       print("Failed to open")
-       print( fn )
-       sys.exit()
-    
-    gx = 241
-    gy = 241
-    gz = 22
-    rec3d = gx*gy*gz
-
-    nv = 1
-    rec = 0
-
-    infile.seek(rec*4)
-    tmp3d = np.fromfile(infile, dtype=np.dtype('>f4'), count=rec3d)  # big endian   
-    input3d = np.reshape( tmp3d, (gz,gy,gx) )
-
-    lons = 138.94319715
-    lats = 35.32193244
-    dlon = 0.00554812
-    dlat = 0.00449640
-    lon1d = np.arange( lons, lons+dlon*gx, dlon )
-    lat1d = np.arange( lats, lats+dlat*gx, dlat )
-    z1d = np.arange( 0.0, gz*500.0, 500.0 )
-
-    lon2d, lat2d = np.meshgrid( lon1d, lat1d )
-
-    return( input3d, lon2d, lat2d, z1d  ) 
-
-def read_obs( utime=datetime(2019,9,3,2,0,0), Kobe=False ):
-
-    jtime = utime + timedelta(hours=9)
-
-    OBS_EXIST = False
-    for sec in range( -15, 16, 1 ):
-        jtime2 = jtime + timedelta( seconds=sec )
-        if Kobe:
-           fn = os.path.join("/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/test_kobe/obs/500m",
-                             jtime2.strftime('%Y/%m/%d/%H/%M/%S'),
-                             "rain_cart_0002.nc")
-        else:
-           fn = os.path.join("/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m/",
-                             jtime2.strftime('%Y/%m/%d/%H/%M/%S'),
-                             "rain_cart_0002.nc")
-
-        if os.path.isfile( fn ):
-           OBS_EXIST = True
-           break
-    
-    if not OBS_EXIST:
-       print( "Not found OBS ", fn)
-       sys.exit()
-
-    try:
-       nc = Dataset( fn, "r", format="NETCDF4" ) 
-    except: 
-       print("Failed to open")
-       print( fn )
-       sys.exit()
-    
-    obs = nc.variables['rain'][0,:,:,:]
-
-    return( obs )
 
 
-def read_fcst_nc( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 ):
-
-    fn = os.path.join( INFO["TOP"], INFO["EXP"],
-                       INFO["time0"].strftime('%Y%m%d%H0000'),  "dafcst/fcst_ref3d_" +
-                       itime.strftime('%Y%m%d-%H%M%S.nc') )
-
-    print( "NetCDF:", fn )
-
-    try:
-       nc = Dataset( fn, "r", format="NETCDF4" )
-    except: 
-       print("Failed to open")
-       print( fn )
-       sys.exit()
-
-    ref3d = nc.variables['Reflectivity'][tlev,:,:,:]
-    cz = nc.variables['Height'][:]
-    nc.close()
-
-    return( ref3d.transpose((2,1,0)), cz )
-
-def read_fcst_grads( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 ):
-
-    #fn = os.path.join( "/data15/honda/SCALE-LETKF/AIP/verify/d4_500m_small",
-    fn = os.path.join( INFO["TOP"], INFO["EXP"],
-                       #INFO["time0"].strftime('%Y%m%d%H0000'),  "dafcst/fcst_ref3d_" +
-                       "dafcst/" +
-                       itime.strftime('%Y%m%d-%H%M%S.grd') )
-
-    try:
-       infile = open(fn)
-    except: 
-       print("Failed to open")
-       print( fn )
-       sys.exit()
-    
-    # tlev starts from "0" (not from "1")
-    gx = 256
-    gy = 256
-    gz = 43 # only below 15km is stored in fcst
-    rec3d = gx*gy*gz
-
-    nv = 1
- 
-#    # grads file starts from FT > 0s
-#    gtlev = tlev - 1
-#    rec = rec3d * nv * gtlev
-
-    if FT0:
-      rec = rec3d * nv * tlev
-    else:
-      rec = rec3d * nv * ( tlev - 1 )
-
-    infile.seek(rec*4)
-    tmp3d = np.fromfile(infile, dtype=np.dtype('>f4'), count=rec3d)  # big endian   
-    input3d = np.reshape( tmp3d, (gz,gy,gx) )
-
-    return( input3d ) 
-
-def read_obs_grads_latlon( kmax=1, Kobe=False ):
-
-    # tlev starts from "0" (not from "1")
-    gx = 161
-    gy = 161
-
-    count = gx*gy
-
-    lonlat = {"lon":None, "lat":None}
-
-    for tvar in ["lon", "lat"]:
-        if Kobe:
-           fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/test_kobe/obs/500m/" + tvar + ".bin"
-        else:
-           fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m/" + tvar + ".bin"
-
-        try:
-           infile = open(fn)
-        except: 
-           print("Failed to open")
-           print( fn )
-           sys.exit()
- 
-        tmp2d = np.fromfile(infile, dtype=np.dtype('<f8'), count=count)  # big endian   
-        input2d = np.reshape( tmp2d, (gy,gx) )
-   
-        lonlat[tvar] = input2d
-
-    dz = 500.0
-    oz = np.arange( 0.0, dz*kmax, dz )
-
-    return( lonlat["lon"], lonlat["lat"], oz )
+#def read_fcst_nc( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 ):
+#
+#    fn = os.path.join( INFO["TOP"], INFO["EXP"],
+#                       INFO["time0"].strftime('%Y%m%d%H0000'),  "dafcst/fcst_ref3d_" +
+#                       itime.strftime('%Y%m%d-%H%M%S.nc') )
+#
+#    print( "NetCDF:", fn )
+#
+#    try:
+#       nc = Dataset( fn, "r", format="NETCDF4" )
+#    except: 
+#       print("Failed to open")
+#       print( fn )
+#       sys.exit()
+#
+#    ref3d = nc.variables['Reflectivity'][tlev,:,:,:]
+#    cz = nc.variables['Height'][:]
+#    nc.close()
+#
+#    return( ref3d.transpose((2,1,0)), cz )
 
 def get_ts_bs( fcst2d, obs2d, thrs=10.0 ):
 
@@ -243,66 +62,60 @@ def vint_fcst( hgt3d, fcst3d, theight=3000.0 ):
 
 #############
 
-def main( INFO, itime=datetime(2019,9,3,2,0), tlev=0, theight=3000, thrs_dbz1=15.0, thrs_dbz2=30, Kobe=False ):
+def main( INFO, itime=datetime(2019,9,3,2,0), tlev=0, theight=3000, dbz_thrs_l=[], ):
 
-    dbz_min = 15.0
+    tlev = int( tlev )
+    ftime = itime + timedelta( seconds=int(tlev)*30 )
 
-    lon2d, lat2d, hgt3d, cz =  read_nc_lonlat( Kobe=Kobe )
-    ##print(lon2d.shape, lat2d.shape, hgt3d.shape)
+    obs3d, ostat = read_obs( utime=ftime, mask=INFO["mask"] )
 
-    #cz = read_CZ( Kobe=Kobe ) 
-    ##print( cz.shape )
-  
-    ftime = itime + timedelta(seconds=tlev*30)
-    if NETCDF:
-       fcst3d, cz = read_fcst_nc( INFO, itime=itime, tlev=tlev )
-       hgt3d = hgt3d[0:len(cz),:,:]
-    else:
-       fcst3d = read_fcst_grads( INFO, itime=itime, tlev=tlev )
-    fcst3d[ fcst3d < dbz_min ] = 0.0
-    #print( fcst3d.shape )
+    if not ostat:
+       return( None, None, ostat)
 
-    # vertical interpolation for fcst3d
-    ifcst2d = vint_fcst( hgt3d, fcst3d, theight=theight )
+    fcst3d, fstat,= read_fcst_grads( INFO, itime=itime, tlev=tlev, )
 
-    #obs3d, olon2d, olat2d, ocz = read_obs_grads( INFO, itime=itime )
-    ##print( obs3d.shape, np.min(obs3d), np.max(obs3d), ftime )
+    if not fstat:
+       print( "No fcst" )
+       return( None, None, fstat)
 
-    obs3d = read_obs( utime=ftime, Kobe=Kobe )
-    olon2d, olat2d, ocz = read_obs_grads_latlon( kmax=obs3d.shape[0], Kobe=Kobe )
+    ifcst2d = vint_fcst( INFO["hgt3d"], fcst3d, theight=theight )
 
-    # horizontal interpolation
-    k = np.argmin( np.abs(ocz - theight) )
-    obs3d[ obs3d < dbz_min ] = 0.0
+
     from scipy.interpolate import griddata
-    iobs2d = griddata( (olon2d.ravel(), olat2d.ravel()), obs3d[k,:,:].ravel(), 
-                       (lon2d, lat2d), 
+    # undef values
+    obs3d[ obs3d < 10.0 ] = 5.0
+    ok = np.argmin( np.abs( INFO["obsz"] - theight ) )
+
+#    iobs2d = griddata( (olon2d.ravel(), olat2d.ravel()), obs3d[ok,:,:].ravel(), 
+#                       (lon2d, lat2d), 
+#                       method='cubic',
+#                      )
+
+    iobs2d = obs3d[ok,:,:]
+    ifcst2d = griddata( ( INFO["lon2d"].ravel(), INFO["lat2d"].ravel()), ifcst2d.ravel(),
+                       (INFO["olon2d"], INFO["olat2d"]),
                        method='cubic',
                       )
 
-#    print(ifcst2d.shape, lon2d.shape)
-    halo = 30
-    imin = halo
-    imax = -halo
-    jmin = halo
-    jmax = -halo
-
-    ts1, bs1 = get_ts_bs( ifcst2d[jmin:jmax,imin:imax], iobs2d[jmin:jmax,imin:imax], 
-                          thrs=thrs_dbz1)
-
-    ts2, bs2 = get_ts_bs( ifcst2d[jmin:jmax,imin:imax], iobs2d[jmin:jmax,imin:imax], 
-                          thrs=thrs_dbz2)
-
-    print( "TS: {0:.4f} BS: {1:.4f} TS: {2:.4f} BS: {3:.4f} FT: {4:0=4} s".format(ts1, bs1, ts2, bs2, tlev*30) )
 
     if PLOT:
-       print( lon2d[jmin:jmax,imin:imax].shape )
-       plot( lon2d[jmin:jmax,imin:imax], lat2d[jmin:jmax,imin:imax], 
-             ifcst2d[jmin:jmax,imin:imax], itime=itime, tit="Fcst", ftsec=30*tlev )
-       plot( lon2d[jmin:jmax,imin:imax], lat2d[jmin:jmax,imin:imax], 
-             iobs2d[jmin:jmax,imin:imax], itime=itime, tit="Obs", ftsec=30*tlev )
+       olon2d = INFO["olon2d"]
+       olat2d = INFO["olat2d"]
+       plot( olon2d, olat2d,
+             ifcst2d, itime=itime, tit="Fcst", ftsec=30*tlev )
+       plot( olon2d, olat2d,
+             iobs2d, itime=itime, tit="Obs", ftsec=30*tlev )
 
-    return( ts1, bs1, ts2, bs2 )
+    ts_l = []
+    bs_l = []
+    for i, dbz in enumerate( dbz_thrs_l ):
+        ts_, bs_ = get_ts_bs( ifcst2d, iobs2d,
+                             thrs=dbz )
+        ts_l.append( ts_ )
+        bs_l.append( bs_ )
+
+    return( ts_l, bs_l, True )
+
 
 def plot( lon2d, lat2d, data2d, itime=datetime(2019, 6, 10, 8,0), tit="Fcst", ftsec=0 ):
 
@@ -361,7 +174,7 @@ def plot( lon2d, lat2d, data2d, itime=datetime(2019, 6, 10, 8,0), tit="Fcst", ft
     x1d -= np.mean(x1d)
     y1d -= np.mean(y1d)
 
-    y2d, x2d = np.meshgrid( x1d, y1d )
+    x2d, y2d = np.meshgrid( x1d, y1d )
 
 
     SHADE = ax1.contourf(x2d, y2d,
@@ -425,81 +238,95 @@ TOP = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY"
 
 
 
-EXP = "D4_500m_0730_M4_NEAR4_HT4_VT4_HLOC4km"
-
-EXP = "D4_500m_0730_M4_NEAR4_HT4_VT4_HLOC4km_MELT_NOBS100"
-
-EXP = "TEST_DEFAULT_MEM01"
-EXP = "TEST_DEFAULT"
+EXP = "D4_500m_CTRL"
 
 theight = 3000.0
 #theight = 6000.0
-thrs_dbz1 = 15.0
-thrs_dbz2 = 30.0
 
 
+#etime = stime
 stime = datetime( 2019, 8, 24, 15, 0, 30 )
-#stime = datetime( 2019, 8, 24, 15, 3, 30 )
-#stime = datetime( 2019, 8, 24, 15, 48, 0 )
 etime = datetime( 2019, 8, 24, 16, 0, 0 )
-
-#stime = datetime( 2019, 8, 24, 16, 0, 0 )
-
-stime = datetime( 2019, 8, 24, 15, 30, 0 )
-etime = stime
+#stime = datetime( 2019, 8, 19, 13, 0, 30 )
+#etime = datetime( 2019, 8, 19, 14, 0, 0 )
 
 # data should be stored in EXP/[time0]/dafcst
 time0 = datetime( 2019, 8, 24, 15, 0, 0 )
+#time0 = datetime( 2019, 8, 19, 13, 0, 0 )
 
-if FT0:
-  tmin = 0
-  tmax = 61 # max time dimension includes FT=0
-else:
-  tmin = 1
-  tmax = 61 # max time dimension does not include FT=0
+tmin = 0
+tmax = 61 # max time dimension does not include FT=0
 
-INFO = { "TOP": TOP,
-         "EXP": EXP,
-         "time0": time0,
+FCST_DIR = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY/{0:}/dafcst".format( EXP )
+#OBS_DIR = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY/{0:}/{1:}/pawr_grads".format( EXP )
+
+fcst_zmax = 43
+
+obsz, olon2d, olat2d = read_obs_grads_latlon()
+lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz )
+mask = read_mask()
+
+
+INFO = {
+         "mask": mask,
+         "EXP": EXP, 
+#         "OBS_DIR": OBS_DIR,
+         "FCST_DIR": FCST_DIR,
+         "obsz": obsz,
+         "olon2d": olon2d,
+         "olat2d": olat2d,
+         "lon2d": lon2d,
+         "lat2d": lat2d,
+         "hgt3d": hgt3d,
+         "ohgt3d": ohgt3d,
+         "cz": cz,
+         "gz": fcst_zmax,
+         "gy": lon2d.shape[0],
+         "gx": lon2d.shape[1],
        }
 
 
-tskip = 1
-tskip = 20
 
-Kobe = False
+dbz_thrs_l = [ 15.0, 30.0, ]
+
+tskip = 1
+
+itmax = int( ( etime - stime ).total_seconds() / 30 ) + 1
+
+tlevs = np.arange( tmin, tmax, tskip, dtype=np.int32 )
+tlev_max = np.shape( tlevs )[0]
+
+ts_l = np.zeros( ( tlev_max, len( dbz_thrs_l) ) )
+bs_l = np.zeros( ( tlev_max, len( dbz_thrs_l) ) )
+
+ts_l[:] = np.nan
+bs_l[:] = np.nan
+
+odir = "ts_npz/" + INFO["EXP"]
+os.makedirs( odir, exist_ok=True)
+
 
 
 time = stime
 while (time <= etime):
   print( "Initial time:", time )
 
-  ts1_l = []
-  bs1_l = []
-
-  ts2_l = []
-  bs2_l = []
 
   ftime_l = []
-  fn_ts1 = "TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz1, theight, time.strftime('%H%M%S_%Y%m%d') )
-  fn_ts2 = "TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz2, theight, time.strftime('%H%M%S_%Y%m%d') )
-  for tlev in range( tmin, tmax, tskip ):
-  #for tlev in range(1,2):
-      ts1, bs1, ts2, bs2 = main( INFO, itime=time, tlev=tlev, theight=theight, thrs_dbz1=thrs_dbz1, thrs_dbz2=thrs_dbz2, Kobe=Kobe )
-      ts1_l.append( ts1 )
-      bs1_l.append( bs1 )
-      ts2_l.append( ts2 )
-      bs2_l.append( bs2 )
-      ftime_l.append( time + timedelta(seconds=tlev*30) )
-  
-  print(fn_ts1, fn_ts2)
-  
-  odir = "ts_npz/" + INFO["EXP"]
-  os.makedirs( odir, exist_ok=True)
-  np.savez(os.path.join(odir,fn_ts1), ts=np.array(ts1_l), bs=np.array(bs1_l), times=ftime_l )
-  np.savez(os.path.join(odir,fn_ts2), ts=np.array(ts2_l), bs=np.array(bs2_l), times=ftime_l )
+  for i, tlev in enumerate( tlevs ):
+      ts_l_, bs_l_, stat = main( INFO, itime=time, tlev=tlev, theight=theight, 
+                            dbz_thrs_l=dbz_thrs_l )
 
+      ts_l[i,:] = ts_l_
+      bs_l[i,:] = bs_l_
+
+      print( ts_l_, i )
+      ftime_l.append( time + timedelta(seconds=int( tlev*30 )) )
+  
+  for i, dbz in enumerate( dbz_thrs_l ):
+      fn_ts = "TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
+      np.savez( os.path.join(odir,fn_ts), ts=np.array(ts_l[:,i]), bs=np.array(bs_l[:,i]), 
+             times=ftime_l )
+  
   time += timedelta(seconds=30)
-
-sys.exit()
 

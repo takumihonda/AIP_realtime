@@ -8,7 +8,7 @@ AVE = True
 
 
 BS = True
-#BS = False
+BS = False
 
 def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
     data = np.load( fn_ts, allow_pickle=True )
@@ -16,6 +16,7 @@ def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
     ts_l = data['ts'] 
     bs_l = data['bs'] 
     time_l = data['times'] 
+
 
     return( ts_l, bs_l, time_l )
  
@@ -38,6 +39,7 @@ def main( INFO, stime=datetime(2019,6,10,8,10,0), etime=datetime(2019,8,24,15,0)
         for n in range( INFO["NEXP"]) :
             odir = "ts_npz/" + INFO["EXP" + str(n+1)]
             fn_ts = odir + "/TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
+            print( fn_ts )
             ts_l[n,it,:], bs_l[n,it,:], _ = read_ts( fn_ts )
 
         it += 1
@@ -68,7 +70,7 @@ def main( INFO, stime=datetime(2019,6,10,8,10,0), etime=datetime(2019,8,24,15,0)
        ax1.hlines( xmin=0, xmax=1800, y=1.0, ls='dashed', lw=0.5)
 
     if AVE:
-       dat = np.mean( dat, axis=1 )
+       dat = np.nanmean( dat, axis=1 )
        c_l = [ 'k', 'r', 'b', 'g', 'y', 'cyan', 'gray', 'p' ]
        lw_l = [ 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ]
        alp = 1.0
@@ -76,6 +78,7 @@ def main( INFO, stime=datetime(2019,6,10,8,10,0), etime=datetime(2019,8,24,15,0)
 
     for n in range( INFO["NEXP"]) :
 
+       print( dat[n,:] )
        ax1.plot( t_l, dat[n,:], lw=lw_l[n], color=c_l[n], 
                  linestyle='solid', label=INFO["LAB"+str(n+1)],
                  alpha=alp_l[n] )
@@ -188,87 +191,20 @@ def main( INFO, stime=datetime(2019,6,10,8,10,0), etime=datetime(2019,8,24,15,0)
 
 TOP = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY"
 
-#EXP2 = "D4_500m_TEST_DEFAULT_MEAN"
-#EXP = "D4_500m_TEST_DEFAULT_MEAN"
-
-EXP2 = "D4_500m_TEST_DEFAULT_0515_MEAN_NOMAX400"
-
-LAB1 = "NOBS050"
-LAB2 = "NOBS400"
-
-EXP1 = "D4_500m_TEST_DEFAULT_0515_MEAN"
-LAB1 = "Default"
 
 
-EXP2 = "D4_500m_TEST_DEFAULT_0515_MEAN_THIN_HG02VG02_M2"
-LAB2 = "H2V2"
-
-EXP3 = "D4_500m_TEST_DEFAULT_0515_MEAN_THIN_HG04VG04_M2"
-LAB3 = "H4V4"
-EXP4 = "D4_500m_TEST_DEFAULT_0515_MEAN_THIN_HG06VG06_M2"
-LAB4 = "H6V6"
-EXP5 = "D4_500m_TEST_DEFAULT_0515_MEAN_THIN_HG08VG08_M2"
-LAB5 = "H8V8"
-
-nexp = 5
 tmax = 61
 
-
-EXP2 = "D4_500m_TEST_DEFAULT_0515_MEAN_THIN_HG04VG01_M2"
-LAB2 = "H4V1"
-
-EXP3 = "D4_500m_TEST_DEFAULT_0515_MEAN_THIN_HG04VG04_M2"
-LAB3 = "H4V4"
-
-EXP4 = "D4_500m_TEST_DEFAULT_0515_MEAN_THIN_HG04VG06_M2"
-LAB4 = "H4V6"
-
-EXP5 = "D4_500m_TEST_DEFAULT_0515_MEAN_THIN_HG04VG08_M2"
-LAB5 = "H4V8"
-
-
-
-
-nexp = 4
-
-EXP2 = "D4_500m_TEST_DEFAULT_0515_MEAN_THIN_HG04VG04_M2"
-LAB2 = "H4V4"
-
-EXP3 = "D4_500m_TEST_DEFAULT_0604_MEAN"
-LAB3 = "NEW (H4V4+small HLOC)"
-
-EXP4 = "D4_500m_TEST_DEFAULT_0604_MEAN_PQV"
-LAB4 = "NEW_PQV"
-
-EXP4 = "D4_500m_TEST_DEFAULT_0604_MEAN_PQV_ALL"
-EXP4 = "D4_500m_TEST_DEFAULT_0604_MEAN_PQV_ALL_mem_ref"
-EXP4 = "D4_500m_TEST_DEFAULT_0604_MEAN_PQV_ALL_QC5"
-
-EXP4 = "D4_500m_TEST_DEFAULT_0604_MEAN_HLOC4km"
-LAB4 = "NEW (H4V4+4km HLOC)"
-
-nexp = 2
-EXP1 = "D4_500m_TEST_DEFAULT_0604_MEAN"
-LAB1 = "DEFAULT"
-
-EXP2 = "D4_500m_TEST_DEFAULT_0604_MEAN_HLOC4km_0630"
-LAB2 = "NEW (H4V4+4km HLOC)"
-
-EXP2 = "D4_500m_TEST_DEFAULT_0604_MEAN_VRMORE"
-LAB2 = "+VR"
-
-EXP2 = "D4_500m_TEST_DEFAULT_0604_MEAN_THIN4_M2"
-LAB2 = "New thinning"
-
-EXP1 = "D4_500m_TEST_DEFAULT_0708_NOBS100_NEAR2"
-LAB1 = "NOBS100_NEAR2"
-
-EXP2 = "D4_500m_TEST_DEFAULT_0708_NOBS100"
-LAB2 = "NOBS100"
-
-EXP1 = "D4_500m_TEST_DEFAULT_0604_MEAN"
-LAB1 = "DEFAULT"
-
+EXP1 = None
+LAB1 = None
+EXP2 = None
+LAB2 = None
+EXP3 = None
+LAB3 = None
+EXP4 = None
+LAB4 = None
+EXP5 = None
+LAB5 = None
 EXP6 = None
 LAB6 = None
 EXP7 = None
@@ -277,73 +213,19 @@ EXP8 = None
 LAB8 = None
 
 
+
+
 nexp = 3
-#
 
-EXP2 = "D4_500m_0730_M4_NEAR4_HT4_VT4_HLOC2km"
-LAB2 = "NEAR4_HT4_VT4_HLOC2km"
+EXP1 = "D4_500m_CTRL"
+LAB1 = "D4_500m_CTRL"
 
-EXP3 = "D4_500m_0730_M4_NEAR4_HT2_VT2_HLOC2km"
-LAB3 = "NEAR4_HT2_VT2_HLOC2km"
+EXP2 = "D4_500m_H1V1"
+LAB2 = "D4_500m_H1V1"
 
-EXP4 = "D4_500m_0730_M4_NEAR4_HT4_VT4_HLOC4km"
-LAB4 = "NEAR4_HT4_VT4_HLOC4km"
+EXP3 = "D4_500m_H8V8"
+LAB3 = "D4_500m_H8V8"
 
-EXP5 = "D4_500m_0730_M4_NEAR4_HT2_VT2_HLOC4km"
-LAB5 = "NEAR4_HT2_VT2_HLOC4km"
-
-
-nexp = 5
-
-EXP1 = "D4_500m_TEST_DEFAULT_0604_MEAN"
-LAB1 = "DEFAULT"
-
-
-#EXP2 = "D4_500m_0730_M4_NEAR4_HT4_VT4_HLOC4km"
-#LAB2 = "NEAR4_HT4_VT4_HLOC4km"
-
-EXP2 = "D4_500m_0730_M4_NEAR4_HT4_VT4_HLOC4km_MELT"
-LAB2 = "NEAR4_HT4_VT4_HLOC4km_MELT"
-
-EXP3 = "D4_500m_0730_M4_NEAR4_HT2_VT2_HLOC4km_MELT"
-LAB3 = "NEAR4_HT2_VT2_HLOC4km_MELT"
-
-EXP4 = "D4_500m_0730_M4_NEAR4_HT4_VT4_HLOC2km_MELT"
-LAB4 = "NEAR4_HT4_VT4_HLOC2km_MELT"
-
-
-#EXP5 = "D4_500m_0730_M4_NEAR4_HT2_VT2_HLOC2km_MELT"
-#LAB5 = "NEAR4_HT2_VT2_HLOC2km_MELT"
-
-EXP5 = "D4_500m_0730_M4_NEAR4_HT2_VT2_HLOC4km_MELT"
-LAB5 = "NEAR4_HT2_VT2_HLOC2km_MELT"
-
-
-EXP7 = "D4_500m_0730_ORGTHIN_HT4_VT4_HLOC2km"
-LAB7 = "ORGTHIN_HT4_VT4_HLOC2km"
-
-EXP4 = "D4_500m_0730_M4_NEAR4_HT4_VT4_HLOC4km_MELT_NOBS100"
-LAB4 = "D4_500m_0730_M4_NEAR4_HT4_VT4_HLOC4km_MELT_NOBS100"
-
-
-nexp = 7
-EXP2 = "D4_500m_0730_M4_NEAR4_HT2_VT1_HLOC4km_MELT"
-LAB2 = "NEAR4_HT2_VT1_HLOC2km_MELT"
-
-EXP3 = "D4_500m_0730_M4_NEAR4_HT4_VT1_HLOC4km_MELT"
-LAB3 = "NEAR4_HT4_VT1_HLOC2km_MELT"
-
-EXP4 = "D4_500m_0730_M4_NEAR4_HT6_VT1_HLOC4km_MELT"
-LAB4 = "NEAR4_HT6_VT1_HLOC2km_MELT"
-
-EXP5 = "D4_500m_0730_M4_NEAR4_HT1_VT2_HLOC4km_MELT"
-LAB5 = "NEAR4_HT1_VT2_HLOC4km_MELT"
-
-EXP6 = "D4_500m_0730_M4_NEAR4_HT1_VT4_HLOC4km_MELT"
-LAB6 = "NEAR4_HT1_VT4_HLOC4km_MELT"
-
-EXP7 = "D4_500m_0730_M4_NEAR4_HT1_VT6_HLOC4km_MELT"
-LAB7 = "NEAR4_HT1_VT6_HLOC4km_MELT"
 
 INFO = { "TOP": TOP,
          "NEXP": nexp,
