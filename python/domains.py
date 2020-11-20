@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 from matplotlib.colors import BoundaryNorm
 
-from tools_AIP import read_nc_topo, draw_rec
+from tools_AIP import read_nc_topo, draw_rec, dist
 
 quick = False
 quick = True
@@ -143,7 +143,10 @@ def main( dom=1, bar=False ):
        # 0.5km mesh
        y2d, x2d = np.meshgrid( x1d*0.5, y1d*0.5 )
 
-       dist2d = np.sqrt( np.square(x2d) + np.square(y2d) )
+       # distance based on SCALE
+       #dist2d = np.sqrt( np.square(x2d) + np.square(y2d) ) 
+       # distance in projection (great cicle)
+       dist2d = dist( lon_r, lat_r, lon2d_2, lat2d_2 ) * 0.001
 
        print(x1d.shape, np.min(x1d), np.max(x1d) )
        CONT = ax1.contour( xd, yd, dist2d, 
@@ -178,8 +181,8 @@ bar = True
 bar = False
 
 dom = 3
-dom = 2
-dom = 1
+#dom = 2
+#dom = 1
 #dom = 4
 main( dom=dom, bar=bar )
 

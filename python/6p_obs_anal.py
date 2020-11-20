@@ -90,7 +90,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
     print( "olon/lat max:", np.max( olon2d ), np.max( olat2d ) )
     print( "mlon/lat min:", np.min( mlon2d ), np.min( mlat2d ) )
     print( "mlon/lat max:", np.max( mlon2d ), np.max( mlat2d ) )
-    sys.exit()
+#    sys.exit()
 
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
@@ -251,7 +251,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
 ############3
 
 TOP = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY"
-EXP = "D4_500m_CTRL"
+EXP = "20201117/D4_500m_CTRL"
 
 FCST_DIR = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY/{0:}/dafcst".format( EXP )
 
@@ -284,14 +284,14 @@ time_l = [
           datetime( 2019, 8, 24, 16,  0),
          ]
 
-time_l = [
-          datetime( 2019, 8, 19, 13, 20),
-          datetime( 2019, 8, 19, 13, 40),
-          datetime( 2019, 8, 19, 14,  0),
-          datetime( 2019, 8, 19, 13, 20),
-          datetime( 2019, 8, 19, 13, 40),
-          datetime( 2019, 8, 19, 14,  0),
-         ]
+#time_l = [
+#          datetime( 2019, 8, 19, 13, 20),
+#          datetime( 2019, 8, 19, 13, 40),
+#          datetime( 2019, 8, 19, 14,  0),
+#          datetime( 2019, 8, 19, 13, 20),
+#          datetime( 2019, 8, 19, 13, 40),
+#          datetime( 2019, 8, 19, 14,  0),
+#         ]
 
 hgt = 3000.0
 

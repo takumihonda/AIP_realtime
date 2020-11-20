@@ -18,10 +18,13 @@ def read_CZ( ):
 
     return( cz )
 
-def read_nc_lonlat( fcst_zmax=43, obsz=np.arange(2) ):
+def read_nc_lonlat( fcst_zmax=43, obsz=np.arange(2), NEW=False ):
 
     #fn = "/work/jh200062/share/honda/SCALE-LETKF/monitor/topo/topo.d4.nc"
-    fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_20200825/topo/topo.d4.nc"
+    if NEW:
+       fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/TEST_INPUT/D4_500m_20201117/const/topo_sno_np00001/topo.pe000000.nc"
+    else:
+       fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_20200825/topo/topo.d4.nc"
 
     HALO = 2
     nc = Dataset( fn, "r", format="NETCDF4" )
@@ -304,7 +307,7 @@ def get_GFS_grads( itime, var, zdim ):
 
 def read_nc( dom=1 ):
 
-    top = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/domains"
+    top = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/domains_20201117"
 
     fn = os.path.join( top, "topo.d" + str(dom) + ".nc")
 
@@ -494,7 +497,7 @@ def read_obs_grads( INFO, itime=datetime(2019,9,10,9) ):
 
 def read_nc_topo( dom=1 ):
 
-    top = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/domains"
+    top = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/domains_20201117"
 
     fn = os.path.join( top, "topo.d" + str(dom) + ".nc") 
 

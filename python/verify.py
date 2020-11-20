@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from tools_AIP import read_obs, read_mask, read_nc_lonlat, read_fcst_grads, read_obs_grads_latlon
 
 PLOT = True
-#quick = True
+quick = True
 PLOT = False
 quick = False
 
@@ -257,13 +257,13 @@ time0 = datetime( 2019, 8, 24, 15, 0, 0 )
 tmin = 0
 tmax = 61 # max time dimension does not include FT=0
 
-FCST_DIR = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY/{0:}/dafcst".format( EXP )
+FCST_DIR = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY/20201117/{0:}/dafcst".format( EXP )
 #OBS_DIR = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY/{0:}/{1:}/pawr_grads".format( EXP )
 
 fcst_zmax = 43
 
 obsz, olon2d, olat2d = read_obs_grads_latlon()
-lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz )
+lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz, NEW=True )
 mask = read_mask()
 
 
