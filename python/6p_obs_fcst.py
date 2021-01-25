@@ -1,7 +1,7 @@
 import os
 import sys
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from tools_AIP import read_obs_grads, prep_proj_multi, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist
 
 import matplotlib.pyplot as plt
@@ -15,7 +15,7 @@ from scipy.interpolate import griddata
 quick = True
 quick = False
 
-def main( INFO, time_l=[], hgt=3000.0 ):
+def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
 
     lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
     flon2d = INFO["lon2d"]
@@ -138,6 +138,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
 
     for i , ax in enumerate( ax_l ):
        itime = time_l[i]
+       tlev = tlev_l[i]
 
        if i<= 2: 
           obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
@@ -155,7 +156,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
           #var2d = np.where( ( imask2d < 1.0 ) or ( dist2d > 60.0e3 ), obs2d_, np.nan )
           var2d = np.where( ( imask2d < 1.0 ) , obs2d_, np.nan )
        else:
-          fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=0 , FT0=True, )
+          fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
           x2d = fx2d
           y2d = fy2d
           var2d = fcst3d[fzidx,:,: ]
@@ -233,7 +234,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
        if i <= 2:
           tit = "PAWR obs"
        else:
-          tit = "Analysis"
+          tit = "Forecast (FT={0:.0f} min)".format( tlev*0.5 )
    
        ax.text( 0.5, 0.99, tit,
                va='top', 
@@ -242,7 +243,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
                color='k', fontsize=12, 
                bbox=bbox )
 
-    ofig = "6p_obs_anal_" + itime.strftime('%m%d') + ".png"
+    ofig = "6p_obs_fcst_" + itime.strftime('%m%d') + ".png"
     print(ofig)
 
     if not quick:
@@ -295,16 +296,26 @@ time_l = [
           datetime( 2019, 8, 24, 16,  0),
          ]
 
-#time_l = [
-#          datetime( 2019, 8, 19, 13, 20),
-#          datetime( 2019, 8, 19, 13, 40),
-#          datetime( 2019, 8, 19, 14,  0),
-#          datetime( 2019, 8, 19, 13, 20),
-#          datetime( 2019, 8, 19, 13, 40),
-#          datetime( 2019, 8, 19, 14,  0),
-#         ]
+itime = datetime( 2019, 8, 19, 13, 30 )
+itime = datetime( 2019, 8, 24, 15, 30 )
+
+tlev1 = 20
+tlev2 = 40
+tlev3 = 60
+
+time_l = [
+          itime + timedelta( seconds=tlev1*30 ),
+          itime + timedelta( seconds=tlev2*30 ),
+          itime + timedelta( seconds=tlev3*30 ),
+          itime + timedelta( seconds=tlev1*30 ),
+          itime + timedelta( seconds=tlev2*30 ),
+          itime + timedelta( seconds=tlev3*30 ),
+         ]
 
 hgt = 3000.0
 
-main( INFO, time_l=time_l, hgt=hgt )
+tlev_l = [ tlev1, tlev2, tlev3, 
+           tlev1, tlev2, tlev3, ]
+
+main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l )
 

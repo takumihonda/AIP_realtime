@@ -220,6 +220,10 @@ htime = datetime(2019, 8, 24, 12, 0, 0 )
 jtime = datetime(2019, 8, 24, 15, 0, 0 )
 FT = 1
 
+#gtime = datetime( 2019, 8, 19, 12, 0, 0 )
+#jtime = datetime( 2019, 8, 19, 12, 0, 0 )
+#FT = 2
+
 htime = gtime
 main( gtime=gtime, htime=htime, jtime=jtime, FT=FT )
 

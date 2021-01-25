@@ -10,7 +10,7 @@ from matplotlib.colors import BoundaryNorm
 from tools_AIP import read_nc_topo, draw_rec, dist
 
 quick = False
-quick = True
+#quick = True
 
 def prep_map( ax, method='merc',lon_0=139.609, lat_0=35.861, 
               ll_lon=1, ur_lon=2,
@@ -43,7 +43,7 @@ def main( dom=1, bar=False ):
     print( lon2d_1.shape )
 
     fig, ax1 = plt.subplots(1, 1, figsize=(8.0,8.0))
-    fig.subplots_adjust( left=0.05, bottom=0.05, right=0.92, top=0.95,
+    fig.subplots_adjust( left=0.07, bottom=0.05, right=0.94, top=0.95,
                          wspace=0.2, hspace=0.01 )
 
     ll_lon = lon2d_1[0,0]
@@ -73,17 +73,18 @@ def main( dom=1, bar=False ):
                   ll_lat=ll_lat, ur_lat=ur_lat,
                   lon_0=lon_0, lat_0=lat_0 )   
 
+    fs = 24
     if dom == 1:
-       pdlon = 5
-       pdlat = 5
+       pdlon = 10
+       pdlat = 10
     elif dom == 2:
-       pdlon = 2
-       pdlat = 2
+       pdlon = 3
+       pdlat = 3
     else:
        pdlon = 0.5
        pdlat = 0.5
-    fs = 8
-    lw = 0.0
+       fs = 18
+    lw = 0.3
     lc = 'k'
     m.drawparallels( np.arange(0,60,pdlat), labels=[1,0,0,0],
                      fontsize=fs, color=lc, linewidth=lw )
@@ -155,11 +156,12 @@ def main( dom=1, bar=False ):
                            linestyles='dashed',
                           )
        ax1.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
-                   fontsize=8, fmt='%.0fkm', colors="k" )
+                   fontsize=16, fmt='%.0fkm', colors="k" )
 
 
     if bar:
        plt.colorbar( SHADE1, ticks=levs[1:] )
+
 
     ofig = 'dom{0:}.png'.format( dom )
 

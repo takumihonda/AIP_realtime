@@ -1,10 +1,18 @@
 import numpy as np
 import sys
 
-range_ = 40.e3
+range_ = 10.e3
 height_ = 11.e3
 elv = np.rad2deg( np.arctan2( height_, range_ ) )
 print( elv )
+
+print( "beam interval" )
+da = 360 / 300 # delta azimith # degree
+dist = np.arange( 20.0, 70.0, 10.0 ) # km
+print( dist )
+print( dist * np.sin( np.deg2rad( da )) )
+
+
 sys.exit()
 
 dx = 0.5

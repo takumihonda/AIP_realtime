@@ -8,7 +8,7 @@ from datetime import timedelta
 from tools_AIP import read_dat
 
 quick = True
-#quick = False
+quick = False
 
 
 def main( stime=datetime(2019,9,10,15,0), etime=datetime(2019,9,10,15,0), otyp=4002,
@@ -56,6 +56,7 @@ def main( stime=datetime(2019,9,10,15,0), etime=datetime(2019,9,10,15,0), otyp=4
             oerr = data["oerr"]
          except:
             print( "No npz file ")
+            print( ofile )
             sys.exit()
  
    # 
@@ -235,6 +236,7 @@ otyp = 4001 # Z
 exp = "D4_500m_TEST_DEFAULT_0515_MEAN"
 
 exp = "D4_500m_TEST_DEFAULT_0604_MEAN"
+exp = "20201117/D4_500m_H1V1"
 
 stime0 = datetime( 2019, 8, 24, 15, 0, 0)
 

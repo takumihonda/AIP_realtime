@@ -215,17 +215,31 @@ LAB8 = None
 
 
 
-nexp = 1
+nexp = 5
 
 EXP1 = "D4_500m_CTRL"
 LAB1 = "D4_500m_CTRL"
 
-EXP2 = "D4_500m_H1V1"
-LAB2 = "D4_500m_H1V1"
+EXP2 = "D4_500m_H4V1"
+LAB2 = "D4_500m_H4V1"
 
-EXP3 = "D4_500m_H8V8"
-LAB3 = "D4_500m_H8V8"
+EXP3 = "D4_500m_H8V1"
+LAB3 = "D4_500m_H8V1"
 
+EXP4 = "D4_500m_H1V1"
+LAB4 = "D4_500m_H1V1"
+
+EXP5 = "D4_500m_H8V8"
+LAB5 = "D4_500m_H8V8"
+
+#EXP2 = EXP1
+#LAB2 = LAB1
+#EXP3 = EXP1
+#LAB3 = LAB1
+#EXP4 = EXP1
+#LAB4 = LAB1
+#EXP5 = EXP1
+#LAB5 = LAB1
 
 INFO = { "TOP": TOP,
          "NEXP": nexp,

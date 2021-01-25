@@ -18,6 +18,20 @@ def read_CZ( ):
 
     return( cz )
 
+def read_nc_lsmask( NEW=False ):
+
+    if NEW:
+       fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/TEST_INPUT/D4_500m_20201117/const/topo_sno_np00001/topo.pe000000.nc"
+    else:
+       fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_20200825/topo/topo.d4.nc"
+
+    HALO = 2
+    nc = Dataset( fn, "r", format="NETCDF4" )
+    lsmask = nc.variables['lsmask'][HALO:-HALO,HALO:-HALO]
+    nc.close()
+
+    return( lsmask )
+
 def read_nc_lonlat( fcst_zmax=43, obsz=np.arange(2), NEW=False ):
 
     #fn = "/work/jh200062/share/honda/SCALE-LETKF/monitor/topo/topo.d4.nc"
@@ -337,7 +351,7 @@ def prep_proj_multi( METHOD, axs, res="c", ll_lon=120, ur_lon=150, ll_lat=20, ur
     lw = lw
 
     for ax in axs:
-      m = Basemap(projection=METHOD,resolution = res,
+      m = Basemap(projection=METHOD,resolution=res,
               llcrnrlon = ll_lon,llcrnrlat = ll_lat,
               urcrnrlon = ur_lon,urcrnrlat = ur_lat,
               lat_0 = blat, lat_1 = lat2,
@@ -347,7 +361,9 @@ def prep_proj_multi( METHOD, axs, res="c", ll_lon=120, ur_lon=150, ll_lat=20, ur
 
       m.drawcoastlines( linewidth = 0.5, color=cc, zorder=zorder)
 #      m.fillcontinents(color=contc,lake_color='w', zorder=0, alpha=cont_alp)
-      m.drawlsmask( land_color=contc, ocean_color=oc, lakes=True, alpha=0.2 )
+      m.drawlsmask( land_color=contc, ocean_color=oc, lakes=True, 
+                    alpha=cont_alp,
+                    resolution=res )
       m.drawparallels(np.arange(0,70,pdlat),labels=[1,0,0,0],fontsize=fs,color=lc,linewidth=lw)
       m.drawmeridians(np.arange(0,180,pdlon),labels=[0,0,0,1],fontsize=fs,color=lc,linewidth=lw)
 
@@ -675,6 +691,113 @@ def dist( rlon=130.0, rlat=30.0, lons=np.zeros(1), lats=np.zeros(1) ):
     dist = np.arccos( cosd ) * 6371.3e3
     return( dist )
 
+def read_oerr_npz( range_inl=[1.0], elv_inl=[5.0], dr=1.0, de=1.0, mode="az",
+                   azm_inl=[10.0], da=1.0, DR=500.0, exp="20201117/D4_500m_H1V1_Z", otyp=4002 ):
+
+    amax = 10
+
+    if mode == "az":
+       azm_inl = [ 999 ]
+       x1d = np.arange( -amax, amax+1 ) * da
+
+    elif mode == "ra":
+       range_inl = [ 999 ]
+       x1d = np.arange( -amax, amax+1 ) * dr * DR
+
+    elif mode == "el":
+       elv_inl = [ 999 ]
+       x1d = np.arange( -amax, amax+1 ) * de
+
+    cnt1d = np.zeros( amax*2+1)
+    cor1d = np.zeros( amax*2+1)
+    oerr = 0.0
+
+    cnt = 0
+    for elv_in in elv_inl:
+        for azm_in in azm_inl:
+            for range_in in range_inl:
+ 
+                dir_in = "dat/{0:}/{1:05}".format( exp, otyp )
+                ofile = os.path.join( dir_in, "oerr_{0:}_e{1:03}_{2:03}_r{3:03}_{4:03}_a{5:03}_{6:03}_{7:03}.npz".format( mode, elv_in, de, range_in, dr, azm_in, da, int( DR ) ) )
+ 
+                try:
+                   #print( "Found npz file ", ofile )
+                   data = np.load( ofile )
+                   cor1d_ = data["cor1d"]
+                   cnt1d_ = data["cnt1d"]
+                   oerr_ = data["oerr"]
+                except:
+                   print( "No npz file ", ofile)
+
+                if not np.isnan( oerr_ ) and not np.isnan( cor1d_[amax] ) :
+                 
+                   cor1d_[ ( cnt1d_ < 1 ) | np.isnan( cnt1d_ ) ] = 0.0
+                   cnt1d_[ ( cnt1d_ < 1 ) | np.isnan( cnt1d_ ) ] = 0.0
+
+                   cor1d += cor1d_ 
+                   cnt1d += cnt1d_ 
+                   oerr += oerr_
+                   cnt += 1
+
+    cor1d = cor1d / cnt1d
+    cor1d = cor1d / cor1d[amax]
+    if cnt > 0:
+       oerr = oerr / cnt
+   
+    return( cor1d, cnt1d, oerr, x1d )
+
+def read_fcst_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True, nvar="p", gz=30 ):
+
+    fn = os.path.join( INFO["FCST_DIR"],
+                       itime.strftime('fcst_all_%Y%m%d-%H%M%S.grd') )
+
+    print( fn )
+    try:
+       infile = open(fn)
+    except:
+       print("Failed to open")
+       print( fn )
+       return( None, False )
+       sys.exit()
+
+    # tlev starts from "0" (not from "1")
+    gz = 60
+    gx = INFO["gx"]
+    gy = INFO["gy"]
+
+    rec3d = gx*gy*gz
+    rec2d = gx*gy
+
+    # u, v, w, t, p, qv, qc, qr, qi, qs, qg
+    nv3d = 11
+    # PW PRCP
+    nv2d = 2
+
+    if FT0:
+      rec = ( rec3d * nv3d + rec2d * nv2d ) * tlev
+    else:
+      rec = ( rec3d * nv3d + rec2d * nv2d ) * ( tlev - 1 )
+
+    nv2d_ = 0
+    if nvar == "u":
+       nv3d_ = 0
+    elif nvar == "v":
+       nv3d_ = 1
+    elif nvar == "p":
+       nv3d_ = 4
+
+    rec = rec + ( rec3d * nv3d_ + rec2d * nv2d_ )
+
+    try:
+       infile.seek( rec*4 )
+       tmp3d = np.fromfile( infile, dtype=np.dtype('>f4'), count=rec3d )  # big endian   
+       input3d = np.reshape( tmp3d, (gz,gy,gx) )
+    except:
+       input3d = None
+
+    return( input3d )
+
+#############################
 if __name__ == "__main__":
     dist() 
 #    read_mask_full()
