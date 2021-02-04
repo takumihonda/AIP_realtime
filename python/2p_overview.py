@@ -26,7 +26,6 @@ if quick:
 
 
 
-
 lat2 = 40.0
 blon = 138.0
 blat = 36.3
@@ -170,8 +169,8 @@ def main( gtime=datetime( 2019, 8, 24, 12, 0 ), htime=datetime( 2019, 8, 24, 12,
     ax2.plot( x_r, y_r, ms=4.0, marker='o', color='r',
               markeredgecolor='w' )
 
-    ptit_l = [ "GFS MSLP (hPa)".format( 13, htime.strftime('%m/%d %HUTC'),), 
-               "JMA radar precipitation (mm) {0:}-{1:}".format( jtime.strftime('%m/%d %H'), jtime2.strftime('%HUTC')) ]
+    ptit_l = [ "GFS MSLP (hPa)".format( 13, htime.strftime('%m/%d %H%M UTC'),), 
+               "JMA radar precipitation (mm) {0:}-{1:}".format( jtime.strftime('%m/%d %H%M'), jtime2.strftime('%H%M UTC')) ]
     
 #    SHADE_l = [ SHADE1, SHADE2 ]
     pos = ax2.get_position()
@@ -188,7 +187,7 @@ def main( gtime=datetime( 2019, 8, 24, 12, 0 ), htime=datetime( 2019, 8, 24, 12,
                 va='bottom', 
                 ha='center',
                 transform=ax.transAxes,
-                color='k', fontsize=12)
+                color='k', fontsize=11 )
 
         ax2.text( 0.0, 1.01, pnum_l[i],
                 va='bottom', 
@@ -220,9 +219,9 @@ htime = datetime(2019, 8, 24, 12, 0, 0 )
 jtime = datetime(2019, 8, 24, 15, 0, 0 )
 FT = 1
 
-#gtime = datetime( 2019, 8, 19, 12, 0, 0 )
-#jtime = datetime( 2019, 8, 19, 12, 0, 0 )
-#FT = 2
+gtime = datetime( 2019, 8, 19, 12, 0, 0 )
+jtime = datetime( 2019, 8, 19, 12, 0, 0 )
+FT = 2
 
 htime = gtime
 main( gtime=gtime, htime=htime, jtime=jtime, FT=FT )

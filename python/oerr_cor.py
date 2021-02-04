@@ -332,13 +332,14 @@ def plot_oerr( INFO, cor1d, cnt1d, az1d, oerr=1.0, range_in=5.0, dr=1.0,
 
 otyp = 4002 # vr
 #otyp = 4004 # zero Z
-otyp = 4001 # Z
+#otyp = 4001 # Z
 
 
 exp = "D4_500m_TEST_DEFAULT_0515_MEAN"
 
 exp = "D4_500m_TEST_DEFAULT_0604_MEAN"
 exp = "20201117/D4_500m_H1V1_Z"
+exp = "20201117/D4_500m_H1V1_VR"
 
 stime0 = datetime( 2019, 8, 24, 15, 0, 0)
 
@@ -362,7 +363,8 @@ azm_inl = np.arange( 0, 360, da )
 
 
 mode = "az"
-#mode = "ra"
+mode = "el"
+mode = "ra"
 
 #mode = "el"
 #range_inl = [ 60 ]

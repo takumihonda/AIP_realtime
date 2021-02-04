@@ -20,7 +20,7 @@ def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
  
 
 def main( INFO, stime_l=[], etime_l=[],
-           theight=3000, thrs_dbz=15.0 ):
+           theight=3000, thrs_dbz=15.0, lab_l=[]):
 
 
     itmax = int( ( etime_l[0] - stime_l[0] ).total_seconds()/30.0 + 1 )
@@ -49,6 +49,11 @@ def main( INFO, stime_l=[], etime_l=[],
     import matplotlib.cm as cm
 
 
+#    fig, ( ( ax1, ax2 ), ( ax3, ax4 ) ) = plt.subplots( 2, 2, figsize=( 11, 8 ) )
+#    fig.subplots_adjust( left=0.05, bottom=0.08, right=0.98, top=0.95, 
+#                         wspace=0.1, hspace=0.3 )
+
+
     fig, ( ax1, ax2 ) = plt.subplots( 1, 2, figsize=( 11, 4 ) )
     fig.subplots_adjust( left=0.05, bottom=0.15, right=0.98, top=0.9, 
                          wspace=0.1 )
@@ -58,35 +63,68 @@ def main( INFO, stime_l=[], etime_l=[],
     bs_l = np.nanmean( bs_l, axis=2 )
 
     lw = 2.0
-    c_l = [ 'k', 'k' ]
+    c_l = [ 'r', 'k', 'b' ]
     ax_l = [ ax1, ax2 ]
-    lab_l = [ "August 24", "August 19" ]
-    ls_l = [ "solid", "dashed" ]
+#    lab_l = [ "August 24", "August 19" ]
+    ls_l = [ "solid", "solid", "solid" ]
+#    ls_l = [ "solid", "dashed" ]
  
     t_l = t_l / 60 #sec 
 
-    for j in range( len(stime_l) ):
-        ax1.plot( t_l, ts_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
-        ax2.plot( t_l, bs_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
+#    for j in range( len(stime_l) ):
+#        for n in range( INFO["NEXP"]) :
+#            ax1.plot( t_l, ts_l[j,n,:], lw=lw, color=c_l[n], label=lab_l[n], ls=ls_l[j] ) 
+#            ax2.plot( t_l, bs_l[j,n,:], lw=lw, color=c_l[n], label=lab_l[n], ls=ls_l[j] ) 
 
     ymin1 = 0
-    ymax1 = 1
+    ymax1 = 0.8
     ymin2 = 0.0
     ymax2 = 3.0
     ymin_l = [ ymin1, ymin2 ]
     ymax_l = [ ymax1, ymax2 ]
     tit_l = [ "Threat score", "Bias score" ]
     note = "Z={:.1f} km\n{:.1f} dBZ".format(theight/1000, thrs_dbz )
-    pnum_l = [ "(a)", "(b)" ] 
+    pnum_l = [ "(a)", "(b)", "(c)", "(d)" ] 
 
     xlab = "Forecast time (min)"
+    print( "chk", ts_l.shape )
 
-    for i, ax in enumerate( ax_l ):
-        ax.legend( fontsize=12, loc='lower left' )
+    for i in range( len(ax_l) ):
+        if i == 0:
+           ax = ax1
+           ii = 0 # TS
+        elif i == 1:
+           ax = ax2
+           ii = 1 # BS
+        elif i == 2:
+           ax = ax3
+           ii = 0 # TS
+        elif i == 3:
+           ax = ax4
+           ii = 1 # BS
+
+        if i<= 1:
+           st = 0
+        else:
+           st = 1
+
+        if ii == 0:
+           data = ts_l[st,:,:]
+           lloc = 'upper right'
+        elif ii == 1:
+           data = bs_l[st,:,:]
+           lloc = 'lower left'
+
+        for n in range( INFO["NEXP"]) :
+            ax.plot( t_l, data[n,:], lw=lw, color=c_l[n], 
+                     label=lab_l[n], ls=ls_l[0] ) 
+
+        ax.legend( fontsize=12, loc=lloc )
+        ax.grid( ls='dashed', lw=1.0 )
         ax.set_xlim(0, 30)
-        ax.set_ylim( ymin_l[i], ymax_l[i] )
+        ax.set_ylim( ymin_l[ii], ymax_l[ii] )
 
-        ax.text( 0.5, 1.02, tit_l[i],
+        ax.text( 0.5, 1.02, tit_l[ii],
                  fontsize=15, transform=ax.transAxes,
                  ha='center',
                  va='bottom' )
@@ -104,7 +142,7 @@ def main( INFO, stime_l=[], etime_l=[],
         ax.set_xlabel( xlab, fontsize=12 )
 
 
-    ofig = "2p_scores.png"
+    ofig = "2p_scores_thinning.png"
  
     print( ofig )
     if quick:
@@ -156,23 +194,22 @@ LAB8 = None
 
 
 
+lab_l = [
+        "H1V1",
+        "H4V4 (CTRL)",
+        "H8V8",
+        ]
 
-nexp = 1
+nexp = 3
 
-EXP1 = "D4_500m_CTRL"
-LAB1 = "D4_500m_CTRL"
+EXP1 = "D4_500m_H1V1"
+LAB1 = "D4_500m_H1V1"
 
-EXP2 = "D4_500m_H4V1"
-LAB2 = "D4_500m_H4V1"
+EXP2 = "D4_500m_CTRL"
+LAB2 = "D4_500m_CTRL"
 
-EXP3 = "D4_500m_H8V1"
-LAB3 = "D4_500m_H8V1"
-
-EXP4 = "D4_500m_H1V1"
-LAB4 = "D4_500m_H1V1"
-
-EXP5 = "D4_500m_H8V8"
-LAB5 = "D4_500m_H8V8"
+EXP3 = "D4_500m_H8V8"
+LAB3 = "D4_500m_H8V8"
 
 #EXP2 = EXP1
 #LAB2 = LAB1
@@ -207,7 +244,7 @@ INFO = { "TOP": TOP,
 theight = 3000.0
 #theight = 6000.0
 thrs_dbz = 15.0
-thrs_dbz = 30.0
+#thrs_dbz = 30.0
 
 
 stime1 = datetime( 2019, 8, 24, 15, 0, 30)
@@ -219,5 +256,6 @@ etime2 = datetime( 2019, 8, 19, 14, 0, 0)
 stime_l = [ stime1, stime2 ]
 etime_l = [ etime1, etime2 ]
 
-main( INFO, stime_l=stime_l, etime_l=etime_l, theight=theight, thrs_dbz=thrs_dbz )
+
+main( INFO, stime_l=stime_l, etime_l=etime_l, theight=theight, thrs_dbz=thrs_dbz, lab_l=lab_l )
 

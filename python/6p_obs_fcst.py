@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, prep_proj_multi, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -10,12 +10,21 @@ from matplotlib.colors import BoundaryNorm
 
 from scipy.interpolate import griddata
 
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 
+from matplotlib.axes import Axes
+from cartopy.mpl.geoaxes import GeoAxes
+GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
 quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
+
+    # radar location
+    lon_r = 139.609
+    lat_r = 35.861
 
     lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
     flon2d = INFO["lon2d"]
@@ -26,43 +35,25 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
     mask, mlon2d, mlat2d = read_mask_full()
     mask2d = mask[mzidx,:,:]
 
-    print( mask2d.shape, mlon2d.shape, mlat2d.shape)
+    fig = plt.figure( figsize=(13, 8.5) )
+#    fig.subplots_adjust( left=0.0, bottom=0.0, right=1.0, top=1.0,
+#                         wspace=0.0, hspace=0.0 )
+    fig.subplots_adjust( left=0.04, bottom=0.03, right=0.96, top=0.97,
+                         wspace=0.15, hspace=0.04)
+ 
+    # original data is lon/lat coordinate
+    data_crs = ccrs.PlateCarree()
 
-    fig, (( ax1,ax2,ax3 ), (ax4,ax5,ax6) ) = plt.subplots( 2, 3, figsize=( 13, 9.0 ) )
-    fig.subplots_adjust( left=0.03, bottom=0.03, right=0.97, top=0.97,
-                         wspace=0.15, hspace=0.05)
-
-    ax_l = [ ax1, ax2, ax3, ax4, ax5, ax6 ]
-
+    ax_l = prep_proj_multi_cartopy( fig, xfig=3, yfig=2, proj='merc', 
+                         latitude_true_scale=lat_r )
+ 
+    res = '10m'
     if quick:
-       res = "l"
-    else:
-       res = "f"
+       res = '50m'
 
+    land = get_cfeature( typ='land', res=res )
+    coast = get_cfeature( typ='coastline', res=res )
 
-    lons = lon2d_4[0,0]
-    lone = lon2d_4[-1,-1]
-
-    lats = lat2d_4[0,0]
-    late = lat2d_4[-1,-1]
-
-    method = "merc"
-    lon_r = 139.609
-    lat_r = 35.861
-    contc = "palegreen"
-    contc = "burlywood"
-    oc = "w"
-    lon_0 = lon_r
-    lat_0 = lat_r
-    if quick:
-       res = 'l'
-    else:
-       res = 'f'
-
-    m_l = prep_proj_multi( method, ax_l, fs=7, res=res, lw=0.0, 
-                           ll_lon=lons, ur_lon=lone, ll_lat=lats, ur_lat=late, 
-                           pdlon=0.2, pdlat=0.2, blon=lon_r, blat=lat_0,
-                           contc=contc, oc=oc )
 
     time = datetime( 2019, 8, 24, 15, 0, 30 )
     obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time )
@@ -75,35 +66,35 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
                        method='nearest',
                       )
 
-    # for pcolormesh
-    olon2d -= np.abs( olon2d[1,0] - olon2d[0,0] )
-    olat2d -= np.abs( olat2d[0,1] - olat2d[0,0] )
-    mlon2d -= np.abs( mlon2d[1,0] - mlon2d[0,0] )
-    mlat2d -= np.abs( mlat2d[0,1] - mlat2d[0,0] )
-
-    print( lon2d_4.shape )
-    print( " ref lon/lat ", lon2d_4[130,130], lat2d_4[130,130] )
-    print( " min lon/lat ", np.min( lon2d_4[130,:] ), np.min( lat2d_4[130,:] ) )
-    print( " max lon/lat ", np.max( lon2d_4[130,:] ), np.max( lat2d_4[130,:] ) )
-    print( "" )
-    print( " lon/lat min:", np.min( lon2d_4 ), np.min( lat2d_4 ) )
-    print( " lon/lat max:", np.max( lon2d_4 ), np.max( lat2d_4 ) )
-    print( "olon/lat min:", np.min( olon2d ), np.min( olat2d ) )
-    print( "olon/lat max:", np.max( olon2d ), np.max( olat2d ) )
-    print( "mlon/lat min:", np.min( mlon2d ), np.min( mlat2d ) )
-    print( "mlon/lat max:", np.max( mlon2d ), np.max( mlat2d ) )
-#    sys.exit()
+#    # for pcolormesh
+#    olon2d -= np.abs( olon2d[1,0] - olon2d[0,0] )
+#    olat2d -= np.abs( olat2d[0,1] - olat2d[0,0] )
+#    mlon2d -= np.abs( mlon2d[1,0] - mlon2d[0,0] )
+#    mlat2d -= np.abs( mlat2d[0,1] - mlat2d[0,0] )
 
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
     fz1d = INFO["cz"]
     fzidx = np.argmin( np.abs( fz1d - hgt ) )
 
-    ox2d, oy2d = m_l[0]( olon2d, olat2d )
-    mx2d, my2d = m_l[0]( mlon2d, mlat2d )
-    fx2d, fy2d = m_l[0]( flon2d, flat2d )
+    i1d = np.arange( flon2d.shape[0] ) + 1.0
+    j1d = np.arange( flon2d.shape[1] ) + 1.0
 
-    x2d_, y2d_ = m_l[0]( lon2d_4, lat2d_4 )
+    i1d -= np.mean( i1d )
+    j1d -= np.mean( j1d )
+
+    # 0.5km mesh
+    j2d, i2d = np.meshgrid( i1d*0.5, j1d*0.5 )
+
+    dist2d = np.sqrt( np.square(i2d) + np.square(j2d) )
+#    dist2d_ = dist( lon_r, lat_r, lon2d_4, lat2d_4 ) * 0.001
+
+
+#    ox2d, oy2d = m_l[0]( olon2d, olat2d )
+#    mx2d, my2d = m_l[0]( mlon2d, mlat2d )
+#    fx2d, fy2d = m_l[0]( flon2d, flat2d )
+
+#    x2d_, y2d_ = m_l[0]( lon2d_4, lat2d_4 )
 
     levs_dbz= np.array( [ 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65 ] )
     cmap_dbz = mcolors.ListedColormap(['cyan', 'b', 'dodgerblue',
@@ -114,32 +105,46 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
     cmap_dbz.set_under('w', alpha=0.0)
     cmap_dbz.set_bad( color='gray', alpha=0.5 )
 
-
-    i1d = np.arange( lon2d_4.shape[0] ) + 1.0
-    j1d = np.arange( lon2d_4.shape[1] ) + 1.0
-
-    i1d -= np.mean( i1d )
-    j1d -= np.mean( j1d )
-
-    # 0.5km mesh
-    j2d, i2d = np.meshgrid( i1d*0.5, j1d*0.5 )
-
-    dist2d = np.sqrt( np.square(i2d) + np.square(j2d) )
-    dist2d_ = dist( lon_r, lat_r, lon2d_4, lat2d_4 ) * 0.001
-
     norm = BoundaryNorm( levs_dbz, ncolors=cmap_dbz.N, clip=False)
-
-    x_r, y_r = m_l[0]( lon_r, lat_r )
 
     bbox = { 'facecolor':'w', 'alpha':0.95, 'pad':0.5,
              'edgecolor':'w' }
 
     pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(f)" ]
 
-    for i , ax in enumerate( ax_l ):
+
+    # for pcolor mesh
+    xlen2 = flon2d.shape[0] // 2
+    ylen2 = flon2d.shape[1] // 2
+    xlen = flon2d.shape[0] 
+    ylen = flon2d.shape[1] 
+    x2d = flon2d - ( flon2d[xlen2+1,ylen2] - flon2d[xlen2,ylen2] )
+    y2d = flat2d - ( flat2d[xlen2,ylen2+1] - flat2d[xlen2,ylen2] )
+
+    lons = flon2d[0,0]
+    lone = flon2d[-2,-2]
+
+    lats = flat2d[0,0]
+    late = flat2d[-2,-2]
+ 
+    xticks = np.arange( 134.0, 142, 0.2 )
+    yticks = np.arange( 30.0, 45, 0.2 )
+
+    for i, ax in enumerate( ax_l ):
        itime = time_l[i]
        tlev = tlev_l[i]
 
+       ax.set_extent([ lons, lone, lats, late ] )
+       ax.add_feature( land, zorder=0 )
+       ax.add_feature( coast, zorder=0 )
+
+       setup_grids_cartopy( ax, xticks=xticks, yticks=yticks, 
+                            fs=8, lw=0.0 )
+
+#       ax.add_feature(cfeature.LAND, color='g') 
+#       ax.add_feature(cfeature.COASTLINE, linewidth=10.8)
+#       ax.coastlines( color='k', linestyle='solid', linewidth=10.5, zorder=1 )
+      
        if i<= 2: 
           obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
           obs2d_ = griddata( ( olon2d.ravel(), olat2d.ravel() ), 
@@ -149,48 +154,31 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
                              method='nearest',
                             )
 
-          x2d = fx2d
-          y2d = fy2d
-          #var2d = np.where( imask2d < 1.0, obs3d[ozidx,:,: ], np.nan )
-          print( imask2d.shape, dist2d.shape  )
-          #var2d = np.where( ( imask2d < 1.0 ) or ( dist2d > 60.0e3 ), obs2d_, np.nan )
           var2d = np.where( ( imask2d < 1.0 ) , obs2d_, np.nan )
        else:
           fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
-          x2d = fx2d
-          y2d = fy2d
           var2d = fcst3d[fzidx,:,: ]
 
-       SHADE = ax.pcolormesh( x2d, y2d, var2d, 
+
+       SHADE = ax.pcolormesh( x2d, y2d, var2d[:xlen-1,:ylen-1], 
                        cmap=cmap_dbz, vmin=np.min(levs_dbz),
                        vmax=np.max(levs_dbz),
                        norm=norm, 
+                       transform=data_crs, 
                        )
 
-       CONT = ax.contour( x2d_, y2d_, dist2d, 
+       ax.plot( lon_r, lat_r, ms=8.0, marker='o', color='r',
+                 markeredgecolor='w', transform=data_crs, )
+
+       CONT = ax.contour( flon2d, flat2d, dist2d, 
                           levels=[20, 40, 60], zorder=1,
                           colors='k', linewidths=0.5,
                           linestyles='dashed',
+                          transform=data_crs,
                           )
 
        ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
                    fontsize=8, fmt='%.0f km', colors="k" )
-
-#       # DEBUG
-#       CONT = ax.contour( x2d_, y2d_, dist2d_, 
-#                          levels=[20, 40, 60], zorder=1,
-#                          colors='r', linewidths=1.5,
-#                          linestyles='dashed',
-#                          )
-#
-#       ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
-#                   fontsize=8, fmt='%.0fkm', colors="r" )
-
-
-
-
-       ax.plot( x_r, y_r, ms=8.0, marker='o', color='r',
-                 markeredgecolor='w' )
 
        if i == 5:
           pos = ax.get_position()
@@ -202,7 +190,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
                              ticks=levs_dbz[::1], extend='both' )
           cb.ax.tick_params( labelsize=8 )
 
-          ax.text( 1.002, 1.51, "(dBZ)",
+          ax.text( 1.01, 1.51, "(dBZ)",
                   va='bottom', 
                   ha='left',
                   transform=ax.transAxes,
@@ -217,7 +205,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
                bbox=bbox )
 
        if i <= 2:
-          ax.text( 0.5, 1.01, itime.strftime('%H:%M:%S UTC %m/%d') ,
+          ax.text( 0.5, 1.01, itime.strftime('%H%M:%S UTC %m/%d') ,
                   va='bottom', 
                   ha='center',
                   transform=ax.transAxes,
@@ -230,11 +218,10 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
                      transform=ax.transAxes,
                      color='k', fontsize=10, )
 
-#       if i == 0 or i == 3:
        if i <= 2:
-          tit = "PAWR obs"
+          tit = "MP-PAWR obs"
        else:
-          tit = "Forecast (FT={0:.0f} min)".format( tlev*0.5 )
+          tit = "Forecast"
    
        ax.text( 0.5, 0.99, tit,
                va='top', 
@@ -242,6 +229,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
                transform=ax.transAxes,
                color='k', fontsize=12, 
                bbox=bbox )
+
 
     ofig = "6p_obs_fcst_" + itime.strftime('%m%d') + ".png"
     print(ofig)
@@ -255,10 +243,9 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
     else:
        plt.show()
 
-#    plt.contourf( dist2d )
-#    plt.colorbar()
-#    plt.show()
-#    sys.exit()
+
+
+
 
 ############3
 
@@ -287,14 +274,6 @@ INFO = { "TOP": TOP,
          "cz": cz,
        }
 
-time_l = [
-          datetime( 2019, 8, 24, 15, 20),
-          datetime( 2019, 8, 24, 15, 40),
-          datetime( 2019, 8, 24, 16,  0),
-          datetime( 2019, 8, 24, 15, 20),
-          datetime( 2019, 8, 24, 15, 40),
-          datetime( 2019, 8, 24, 16,  0),
-         ]
 
 itime = datetime( 2019, 8, 19, 13, 30 )
 itime = datetime( 2019, 8, 24, 15, 30 )
@@ -314,7 +293,7 @@ time_l = [
 
 hgt = 3000.0
 
-tlev_l = [ tlev1, tlev2, tlev3, 
+tlev_l = [ tlev1, tlev2, tlev3,
            tlev1, tlev2, tlev3, ]
 
 main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l )

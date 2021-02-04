@@ -6,6 +6,12 @@ from netCDF4 import Dataset
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
+import cartopy.feature as cfeature
+import cartopy.crs as ccrs
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+import matplotlib.ticker as mticker
+
+
 from datetime import timedelta, datetime
 
 def read_CZ( ):
@@ -485,7 +491,6 @@ def read_obs_grads( INFO, itime=datetime(2019,9,10,9) ):
 
     lon2d, lat2d = np.meshgrid( lon1d, lat1d )
 
-    print( "debug" )
     gx = 241
     gy = 241
 #    gz = 241
@@ -728,6 +733,8 @@ def read_oerr_npz( range_inl=[1.0], elv_inl=[5.0], dr=1.0, de=1.0, mode="az",
                    oerr_ = data["oerr"]
                 except:
                    print( "No npz file ", ofile)
+                   print( ofile )
+                   sys.exit()
 
                 if not np.isnan( oerr_ ) and not np.isnan( cor1d_[amax] ) :
                  
@@ -796,6 +803,58 @@ def read_fcst_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True
        input3d = None
 
     return( input3d )
+
+def get_cfeature( typ='land', res='10m' ):
+
+    if typ == 'land': 
+       name = 'land'
+       fcolor = cfeature.COLORS['land']
+       ecolor = 'face'
+    elif typ == 'coastline': 
+       name = 'coastline'
+       fcolor = 'none'
+       ecolor = 'k'
+
+    feature = cfeature.NaturalEarthFeature( 'physical', name, res, 
+                                            edgecolor=ecolor,
+                                            facecolor=fcolor )
+
+    return( feature )
+
+def setup_grids_cartopy( ax, xticks=np.array([]), yticks=np.array([]), lw=0.5, 
+                         fs=10, fc='k' ):
+       gl = ax.gridlines( crs=ccrs.PlateCarree(), linewidth=lw, 
+                          draw_labels=True  )
+       gl.xlabels_top = False
+       gl.ylabels_right = False 
+       gl.xlocator = mticker.FixedLocator( xticks ) 
+       gl.ylocator = mticker.FixedLocator( yticks ) 
+       if lw == 0.0:
+          gl.xlines = False
+          gl.ylines = False
+       else:
+          gl.xlines = True
+          gl.ylines = True
+       gl.xformatter = LONGITUDE_FORMATTER
+       gl.yformatter = LATITUDE_FORMATTER
+
+       gl.xlabel_style = {'size': fs, 'color': fc, }
+       gl.ylabel_style = {'size': fs, 'color': fc, }
+
+def prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='none', latitude_true_scale=35.0 ):
+
+    if proj == 'none':
+       projection = ccrs.PlateCarree()
+
+    elif proj == 'merc':
+       projection = ccrs.Mercator( latitude_true_scale=latitude_true_scale, ) 
+
+    ax_l = []
+    for i in range( 1, xfig*yfig+1 ):
+       ax_l.append( fig.add_subplot( yfig,xfig,i, projection=projection ) )
+
+    return( ax_l )
+
 
 #############################
 if __name__ == "__main__":
