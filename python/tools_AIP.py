@@ -855,6 +855,33 @@ def prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='none', latitude_true_sca
 
     return( ax_l )
 
+def read_nowcast_hires( stime=datetime(2019,9,10,9), ft=timedelta(minutes=5) ):
+
+    top = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/JMA/data/jma_nowcast_highres"
+
+    time = stime + ft
+
+    fn = os.path.join( top, time.strftime('%Y%m%d%H%M%S.nc') )
+
+    nc = Dataset( fn, "r", format="NETCDF4" )
+
+    rain2d = nc.variables["rain"][:,:]
+    lon1d = nc.variables["longitude"][:]
+    lat1d = nc.variables["latitude"][:]
+
+    nc.close()
+
+    lon2d, lat2d = np.meshgrid( lon1d, lat1d )
+
+    return( rain2d, lon2d, lat2d )
+
+def dbz2rain( dbz ):
+    B_ = 111.1
+    beta_ = 1.664
+    const_ = np.log10( B_ )
+    return( np.power( 10, ( dbz*0.1 - const_ ) / beta_ ) )
+    #return( np.power( np.power( 10, dbz*0.1) / 200.0, 1.0/1.6 ) ) 
+
 
 #############################
 if __name__ == "__main__":

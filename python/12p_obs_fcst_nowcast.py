@@ -2,11 +2,12 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_nowcast_hires, dbz2rain
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from matplotlib.colors import BoundaryNorm
+import matplotlib as mpl
 
 from scipy.interpolate import griddata
 
@@ -20,7 +21,7 @@ GeoAxes._pcolormesh_patched = Axes.pcolormesh
 quick = True
 quick = False
 
-def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
+def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[] ):
 
     # radar location
     lon_r = 139.609
@@ -35,16 +36,14 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
     mask, mlon2d, mlat2d = read_mask_full()
     mask2d = mask[mzidx,:,:]
 
-    fig = plt.figure( figsize=(13, 8.5) )
-#    fig.subplots_adjust( left=0.0, bottom=0.0, right=1.0, top=1.0,
-#                         wspace=0.0, hspace=0.0 )
+    fig = plt.figure( figsize=(10, 12) )
     fig.subplots_adjust( left=0.04, bottom=0.03, right=0.96, top=0.97,
-                         wspace=0.15, hspace=0.04)
+                         wspace=0.3, hspace=0.06)
  
     # original data is lon/lat coordinate
     data_crs = ccrs.PlateCarree()
 
-    ax_l = prep_proj_multi_cartopy( fig, xfig=3, yfig=2, proj='merc', 
+    ax_l = prep_proj_multi_cartopy( fig, xfig=3, yfig=4, proj='merc', 
                          latitude_true_scale=lat_r )
  
     res = '10m'
@@ -96,21 +95,31 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
 
 #    x2d_, y2d_ = m_l[0]( lon2d_4, lat2d_4 )
 
-    levs_dbz= np.array( [ 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65 ] )
-    cmap_dbz = mcolors.ListedColormap(['cyan', 'b', 'dodgerblue',
-                                       'lime','yellow',
-                                       'orange', 'red', 'firebrick', 'magenta',
-                                       'purple'])
-    cmap_dbz.set_over('gray', alpha=1.0)
-    cmap_dbz.set_under('w', alpha=0.0)
-    cmap_dbz.set_bad( color='gray', alpha=0.5 )
 
-    norm = BoundaryNorm( levs_dbz, ncolors=cmap_dbz.N, clip=False)
+    cmap = plt.cm.get_cmap("jet")
+    levs = np.array( [ 1.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40 ] )
+
+#    cmap = mpl.colors.ListedColormap(['cyan','dodgerblue',
+#                                      'blue', 'yellow',
+#                                      'orange', 'red', 'magenta'])
+#    levs = np.array( [ 1.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0 ] )
+
+    cmap.set_under( 'w', alpha=0.0 )
+    cmap.set_over( 'k', alpha=1.0 )
+    cmap.set_bad( color='gray', alpha=0.5 )
+    extend = 'max'
+
+
+    norm = BoundaryNorm( levs, ncolors=cmap.N, clip=False)
 
     bbox = { 'facecolor':'w', 'alpha':0.95, 'pad':0.5,
              'edgecolor':'w' }
 
-    pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(f)" ]
+    pnum_l = [ "(a)", "(b)", "(c)", 
+               "(d)", "(e)", "(f)", 
+               "(g)", "(h)", "(i)",
+               "(j)", "(k)", "(l)",
+               ]
 
 
     # for pcolor mesh
@@ -121,51 +130,63 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
     x2d = flon2d - ( flon2d[xlen2+1,ylen2] - flon2d[xlen2,ylen2] )
     y2d = flat2d - ( flat2d[xlen2,ylen2+1] - flat2d[xlen2,ylen2] )
 
-    lons = flon2d[0,0]
-    lone = flon2d[-2,-2]
+    lons = flon2d[0,0] + 0.5
+    lone = flon2d[-2,-2] - 0.15
 
-    lats = flat2d[0,0]
-    late = flat2d[-2,-2]
+    lats = flat2d[0,0] + 0.5
+    late = flat2d[-2,-2] 
  
     xticks = np.arange( 134.0, 142, 0.2 )
     yticks = np.arange( 30.0, 45, 0.2 )
 
+
     for i, ax in enumerate( ax_l ):
        itime = time_l[i]
        tlev = tlev_l[i]
+       lab_ = lab_l[i]
 
        ax.set_extent([ lons, lone, lats, late ] )
        ax.add_feature( land, zorder=0 )
        ax.add_feature( coast, zorder=0 )
 
        setup_grids_cartopy( ax, xticks=xticks, yticks=yticks, 
-                            fs=8, lw=0.0 )
+                            fs=9, lw=0.0 )
 
 #       ax.add_feature(cfeature.LAND, color='g') 
 #       ax.add_feature(cfeature.COASTLINE, linewidth=10.8)
 #       ax.coastlines( color='k', linestyle='solid', linewidth=10.5, zorder=1 )
       
-       if i<= 2: 
+       if lab_ == "obs":
           obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
           obs2d_ = griddata( ( olon2d.ravel(), olat2d.ravel() ), 
                              obs3d[ozidx,:,:].ravel(),
                              (flon2d, flat2d),
-                             #method='cubic',
                              method='nearest',
                             )
 
           var2d = np.where( ( imask2d < 1.0 ) , obs2d_, np.nan )
-       else:
-          print( "fcst", itime, tlev )
+       elif lab_ == "scale":
           fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
           var2d = fcst3d[fzidx,:,: ]
+       elif lab_ == "nowcast":
+          jma2d, jlon2d, jlat2d = read_nowcast_hires( stime=itime, ft=timedelta(seconds=tlev*30) )
+
+          var2d = griddata( ( jlon2d.ravel(), jlat2d.ravel() ), 
+                            jma2d.ravel(),
+                            (flon2d, flat2d),
+                            method='nearest',
+                            )
+
+    
+       if lab_ != "nowcast":
+          var2d = dbz2rain( var2d )
 
 
        SHADE = ax.pcolormesh( x2d, y2d, var2d[:xlen-1,:ylen-1], 
-                       cmap=cmap_dbz, vmin=np.min(levs_dbz),
-                       vmax=np.max(levs_dbz),
+                       cmap=cmap, vmin=np.min(levs),
+                       vmax=np.max(levs),
                        norm=norm, 
-                       transform=data_crs, 
+                       transform=data_crs, #extend=extend,
                        )
 
        ax.plot( lon_r, lat_r, ms=8.0, marker='o', color='r',
@@ -181,17 +202,17 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
        ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
                    fontsize=8, fmt='%.0f km', colors="k" )
 
-       if i == 5:
+       if i == 8:
           pos = ax.get_position()
-          cb_width = 0.006
-          cb_height = pos.height*1.0
+          cb_width = 0.008
+          cb_height = pos.height*2.0
           ax_cb = fig.add_axes( [ pos.x1+0.002, pos.y1-cb_height*0.5, 
                                   cb_width, cb_height] )
           cb = plt.colorbar( SHADE, cax=ax_cb, orientation='vertical',  
-                             ticks=levs_dbz[::1], extend='both' )
-          cb.ax.tick_params( labelsize=8 )
+                             ticks=levs[::1], extend=extend )
+          cb.ax.tick_params( labelsize=9 )
 
-          ax.text( 1.01, 1.51, "(dBZ)",
+          ax.text( 1.01, 2.01, "(mm/h)",
                   va='bottom', 
                   ha='left',
                   transform=ax.transAxes,
@@ -205,34 +226,38 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
                color='k', fontsize=10, 
                bbox=bbox )
 
-       if i <= 2:
-          ax.text( 0.5, 1.01, itime.strftime('%H%M:%S UTC %m/%d') ,
+       vtime = itime + timedelta( seconds=tlev*30 )
+       ax.text( 0.5, 0.01, vtime.strftime('%H%M:%S UTC') ,
+               va='bottom', 
+               ha='center',
+               transform=ax.transAxes,
+               color='k', fontsize=11,
+               bbox=bbox, 
+               zorder=4 )
+
+       if i == 2:
+          ax.text( 0.9, 1.01, "Z={0:.0f} km".format( hgt/1000 ),
                   va='bottom', 
-                  ha='center',
+                  ha='left',
                   transform=ax.transAxes,
-                  color='k', fontsize=11, )
+                  color='k', fontsize=10, )
 
-          if i == 2:
-             ax.text( 0.9, 1.01, "Z={0:.0f} km".format( hgt/1000 ),
-                     va='bottom', 
-                     ha='left',
-                     transform=ax.transAxes,
-                     color='k', fontsize=10, )
-
-       if i <= 2:
+       if lab_ == "obs":
           tit = "MP-PAWR obs"
-       else:
-          tit = "Forecast"
+       elif lab_ == "scale":
+          tit = "Forecast (FT={0:.0f} min)".format( tlev*30/60 )
+       elif lab_ == "nowcast":
+          tit = "JMA nowcast (FT={0:.0f} min)".format( tlev*30/60 )
    
        ax.text( 0.5, 0.99, tit,
                va='top', 
                ha='center',
                transform=ax.transAxes,
-               color='k', fontsize=12, 
+               color='k', fontsize=11, 
                bbox=bbox )
 
 
-    ofig = "6p_obs_fcst_" + itime.strftime('%m%d') + ".png"
+    ofig = "12p_obs_fcst_nowcast_" + itime.strftime('%m%d') + ".png"
     print(ofig)
 
     if not quick:
@@ -277,25 +302,47 @@ INFO = { "TOP": TOP,
 
 
 itime = datetime( 2019, 8, 19, 13, 30 )
-#itime = datetime( 2019, 8, 24, 15, 30 )
+itime = datetime( 2019, 8, 24, 15, 30 )
 
-tlev1 = 20
-tlev2 = 40
-tlev3 = 60
+tlev1 = 0
+tlev2 = 10
+tlev3 = 20
+tlev4 = 30
 
 time_l = [
           itime + timedelta( seconds=tlev1*30 ),
+          itime,  # SCALE
+          itime,  # nowcast
           itime + timedelta( seconds=tlev2*30 ),
+          itime,  # SCALE
+          itime,  # nowcast
           itime + timedelta( seconds=tlev3*30 ),
-          itime, # scale
-          itime, # scale
-          itime, # scale
+          itime,  # SCALE
+          itime,  # nowcast
+          itime + timedelta( seconds=tlev4*30 ),
+          itime,  # SCALE
+          itime,  # nowcast
          ]
 
-hgt = 3000.0
+hgt = 2000.0
 
-tlev_l = [ tlev1, tlev2, tlev3,
-           tlev1, tlev2, tlev3, ]
+tlev_l = [ 0, tlev1, tlev1,
+           0, tlev2, tlev2, 
+           0, tlev3, tlev3, 
+           0, tlev4, tlev4, 
+         ]
 
-main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l )
+lab_p = "MP-PAWR obs"
+lab_n = "JMA nowcast"
+lab_s = "SCALE-LETKF Forecast"
+lab_p = "obs"
+lab_n = "nowcast"
+lab_s = "scale"
+lab_l = [ lab_p, lab_s, lab_n,
+          lab_p, lab_s, lab_n,
+          lab_p, lab_s, lab_n,
+          lab_p, lab_s, lab_n,
+         ]
+
+main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l, lab_l=lab_l )
 
