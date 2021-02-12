@@ -8,7 +8,7 @@ AVE = True
 
 
 BS = True
-BS = False
+#BS = False
 
 def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
     data = np.load( fn_ts, allow_pickle=True )
@@ -215,7 +215,7 @@ LAB8 = None
 
 
 
-nexp = 5
+nexp = 6
 
 EXP1 = "D4_500m_CTRL"
 LAB1 = "D4_500m_CTRL"
@@ -231,6 +231,10 @@ LAB4 = "D4_500m_H1V1"
 
 EXP5 = "D4_500m_H8V8"
 LAB5 = "D4_500m_H8V8"
+
+EXP6 = "D4_500m_CTRL_NOCLRZ"
+LAB6 = "D4_500m_CTRL_NOCLRZ"
+
 
 #EXP2 = EXP1
 #LAB2 = LAB1
@@ -271,8 +275,8 @@ thrs_dbz = 30.0
 stime = datetime( 2019, 8, 24, 15, 0, 30)
 etime = datetime( 2019, 8, 24, 16, 0, 0)
 
-stime = datetime( 2019, 8, 19, 13, 0, 30)
-etime = datetime( 2019, 8, 19, 14, 0, 0)
+#stime = datetime( 2019, 8, 19, 13, 0, 30)
+#etime = datetime( 2019, 8, 19, 14, 0, 0)
 
 
 main( INFO, stime=stime, etime=etime, theight=theight, thrs_dbz=thrs_dbz )

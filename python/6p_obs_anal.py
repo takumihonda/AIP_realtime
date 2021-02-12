@@ -18,7 +18,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 def main( INFO, time_l=[], hgt=3000.0 ):
 
@@ -118,8 +118,18 @@ def main( INFO, time_l=[], hgt=3000.0 ):
     ylen2 = flon2d.shape[1] // 2
     xlen = flon2d.shape[0] 
     ylen = flon2d.shape[1] 
-    x2d = flon2d - ( flon2d[xlen2+1,ylen2] - flon2d[xlen2,ylen2] )
-    y2d = flat2d - ( flat2d[xlen2,ylen2+1] - flat2d[xlen2,ylen2] )
+    fx2d = flon2d - ( flon2d[xlen2+1,ylen2] - flon2d[xlen2,ylen2] )
+    fy2d = flat2d - ( flat2d[xlen2,ylen2+1] - flat2d[xlen2,ylen2] )
+
+    # for pcolor mesh
+    oxlen2 = olon2d.shape[0] // 2
+    oylen2 = olon2d.shape[1] // 2
+    oxlen = olon2d.shape[0] 
+    oylen = olon2d.shape[1] 
+    ox2d = olon2d - ( olon2d[oxlen2+1,oylen2] - olon2d[oxlen2,oylen2] )
+    oy2d = olat2d - ( olat2d[oxlen2,oylen2+1] - olat2d[oxlen2,oylen2] )
+
+
 
     lons = flon2d[0,0]
     lone = flon2d[-2,-2]
@@ -152,11 +162,17 @@ def main( INFO, time_l=[], hgt=3000.0 ):
                              #method='cubic',
                              method='nearest',
                             )
+          x2d = fx2d
+          y2d = fy2d
 
-          var2d = np.where( ( imask2d < 1.0 ) , obs2d_, np.nan )
+          # Use interpolation for completely filling the radar shadow region
+#          var2d = np.where( ( mask[mzidx,:,:] < 1.0 ) , obs3d[ozidx,:,:], np.nan )
+          var2d = np.where( ( imask2d[:,:] < 1.0 ) , obs2d_, np.nan )
        else:
           fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=0 , FT0=True, )
           var2d = fcst3d[fzidx,:,: ]
+          x2d = fx2d
+          y2d = fy2d
 
 
        SHADE = ax.pcolormesh( x2d, y2d, var2d[:xlen-1,:ylen-1], 

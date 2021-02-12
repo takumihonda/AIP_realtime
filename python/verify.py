@@ -242,19 +242,21 @@ EXP = "D4_500m_CTRL"
 EXP = "D4_500m_H4V1"
 EXP = "D4_500m_H8V8"
 
+EXP = "D4_500m_CTRL_NOCLRZ"
+
 theight = 3000.0
 #theight = 6000.0
 
 
 #etime = stime
-#stime = datetime( 2019, 8, 24, 15, 0, 30 )
-#etime = datetime( 2019, 8, 24, 16, 0, 0 )
-stime = datetime( 2019, 8, 19, 13, 0, 30 )
-etime = datetime( 2019, 8, 19, 14, 0, 0 )
+stime = datetime( 2019, 8, 24, 15, 0, 30 )
+etime = datetime( 2019, 8, 24, 16, 0, 0 )
+#stime = datetime( 2019, 8, 19, 13, 0, 30 )
+#etime = datetime( 2019, 8, 19, 14, 0, 0 )
 
 # data should be stored in EXP/[time0]/dafcst
 time0 = datetime( 2019, 8, 24, 15, 0, 0 )
-time0 = datetime( 2019, 8, 19, 13, 0, 0 )
+#time0 = datetime( 2019, 8, 19, 13, 0, 0 )
 
 tmin = 0
 tmax = 61 # max time dimension does not include FT=0

@@ -19,14 +19,17 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
-def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False ):
+def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False, 
+          clon=139.75, clat=36.080 ):
 
     # cross section
     clons = 139.5 + 0.001
     clone = 140.1 - 0.001
-    clat = 36.080
+
+    clats = 35.85 + 0.001
+    clate = 36.25 - 0.001
 
     # radar location
     lon_r = 139.609
@@ -41,14 +44,14 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False ):
     mask, mlon2d, mlat2d = read_mask_full()
     mask2d = mask[mzidx,:,:]
 
-    fig = plt.figure( figsize=(10, 12) )
+    fig = plt.figure( figsize=(13, 9) )
     fig.subplots_adjust( left=0.04, bottom=0.03, right=0.96, top=0.97,
-                         wspace=0.3, hspace=0.06)
+                         wspace=0.2, hspace=0.06)
  
     # original data is lon/lat coordinate
     data_crs = ccrs.PlateCarree()
 
-    ax_l = prep_proj_multi_cartopy( fig, xfig=3, yfig=4, proj='merc', 
+    ax_l = prep_proj_multi_cartopy( fig, xfig=4, yfig=3, proj='merc', 
                          latitude_true_scale=lat_r )
  
     res = '10m'
@@ -158,7 +161,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False ):
     lone = flon2d[-2,-2] - 0.15
 
     lats = flat2d[0,0] + 0.5
-    late = flat2d[-2,-2] 
+    late = flat2d[-2,-2] -0.05
  
     xticks = np.arange( 134.0, 142, 0.2 )
     yticks = np.arange( 30.0, 45, 0.2 )
@@ -243,8 +246,12 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False ):
        ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
                    fontsize=8, fmt='%.0f km', colors="k" )
 
-       if CRS and ( i == 0 or i == 3 or i == 6 ):
+       if CRS and ( i <= 2 or ( i >= 4 and i <= 6 ) ):
           ax.plot( [ clons, clone ], [ clat, clat ], 
+                   color='k', linewidth=1.0, linestyle='dashed',
+                   transform=data_crs )
+
+          ax.plot( [ clon, clon ], [ clats, clate ], 
                    color='k', linewidth=1.0, linestyle='dashed',
                    transform=data_crs )
 
@@ -260,7 +267,21 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False ):
                        bbox=bbox,     
                        transform=data_crs )
 
-       if i == 8:
+          ctit_l = [ "C", "D" ]
+          clat_l = [ clats, clate ]
+          dlat_l = [ -0.0, 0.0 ]
+          va_l = [ "bottom", "top" ]
+          for j in range( 2 ):
+              print( clon )
+              ax.text( clon, clat_l[j] + dlat_l[j], ctit_l[j], 
+                       fontsize=10,
+                       ha='left',
+                       va=va_l[j], 
+                       bbox=bbox,     
+                       transform=data_crs )
+
+
+       if i == 7:
           pos = ax.get_position()
           cb_width = 0.008
           cb_height = pos.height*2.0
@@ -293,7 +314,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False ):
                bbox=bbox, 
                zorder=4 )
 
-       if i == 2:
+       if i == 3:
           ax.text( 0.9, 1.01, "Z={0:.0f} km".format( hgt/1000 ),
                   va='bottom', 
                   ha='left',
@@ -315,7 +336,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False ):
                bbox=bbox )
 
 
-    ofig = "12p_obs_fcst_nowcast_" + itime.strftime('%m%d') + ".png"
+    ofig = "12p_obs_fcst_nowcast_{0:}_clon{1:.2f}_clat{2:.2f}_landscape.png".format( itime.strftime('%m%d'), clon, clat )
     print(ofig)
 
     if not quick:
@@ -369,26 +390,28 @@ tlev4 = 30
 
 time_l = [
           itime + timedelta( seconds=tlev1*30 ),
-          itime,  # SCALE
-          itime,  # nowcast
           itime + timedelta( seconds=tlev2*30 ),
-          itime,  # SCALE
-          itime,  # nowcast
           itime + timedelta( seconds=tlev3*30 ),
-          itime,  # SCALE
-          itime,  # nowcast
           itime + timedelta( seconds=tlev4*30 ),
           itime,  # SCALE
+          itime,  # SCALE
+          itime,  # SCALE
+          itime,  # SCALE
+          itime,  # nowcast
+          itime,  # nowcast
+          itime,  # nowcast
           itime,  # nowcast
          ]
+
+
 
 hgt = 2000.0
 
-tlev_l = [ 0, tlev1, tlev1,
-           0, tlev2, tlev2, 
-           0, tlev3, tlev3, 
-           0, tlev4, tlev4, 
+tlev_l = [ 0, 0, 0, 0, 
+           tlev1, tlev2, tlev3, tlev4, 
+           tlev1, tlev2, tlev3, tlev4, 
          ]
+
 
 lab_p = "MP-PAWR obs"
 lab_n = "JMA nowcast"
@@ -396,11 +419,15 @@ lab_s = "SCALE-LETKF Forecast"
 lab_p = "obs"
 lab_n = "nowcast"
 lab_s = "scale"
-lab_l = [ lab_p, lab_s, lab_n,
-          lab_p, lab_s, lab_n,
-          lab_p, lab_s, lab_n,
-          lab_p, lab_s, lab_n,
-         ]
+
+lab_l = [ lab_p, lab_p, lab_p, lab_p,
+          lab_s, lab_s, lab_s, lab_s,
+          lab_n, lab_n, lab_n, lab_n,
+        ]
+
+clon = 139.75
+clat = 36.080
+clat = 36.09
 
 CRS = True
 main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l, lab_l=lab_l, CRS=CRS )

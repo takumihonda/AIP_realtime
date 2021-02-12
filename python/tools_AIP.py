@@ -753,7 +753,7 @@ def read_oerr_npz( range_inl=[1.0], elv_inl=[5.0], dr=1.0, de=1.0, mode="az",
    
     return( cor1d, cnt1d, oerr, x1d )
 
-def read_fcst_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True, nvar="p", gz=30 ):
+def read_fcst_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True, nvar="p", ):
 
     fn = os.path.join( INFO["FCST_DIR"],
                        itime.strftime('fcst_all_%Y%m%d-%H%M%S.grd') )
@@ -790,8 +790,24 @@ def read_fcst_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True
        nv3d_ = 0
     elif nvar == "v":
        nv3d_ = 1
+    elif nvar == "w":
+       nv3d_ = 2
+    elif nvar == "t":
+       nv3d_ = 3
     elif nvar == "p":
        nv3d_ = 4
+    elif nvar == "qv":
+       nv3d_ = 5
+    elif nvar == "qc":
+       nv3d_ = 6
+    elif nvar == "qr":
+       nv3d_ = 7
+    elif nvar == "qi":
+       nv3d_ = 8
+    elif nvar == "qs":
+       nv3d_ = 9
+    elif nvar == "qg":
+       nv3d_ = 10
 
     rec = rec + ( rec3d * nv3d_ + rec2d * nv2d_ )
 
@@ -876,8 +892,9 @@ def read_nowcast_hires( stime=datetime(2019,9,10,9), ft=timedelta(minutes=5) ):
     return( rain2d, lon2d, lat2d )
 
 def dbz2rain( dbz ):
-    B_ = 111.1
-    beta_ = 1.664
+    # Suezawa
+    B_ = 115.7
+    beta_ = 1.681
     const_ = np.log10( B_ )
     return( np.power( 10, ( dbz*0.1 - const_ ) / beta_ ) )
     #return( np.power( np.power( 10, dbz*0.1) / 200.0, 1.0/1.6 ) ) 
