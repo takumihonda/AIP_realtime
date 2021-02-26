@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w', 
       CRS="ZONAL", clon=139.8 ):
@@ -30,7 +30,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w
     elif CRS == "MERID":
 #       clats = 35.8 + 0.001
 #       clate = 36.3 - 0.001
-       clats = 35.85 + 0.001
+       clats = 35.85 + 0.001 + 0.1
        clate = 36.25 - 0.001
 
     # radar location
@@ -49,7 +49,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w
 
     fig = plt.figure( figsize=(13, 8.5) )
     fig.subplots_adjust( left=0.04, bottom=0.03, right=0.96, top=0.97,
-                         wspace=0.15, hspace=0.1)
+                         wspace=0.15, hspace=0.15 )
  
     # original data is lon/lat coordinate
 
@@ -110,6 +110,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w
 #    x2d_, y2d_ = m_l[0]( lon2d_4, lat2d_4 )
 
     levs_w = np.arange( -10, 11, 1)
+    levs_hdiv = np.arange( -5, 5.5, 0.5)
 
     cmap_w = plt.cm.get_cmap("RdBu_r")
     cmap_w.set_over('k', alpha=1.0)
@@ -126,8 +127,10 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w
     unit_ms = "(m/s)"
 
     levs_t = np.arange( -3, 0, 0.5 )
+    levs_t = np.arange( 270, 300, 2 )
 
-    cmap_t = plt.cm.get_cmap("Blues_r")
+    #cmap_t = plt.cm.get_cmap("Blues_r")
+    cmap_t = plt.cm.get_cmap("RdBu_r")
     cmap_t.set_over('k', alpha=1.0)
     cmap_t.set_under('w', alpha=0.0)
 
@@ -261,11 +264,13 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w
           fac = 1.0
           cmap = cmap_t
           levs = levs_t
+          tvar = "T"
+          unit = "K"
 
        elif nvar == "hdiv":
           fac = 1.e3
           cmap = cmap_w
-          levs = levs_w
+          levs = levs_hdiv
           unit = unit_hdiv
           tvar = "HDIV"
 
@@ -292,10 +297,10 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w
        else:
           fcst3d = read_fcst_grads_all( INFO, itime=itime, tlev=tlev , FT0=True, nvar=nvar ) 
 
-       if nvar == "t":
-          if i == 3:
-             tave = np.mean( fcst3d, axis=(1,2), keepdims=True )
-          fcst3d -= tave
+#       if nvar == "t":
+#          if i == 3:
+#             tave = np.mean( fcst3d, axis=(1,2), keepdims=True )
+#          fcst3d -= tave
 
 
        if CRS == "ZONAL":
@@ -329,7 +334,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w
           ctit_l = [ "A", "B"]
        elif CRS == "MERID":
           ax.xaxis.set_major_formatter( FormatStrFormatter( '%.1fN' ) )
-          ctit_l = [ "C", "D"]
+          #ctit_l = [ "C", "D"]
+          ctit_l = [ "A", "B"]
 
        if i == 0 or i == 3:
           ax.set_ylabel( ylab, fontsize=10 )
@@ -388,29 +394,29 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w
                    va='bottom', 
                    ha='center',
                    transform=ax.transAxes,
-                   color='k', fontsize=11, 
+                   color='r', fontsize=11, 
                    bbox=bbox )
     
 
-       if i <= 2:
-          ax.text( 0.5, 1.01, itime.strftime('%H%M:%S UTC %m/%d') ,
+       vtime = itime + timedelta( seconds=tlev*30 )
+       ax.text( 0.5, 1.01, vtime.strftime('%H%M:%S UTC %m/%d') ,
+               va='bottom', 
+               ha='center',
+               transform=ax.transAxes,
+               color='k', fontsize=11, )
+
+       if i == 2:
+          if CRS == "ZONAL":
+             ctit_ = '{0:.2f}N'.format( clat )
+          elif CRS == "MERID":
+             ctit_ = '{0:.2f}E'.format( clon )
+          ax.text( 0.9, 1.01, ctit_,
                   va='bottom', 
-                  ha='center',
+                  ha='left',
                   transform=ax.transAxes,
-                  color='k', fontsize=11, )
+                  color='k', fontsize=10, )
 
-          if i == 2:
-             if CRS == "ZONAL":
-                ctit_ = '{0:.2f}N'.format( clat )
-             elif CRS == "MERID":
-                ctit_ = '{0:.2f}E'.format( clon )
-             ax.text( 0.9, 1.01, ctit_,
-                     va='bottom', 
-                     ha='left',
-                     transform=ax.transAxes,
-                     color='k', fontsize=10, )
-
-       tit = "Forecast (FT={0:.0f} min)".format( tlev*30/60 )
+       tit = "Forecast (FT={0:.1f} min)".format( tlev*30/60 )
    
        ax.text( 0.5, 0.99, tit,
                va='top', 
@@ -424,7 +430,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, nvar1='w', nvar2='w
     if CRS == "MERID":
        cll = clon
 
-    ofig = "6p_fcst_crs_{0:}_{1:}_cll{2:.3f}_{3:}_{4:}.png".format(  itime.strftime('%m%d'), CRS, cll, nvar1, nvar2 )
+    ofig = "6p_fcst_crs_{0:}_{1:}_cll{2:.3f}_{3:}_{4:}.png".format(  itime.strftime('%m%d%H%M%S'), CRS, cll, nvar1, nvar2 )
     print(ofig)
 
     if not quick:
@@ -475,6 +481,22 @@ tlev1 = 0
 tlev2 = 10
 tlev3 = 20
 
+#itime = datetime( 2019, 8, 24, 15, 25, 30 )
+#tlev1 = 9
+#tlev2 = 19
+#tlev3 = 29
+
+itime = datetime( 2019, 8, 24, 15, 25, 0 )
+tlev1 = 10
+tlev2 = 20
+tlev3 = 30
+
+itime = datetime( 2019, 8, 24, 15, 30, 0 )
+tlev1 = 0
+tlev2 = 10
+tlev3 = 20
+
+
 time_l = [
           itime, # scale
           itime, # scale
@@ -496,17 +518,38 @@ clon = 139.75
 clat = 36.09
 
 nvar1 = "w"
+nvar1 = "qv"
 #nvar1 = "v"
-nvar2 = "hdiv"
-#nvar2 = "qv"
-nvar2 = "qg"
+#nvar1 = "qg"
 #nvar2 = "qr"
+nvar2 = "w"
+nvar2 = "qv"
 #nvar1 = "qs"
+#nvar1 = "hdiv"
 #nvar2 = "u"
 #nvar2 = "v"
 
+nvar1 = 't'
+nvar2 = 't'
+nvar1 = "hdiv"
+nvar2 = "hdiv"
+
 CRS = 'ZONAL'
 CRS = 'MERID'
+
+stime = datetime( 2019, 8, 24, 15, 30, 0 )
+vtime = datetime( 2019, 8, 24, 15, 30, 0 )
+time_l = [ stime, 
+           stime - timedelta( seconds=60*1 ), 
+           stime - timedelta( seconds=60*2 ), 
+           stime - timedelta( seconds=60*3 ), 
+           stime - timedelta( seconds=60*4 ), 
+           stime - timedelta( seconds=60*5 ), 
+         ]
+for i, stime_ in enumerate( time_l ):
+    tlev_l[i] = int( ( vtime - stime_ ).total_seconds() / 30 )
+    #tlev_l[i] = 0
+
 
 main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l, clat=clat, nvar1=nvar1, nvar2=nvar2, CRS=CRS, clon=clon )
 

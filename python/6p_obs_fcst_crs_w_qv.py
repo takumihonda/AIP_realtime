@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_fcst_grads_all
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -19,10 +19,10 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
-          CRS="ZONAL", lab_l=[], ores='500m' ):
+          CRS="ZONAL", lab_l=[], ores='500m', nvar="w" ):
 
     if CRS == "ZONAL":
        clons = 139.5 + 0.001
@@ -51,7 +51,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
 
     fig = plt.figure( figsize=(13, 8.5) )
     fig.subplots_adjust( left=0.04, bottom=0.03, right=0.96, top=0.97,
-                         wspace=0.15, hspace=0.15 )
+                         wspace=0.15, hspace=0.25 )
  
     # original data is lon/lat coordinate
 
@@ -122,12 +122,20 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
     cmap_dbz.set_under('w', alpha=0.0)
     cmap_dbz.set_bad( color='gray', alpha=0.3 )
 
-    norm = BoundaryNorm( levs_dbz, ncolors=cmap_dbz.N, clip=False)
+    cmap_qv = plt.cm.get_cmap("RdPu")
+    cmap_qv.set_over('k', alpha=1.0)
+    cmap_qv.set_under('w', alpha=0.0)
+    #levs_qv = np.arange( 0, 19, 1)
+    levs_qv = np.arange( 5, 19, 1)
+    norm_qv = BoundaryNorm( levs_qv, ncolors=cmap_qv.N, clip=False)
+
+    norm_dbz = BoundaryNorm( levs_dbz, ncolors=cmap_dbz.N, clip=False)
 
     bbox = { 'facecolor':'w', 'alpha':0.95, 'pad':0.5,
              'edgecolor':'w' }
 
-    pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(f)" ]
+#    pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(f)" ]
+    pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(e)" ]
 
 
 #    lons = flon2d[0,0]
@@ -158,13 +166,33 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
        xmax = clate
   
 
+    levs_wu = np.arange( 1, 21, 1 )
+    levs_wu = np.arange( 2, 22, 2 )
+    levs_wd = np.arange( -21, 0, 1 )
 
     dfz1d = np.diff( fz1d ) * 0.5
     dfz1d = np.append( dfz1d, dfz1d[-1] )
 
     ylab = 'Height (km)'
 
+    cmap = cmap_dbz
+    levs = levs_dbz
+    norm = norm_dbz
+
     for i, ax in enumerate( ax_l ):
+
+       if i == 1 or i == 4:
+          vtime = itime + timedelta( seconds=tlev*30 )
+          ax.text( 0.5, 1.01, vtime.strftime('Valid: %H:%M:%S UTC %m/%d') ,
+                  va='bottom', 
+                  ha='center',
+                  transform=ax.transAxes,
+                  color='k', fontsize=13, )
+
+       if i == 3:
+          ax.axis( 'off' )
+          continue
+
        itime = time_l[i]
        tlev = tlev_l[i]
        lab_ = lab_l[i]
@@ -207,26 +235,53 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
        else:
           print( "fcst", itime, tlev )
           fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
+          if i >= 4:
+             nvar = "qv"
+          fcst3d_nvar = read_fcst_grads_all( INFO, itime=itime, tlev=tlev , FT0=True, nvar=nvar ) 
           if CRS == "ZONAL":
              var2d = fcst3d[:,fyidx,: ]
              x2d, y2d = np.meshgrid( flon2d[fyidx,:], 
                                      fz1d - dfz1d )   # pcolormesh
           elif CRS == "MERID":
              var2d = fcst3d[:,:,fxidx ]
+             var2d_c = fcst3d_nvar[:INFO["fcst_zmax"],:,fxidx ]
              x2d, y2d = np.meshgrid( flat2d[:,fxidx], 
                                      fz1d - dfz1d )   # pcolormesh
           
+       if i >= 4:
+          var2d = var2d_c * 1.e3
+          cmap = cmap_qv
+          levs = levs_qv
+          norm = norm_qv
 
        xlen = x2d.shape[0] 
        ylen = x2d.shape[1] 
 
 
        SHADE = ax.pcolormesh( x2d, y2d*0.001, var2d[:xlen-1,:ylen-1], 
-                       cmap=cmap_dbz, vmin=np.min(levs_dbz),
-                       vmax=np.max(levs_dbz),
+                       cmap=cmap, vmin=np.min(levs),
+                       vmax=np.max(levs),
                        norm=norm, 
                        )
  
+       if lab_ != "obs" and i <= 2: 
+          CONT = ax.contour( x2d, y2d*0.001, var2d_c[:,:], 
+                          levels=levs_wu, 
+                          colors='k',
+                          linewidths=1.0,     
+                          linestyles='solid',     
+                          )
+#          ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
+#                      fontsize=8, fmt='%.0f', colors="k" )
+
+#          CONT2 = ax.contour( x2d, y2d*0.001, var2d_c[:,:], 
+#                           levels=levs_wd, 
+#                           colors='b',
+#                           linewidths=1.0,     
+#                           linestyles='solid',     
+#                          )
+
+
        ax.set_ylim( ymin, ymax )
        ax.set_xlim( xmin, xmax )
 
@@ -268,7 +323,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
           ax_cb = fig.add_axes( [ pos.x1+0.002, pos.y0, #-cb_height*0.5, 
                                   cb_width, cb_height] )
           cb = plt.colorbar( SHADE, cax=ax_cb, orientation='vertical',  
-                             ticks=levs_dbz[::1], extend='both' )
+                             ticks=levs[::1], extend='both' )
           cb.ax.tick_params( labelsize=8 )
 
           ax.text( 1.01, 0.99, "(dBZ)",
@@ -295,12 +350,6 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
                    bbox=bbox )
     
 
-       vtime = itime + timedelta( seconds=tlev*30 )
-       ax.text( 0.5, 1.01, vtime.strftime('%H:%M:%S UTC %m/%d') ,
-               va='bottom', 
-               ha='center',
-               transform=ax.transAxes,
-               color='k', fontsize=11, )
 
        if i == 2:
 
@@ -332,7 +381,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
     if CRS == "MERID":
        cll = clon
 
-    ofig = "6p_obs_fcst_crs_{0:}_{1:}_cll{2:.3f}_{3:}.png".format(  itime.strftime('%m%d'), CRS, cll, time_l[3].strftime('%m%d%H%M%S') )
+    ofig = "6p_obs_fcst_w_qv_crs_{0:}_{1:}_cll{2:.3f}_{3:}.png".format(  itime.strftime('%m%d'), CRS, cll, time_l[3].strftime('%m%d%H%M%S') )
     print(ofig)
 
     if not quick:
@@ -373,6 +422,7 @@ INFO = { "TOP": TOP,
          "lon2d": lon2d,
          "lat2d": lat2d,
          "cz": cz,
+         "fcst_zmax": fcst_zmax,
        }
 
 
@@ -419,11 +469,34 @@ tlev_l = [ 0, 0, 0,
 lab_p = "obs"
 lab_s = "scale"
 
-lab_l = [ lab_p, lab_p, lab_p, 
-          lab_s, lab_s, lab_s, 
+lab_l = [ lab_p, lab_s, lab_s, 
+          lab_p, lab_s, lab_s, 
         ]
 
+tlev_l = [ 0, 0, 10, 
+           0, 0, 0, ]
 
+vtime1 = datetime( 2019, 8, 24, 15, 30, 0 )
+vtime2 = datetime( 2019, 8, 24, 15, 25, 0 )
+sitime1 = datetime( 2019, 8, 24, 15, 30, 0 )
+sitime2 = datetime( 2019, 8, 24, 15, 25, 0 )
+
+tlev_l = [ 0, 0, 10, 
+           0, 10, 20, ]
+
+vtime1 = datetime( 2019, 8, 24, 15, 30, 0 )
+vtime2 = datetime( 2019, 8, 24, 15, 35, 0 )
+sitime1 = datetime( 2019, 8, 24, 15, 30, 0 )
+sitime2 = datetime( 2019, 8, 24, 15, 25, 0 )
+
+time_l = [
+          vtime1, 
+          sitime1, # scale
+          sitime2, # scale
+          vtime2,
+          sitime1, # scale
+          sitime2, # scale
+         ]
 
 
 #lab_l = [ lab_s, lab_s, lab_s, 
@@ -453,6 +526,8 @@ CRS = "MERID"
 ores = "500m"
 #ores = "100m"
 
+nvar = "w"
+
 main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l, clat=clat, CRS=CRS, 
-      clon=clon, lab_l=lab_l, ores=ores )
+      clon=clon, lab_l=lab_l, ores=ores, nvar=nvar )
 

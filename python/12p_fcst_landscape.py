@@ -22,7 +22,7 @@ quick = True
 #quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False, 
-          clon=139.75, clat=36.080 ):
+          clon=139.75, clat=36.080, vtime=datetime( 2019, 8, 24, 15, 0 ) ):
 
     # cross section
     clons = 139.5 + 0.001
@@ -63,7 +63,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
     time = datetime( 2019, 8, 24, 15, 0, 30 )
-    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time )
+    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=vtime )
     ozidx = np.argmin( np.abs( oz1d - hgt ) )
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
@@ -114,7 +114,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
     cmap.set_under( 'w', alpha=0.0 )
     cmap.set_over( 'k', alpha=1.0 )
-    cmap.set_bad( color='gray', alpha=0.3 )
+    cmap.set_bad( color='gray', alpha=0.5 )
     extend = 'max'
 
 
@@ -168,7 +168,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
     for i, ax in enumerate( ax_l ):
-       itime = time_l[i]
+       itime = vtime
        tlev = tlev_l[i]
        lab_ = lab_l[i]
 
@@ -184,8 +184,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 #       ax.coastlines( color='k', linestyle='solid', linewidth=10.5, zorder=1 )
       
        if lab_ == "obs":
-          obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
-          obs3d[ obs3d == -9.99e33 ] = np.nan 
+          obs3d, _, _, _ = read_obs_grads( INFO, itime=vtime )
 #          obs2d_ = griddata( ( olon2d.ravel(), olat2d.ravel() ), 
 #                             obs3d[ozidx,:,:].ravel(),
 #                             (flon2d, flat2d),
@@ -200,6 +199,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
           ylen = oylen
 
        elif lab_ == "scale":
+          itime = vtime - timedelta( seconds=tlev*30 )
           fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
           var2d = fcst3d[fzidx,:,: ]
           x2d = fx2d
@@ -247,31 +247,29 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
        ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
                    fontsize=8, fmt='%.0f km', colors="k" )
 
-       if CRS and ( i <= 2 or ( i >= 4 and i <= 6 ) ):
-
-#          ax.plot( [ clons, clone ], [ clat, clat ], 
-#                   color='r', linewidth=1.0, linestyle='dotted',
-#                   transform=data_crs )
-
-          ax.plot( [ clon, clon ], [ clats, clate ], 
-                   color='r', linewidth=1.0, linestyle='dotted',
+#       if CRS and ( i <= 2 or ( i >= 4 and i <= 6 ) ):
+       if CRS:
+          ax.plot( [ clons, clone ], [ clat, clat ], 
+                   color='k', linewidth=1.0, linestyle='dashed',
                    transform=data_crs )
 
-#          ctit_l = [ "A", "B" ]
-#          clon_l = [ clons, clone ]
-#          dlon_l = [ -0.0, 0.0 ]
-#          ha_l = [ "left", "right" ]
-#          for j in range( 2 ):
-#              ax.text( clon_l[j] + dlon_l[j], clat, ctit_l[j],
-#                       fontsize=10,
-#                       ha=ha_l[j],
-#                       va='bottom',
-#                       color='r',
-#                       bbox=bbox,     
-#                       transform=data_crs )
+          ax.plot( [ clon, clon ], [ clats, clate ], 
+                   color='k', linewidth=1.0, linestyle='dashed',
+                   transform=data_crs )
 
-#          ctit_l = [ "C", "D" ]
           ctit_l = [ "A", "B" ]
+          clon_l = [ clons, clone ]
+          dlon_l = [ -0.0, 0.0 ]
+          ha_l = [ "left", "right" ]
+          for j in range( 2 ):
+              ax.text( clon_l[j] + dlon_l[j], clat, ctit_l[j],
+                       fontsize=10,
+                       ha=ha_l[j],
+                       va='bottom',
+                       bbox=bbox,     
+                       transform=data_crs )
+
+          ctit_l = [ "C", "D" ]
           clat_l = [ clats, clate ]
           dlat_l = [ -0.0, 0.0 ]
           va_l = [ "bottom", "top" ]
@@ -281,7 +279,6 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                        fontsize=10,
                        ha='left',
                        va=va_l[j], 
-                       color='r',
                        bbox=bbox,     
                        transform=data_crs )
 
@@ -311,7 +308,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                bbox=bbox )
 
        vtime = itime + timedelta( seconds=tlev*30 )
-       ax.text( 0.5, 0.01, vtime.strftime('%H:%M:%S UTC') ,
+       ax.text( 0.5, 0.01, itime.strftime('Init: %H%M:%S UTC') ,
                va='bottom', 
                ha='center',
                transform=ax.transAxes,
@@ -341,7 +338,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                bbox=bbox )
 
 
-    ofig = "12p_obs_fcst_nowcast_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_stime{3:}.png".format( itime.strftime('%m%d'), clon, clat, time_l[4].strftime('%m%d%H%M%S')  )
+    ofig = "12p_fcst_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_vtime{3:}.png".format( itime.strftime('%m%d'), clon, clat, vtime.strftime('%m%d%H%M%S')  )
     print(ofig)
 
     if not quick:
@@ -399,23 +396,23 @@ stlev2 = 10
 stlev3 = 20
 stlev4 = 30
 
-#sitime = datetime( 2019, 8, 24, 15, 25, 30 )
-#stlev1 = 9
-#stlev2 = 19
-#stlev3 = 29
-#stlev4 = 39
+sitime = datetime( 2019, 8, 24, 15, 25, 30 )
+stlev1 = 9
+stlev2 = 19
+stlev3 = 29
+stlev4 = 39
 
-#sitime = datetime( 2019, 8, 24, 15, 26, 30 )
-#stlev1 = 7
-#stlev2 = 17
-#stlev3 = 27
-#stlev4 = 37
+sitime = datetime( 2019, 8, 24, 15, 26, 30 )
+stlev1 = 7
+stlev2 = 17
+stlev3 = 27
+stlev4 = 37
 
-#sitime = datetime( 2019, 8, 24, 15, 27, 30 )
-#stlev1 = 5
-#stlev2 = 15
-#stlev3 = 25
-#stlev4 = 35
+sitime = datetime( 2019, 8, 24, 15, 27, 30 )
+stlev1 = 5
+stlev2 = 15
+stlev3 = 25
+stlev4 = 35
 
 time_l = [
           itime + timedelta( seconds=tlev1*30 ),
@@ -432,14 +429,30 @@ time_l = [
           itime,  # nowcast
          ]
 
-
-
 hgt = 2000.0
 
 tlev_l = [ 0, 0, 0, 0, 
            stlev1, stlev2, stlev3, stlev4, 
            tlev1, tlev2, tlev3, tlev4, 
          ]
+
+tlev_l = [ 0, 4, 8, 12, 
+           16, 20, 24, 28,
+           32, 36, 40, 44,
+         ]
+
+vtime = datetime( 2019, 8, 24, 15, 40, 0 )
+tlev_l = [ 20, 22, 24, 26, 
+           28, 30, 32, 34,
+           36, 38, 40, 42,
+         ]
+
+#
+#vtime = datetime( 2019, 8, 24, 15, 30, 0 )
+#tlev_l = [ 0, 2, 4, 6, 
+#           8, 10, 12, 14,
+#           16, 18, 20, 22,
+#         ]
 
 
 lab_p = "MP-PAWR obs"
@@ -449,9 +462,9 @@ lab_p = "obs"
 lab_n = "nowcast"
 lab_s = "scale"
 
-lab_l = [ lab_p, lab_p, lab_p, lab_p,
+lab_l = [ lab_s, lab_s, lab_s, lab_s,
           lab_s, lab_s, lab_s, lab_s,
-          lab_n, lab_n, lab_n, lab_n,
+          lab_s, lab_s, lab_s, lab_s,
         ]
 
 clon = 139.75
@@ -459,5 +472,6 @@ clat = 36.080
 clat = 36.09
 
 CRS = True
-main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l, lab_l=lab_l, CRS=CRS )
+main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l, lab_l=lab_l, CRS=CRS, 
+      vtime=vtime )
 

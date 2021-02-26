@@ -457,10 +457,28 @@ def read_obs( utime=datetime(2019,9,3,2,0,0), mask=np.array([]) ):
 
     return( obs, True )
 
-def read_obs_grads( INFO, itime=datetime(2019,9,10,9) ):
+def read_obs_grads( INFO, itime=datetime(2019,9,10,9), ores='500m' ):
     fn = os.path.join( INFO["TOP"], INFO["EXP"],
                        INFO["time0"].strftime('%Y%m%d%H0000'),  "pawr_grads/pawr_ref3d_" +
                        itime.strftime('%Y%m%d-%H%M%S.grd') )
+    gz = 22
+    dz = 500.0
+    gx = 241
+    gy = 241
+    dlon = 0.00554812
+    dlat = 0.00449640
+
+    if ores == "100m":
+       fn = os.path.join( INFO["TOP"], "20201117/D4_500m_NODA_O100M",
+                          INFO["time0"].strftime('%Y%m%d%H0000'),  "pawr_grads/pawr_ref3d_" +
+                          itime.strftime('%Y%m%d-%H%M%S.grd') )
+       gz = 110
+       dz = 100.0
+       gx = 1201
+       gy = 1201
+       dlon = 0.00110962
+       dlat = 0.00089928
+
 
     try:
        infile = open(fn)
@@ -469,9 +487,6 @@ def read_obs_grads( INFO, itime=datetime(2019,9,10,9) ):
        print( fn )
        sys.exit()
 
-    gx = 241
-    gy = 241
-    gz = 22
     rec3d = gx*gy*gz
 
     nv = 1
@@ -483,33 +498,31 @@ def read_obs_grads( INFO, itime=datetime(2019,9,10,9) ):
 
     lons = 138.94319715
     lats = 35.32193244
-    dlon = 0.00554812
-    dlat = 0.00449640
     lon1d = np.arange( lons, lons+dlon*gx, dlon )
     lat1d = np.arange( lats, lats+dlat*gx, dlat )
-    z1d = np.arange( 0.0, gz*500.0, 500.0 )
+    z1d = np.arange( 0.0, gz*dz, dz )
 
     lon2d, lat2d = np.meshgrid( lon1d, lat1d )
 
-    gx = 241
-    gy = 241
-#    gz = 241
-    for nvar in "lon", "lat":
-        fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_full/shadow/{0:}.bin".format( nvar )   
-        try:
-           infile = open(fn)
-        except:
-           print("Failed to open")
-           sys.exit()
-    
-        rec = gx * gy
-        tmp = np.fromfile( infile, dtype=np.dtype('<f8'), count=rec )
-        
-        if nvar == "lon":
-           lon2d = np.reshape( tmp, (gy,gx) )
-        elif nvar == "lat":
-           lat2d = np.reshape( tmp, (gy,gx) )
-
+#    gx = 241
+#    gy = 241
+##    gz = 241
+#    for nvar in "lon", "lat":
+#        fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_full/shadow/{0:}.bin".format( nvar )   
+#        try:
+#           infile = open(fn)
+#        except:
+#           print("Failed to open")
+#           sys.exit()
+#    
+#        rec = gx * gy
+#        tmp = np.fromfile( infile, dtype=np.dtype('<f8'), count=rec )
+#        
+#        if nvar == "lon":
+#           lon2d = np.reshape( tmp, (gy,gx) )
+#        elif nvar == "lat":
+#           lat2d = np.reshape( tmp, (gy,gx) )
+#
 
 
 
@@ -636,7 +649,7 @@ def read_fcst_grads( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True, ):
 
     return( input3d, fstat )
 
-def read_obs_grads_latlon( ):
+def read_obs_grads_latlon( ores='500m' ):
 
     # tlev starts from "0" (not from "1")
     gx = 161

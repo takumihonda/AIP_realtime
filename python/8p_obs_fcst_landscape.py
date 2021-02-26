@@ -19,10 +19,11 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False, 
-          clon=139.75, clat=36.080 ):
+          clon=139.75, clat=36.080, vtime=datetime( 2019, 8, 24, 15, 0 ),
+          vtime2=datetime( 2019, 8, 24, 15, 0) ):
 
     # cross section
     clons = 139.5 + 0.001
@@ -44,14 +45,14 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
     mask, mlon2d, mlat2d = read_mask_full()
     mask2d = mask[mzidx,:,:]
 
-    fig = plt.figure( figsize=(13, 9) )
-    fig.subplots_adjust( left=0.04, bottom=0.03, right=0.96, top=0.97,
-                         wspace=0.2, hspace=0.06)
+    fig = plt.figure( figsize=(13, 6) )
+    fig.subplots_adjust( left=0.04, bottom=0.03, right=0.96, top=0.9,
+                         wspace=0.2, hspace=0.2 )
  
     # original data is lon/lat coordinate
     data_crs = ccrs.PlateCarree()
 
-    ax_l = prep_proj_multi_cartopy( fig, xfig=4, yfig=3, proj='merc', 
+    ax_l = prep_proj_multi_cartopy( fig, xfig=4, yfig=2, proj='merc', 
                          latitude_true_scale=lat_r )
  
     res = '10m'
@@ -63,7 +64,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
     time = datetime( 2019, 8, 24, 15, 0, 30 )
-    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time )
+    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=vtime )
     ozidx = np.argmin( np.abs( oz1d - hgt ) )
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
@@ -168,7 +169,18 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
     for i, ax in enumerate( ax_l ):
-       itime = time_l[i]
+       if i >= 4:
+          vtime = vtime2
+
+       if i == 1 or i == 5:
+          vtime_ = vtime.strftime('Valid: %H:%M:%S UTC')
+          ax.text( 0.9, 1.01, vtime_, 
+                  va='bottom', 
+                  ha='left',
+                  transform=ax.transAxes,
+                  color='k', fontsize=14, )
+
+       itime = vtime
        tlev = tlev_l[i]
        lab_ = lab_l[i]
 
@@ -184,6 +196,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 #       ax.coastlines( color='k', linestyle='solid', linewidth=10.5, zorder=1 )
       
        if lab_ == "obs":
+          itime = vtime - timedelta( seconds=tlev*30 )
           obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
           obs3d[ obs3d == -9.99e33 ] = np.nan 
 #          obs2d_ = griddata( ( olon2d.ravel(), olat2d.ravel() ), 
@@ -200,6 +213,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
           ylen = oylen
 
        elif lab_ == "scale":
+          itime = vtime - timedelta( seconds=tlev*30 )
           fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
           var2d = fcst3d[fzidx,:,: ]
           x2d = fx2d
@@ -247,8 +261,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
        ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
                    fontsize=8, fmt='%.0f km', colors="k" )
 
-       if CRS and ( i <= 2 or ( i >= 4 and i <= 6 ) ):
-
+#       if CRS and ( i <= 2 or ( i >= 4 and i <= 6 ) ):
+       if CRS:
 #          ax.plot( [ clons, clone ], [ clat, clat ], 
 #                   color='r', linewidth=1.0, linestyle='dotted',
 #                   transform=data_crs )
@@ -266,11 +280,10 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 #                       fontsize=10,
 #                       ha=ha_l[j],
 #                       va='bottom',
-#                       color='r',
 #                       bbox=bbox,     
+#                       color='r',
 #                       transform=data_crs )
 
-#          ctit_l = [ "C", "D" ]
           ctit_l = [ "A", "B" ]
           clat_l = [ clats, clate ]
           dlat_l = [ -0.0, 0.0 ]
@@ -281,15 +294,15 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                        fontsize=10,
                        ha='left',
                        va=va_l[j], 
-                       color='r',
                        bbox=bbox,     
+                       color='r',
                        transform=data_crs )
 
 
        if i == 7:
           pos = ax.get_position()
           cb_width = 0.008
-          cb_height = pos.height*2.0
+          cb_height = pos.height*1.0
           ax_cb = fig.add_axes( [ pos.x1+0.005, pos.y1-cb_height*0.5, 
                                   cb_width, cb_height] )
           cb = plt.colorbar( SHADE, cax=ax_cb, orientation='vertical',  
@@ -311,7 +324,11 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                bbox=bbox )
 
        vtime = itime + timedelta( seconds=tlev*30 )
-       ax.text( 0.5, 0.01, vtime.strftime('%H:%M:%S UTC') ,
+       ptime = itime.strftime('Init: %H:%M:%S UTC')
+       if lab_ == "obs":
+          ptime = itime.strftime('Valid: %H:%M:%S UTC')
+         
+       ax.text( 0.5, 0.01, ptime, #itime.strftime('Init: %H%M:%S UTC') ,
                va='bottom', 
                ha='center',
                transform=ax.transAxes,
@@ -341,7 +358,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                bbox=bbox )
 
 
-    ofig = "12p_obs_fcst_nowcast_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_stime{3:}.png".format( itime.strftime('%m%d'), clon, clat, time_l[4].strftime('%m%d%H%M%S')  )
+    ofig = "8p_obs_fcst_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_vtime{3:}.png".format( itime.strftime('%m%d'), clon, clat, vtime.strftime('%m%d%H%M%S')  )
     print(ofig)
 
     if not quick:
@@ -399,23 +416,23 @@ stlev2 = 10
 stlev3 = 20
 stlev4 = 30
 
-#sitime = datetime( 2019, 8, 24, 15, 25, 30 )
-#stlev1 = 9
-#stlev2 = 19
-#stlev3 = 29
-#stlev4 = 39
+sitime = datetime( 2019, 8, 24, 15, 25, 30 )
+stlev1 = 9
+stlev2 = 19
+stlev3 = 29
+stlev4 = 39
 
-#sitime = datetime( 2019, 8, 24, 15, 26, 30 )
-#stlev1 = 7
-#stlev2 = 17
-#stlev3 = 27
-#stlev4 = 37
+sitime = datetime( 2019, 8, 24, 15, 26, 30 )
+stlev1 = 7
+stlev2 = 17
+stlev3 = 27
+stlev4 = 37
 
-#sitime = datetime( 2019, 8, 24, 15, 27, 30 )
-#stlev1 = 5
-#stlev2 = 15
-#stlev3 = 25
-#stlev4 = 35
+sitime = datetime( 2019, 8, 24, 15, 27, 30 )
+stlev1 = 5
+stlev2 = 15
+stlev3 = 25
+stlev4 = 35
 
 time_l = [
           itime + timedelta( seconds=tlev1*30 ),
@@ -432,14 +449,36 @@ time_l = [
           itime,  # nowcast
          ]
 
-
-
 hgt = 2000.0
 
 tlev_l = [ 0, 0, 0, 0, 
            stlev1, stlev2, stlev3, stlev4, 
            tlev1, tlev2, tlev3, tlev4, 
          ]
+
+tlev_l = [ 0, 4, 8, 12, 
+           16, 20, 24, 28,
+           32, 36, 40, 44,
+         ]
+
+vtime = datetime( 2019, 8, 24, 15, 40, 0 )
+tlev_l = [ 20, 22, 24, 26, 
+           28, 30, 32, 34,
+           36, 38, 40, 42,
+         ]
+
+#
+#vtime = datetime( 2019, 8, 24, 15, 30, 0 )
+#tlev_l = [ 0, 2, 4, 6, 
+#           8, 10, 12, 14,
+#           16, 18, 20, 22,
+#         ]
+
+vtime = datetime( 2019, 8, 24, 15, 40, 0 )
+vtime2 = datetime( 2019, 8, 24, 15, 30, 0 )
+tlev_l = [ 0, 20, 25, 30,
+           0,  0,  5, 10,
+         ] 
 
 
 lab_p = "MP-PAWR obs"
@@ -449,9 +488,9 @@ lab_p = "obs"
 lab_n = "nowcast"
 lab_s = "scale"
 
-lab_l = [ lab_p, lab_p, lab_p, lab_p,
+lab_l = [ lab_p, lab_s, lab_s, lab_s,
+          lab_p, lab_s, lab_s, lab_s,
           lab_s, lab_s, lab_s, lab_s,
-          lab_n, lab_n, lab_n, lab_n,
         ]
 
 clon = 139.75
@@ -459,5 +498,6 @@ clat = 36.080
 clat = 36.09
 
 CRS = True
-main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l, lab_l=lab_l, CRS=CRS )
+main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l, lab_l=lab_l, CRS=CRS, 
+      vtime=vtime, vtime2=vtime2 )
 

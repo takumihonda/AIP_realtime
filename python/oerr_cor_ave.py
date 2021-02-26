@@ -68,7 +68,7 @@ def main( otyp=4002,
       elif mode == "el":
          xlab = r'Elevation separation distance (km)'
  
-      tit = "Estimated observatino error correlations for\n"
+      tit = "Estimated observation-error correlations for\n"
       if otyp == 4001:   # Z
          tit += "MP-PAWR radar reflectivity"
          otyp_ = "Z"

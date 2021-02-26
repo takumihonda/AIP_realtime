@@ -147,15 +147,6 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
     oy2d = olat2d - ( olat2d[oxlen2,oylen2+1] - olat2d[oxlen2,oylen2] )
 
 
-    # for pcolor mesh
-    _, jlon2d, jlat2d = read_nowcast_hires( stime=time_l[0], ft=timedelta(seconds=0) )
-    jxlen2 = jlon2d.shape[0] // 2
-    jylen2 = jlon2d.shape[1] // 2
-    jxlen = jlon2d.shape[0] 
-    jylen = jlon2d.shape[1] 
-    jx2d = jlon2d - ( jlon2d[jxlen2+1,jylen2] - jlon2d[jxlen2,jylen2] )
-    jy2d = jlat2d - ( jlat2d[jxlen2,jylen2+1] - jlat2d[jxlen2,jylen2] )
-
 
     lons = flon2d[0,0] + 0.5
     lone = flon2d[-2,-2] - 0.15
@@ -247,7 +238,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
        ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
                    fontsize=8, fmt='%.0f km', colors="k" )
 
-       if CRS and ( i <= 2 or ( i >= 4 and i <= 6 ) ):
+       if CRS:
 
 #          ax.plot( [ clons, clone ], [ clat, clat ], 
 #                   color='r', linewidth=1.0, linestyle='dotted',
@@ -341,7 +332,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                bbox=bbox )
 
 
-    ofig = "12p_obs_fcst_nowcast_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_stime{3:}.png".format( itime.strftime('%m%d'), clon, clat, time_l[4].strftime('%m%d%H%M%S')  )
+    ofig = "12p_obs_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_stime{3:}.png".format( itime.strftime('%m%d'), clon, clat, time_l[4].strftime('%m%d%H%M%S')  )
     print(ofig)
 
     if not quick:
@@ -386,59 +377,41 @@ INFO = { "TOP": TOP,
 
 
 itime = datetime( 2019, 8, 19, 13, 30 )
-itime = datetime( 2019, 8, 24, 15, 30 )
 sitime = datetime( 2019, 8, 24, 15, 30 )
 
-tlev1 = 0
-tlev2 = 10
-tlev3 = 20
-tlev4 = 30
+itime = datetime( 2019, 8, 24, 15, 25 )
 
 stlev1 = 0
 stlev2 = 10
 stlev3 = 20
 stlev4 = 30
 
-#sitime = datetime( 2019, 8, 24, 15, 25, 30 )
-#stlev1 = 9
-#stlev2 = 19
-#stlev3 = 29
-#stlev4 = 39
-
-#sitime = datetime( 2019, 8, 24, 15, 26, 30 )
-#stlev1 = 7
-#stlev2 = 17
-#stlev3 = 27
-#stlev4 = 37
-
-#sitime = datetime( 2019, 8, 24, 15, 27, 30 )
-#stlev1 = 5
-#stlev2 = 15
-#stlev3 = 25
-#stlev4 = 35
 
 time_l = [
-          itime + timedelta( seconds=tlev1*30 ),
-          itime + timedelta( seconds=tlev2*30 ),
-          itime + timedelta( seconds=tlev3*30 ),
-          itime + timedelta( seconds=tlev4*30 ),
-          sitime,  # SCALE
-          sitime,  # SCALE
-          sitime,  # SCALE
-          sitime,  # SCALE
-          itime,  # nowcast
-          itime,  # nowcast
-          itime,  # nowcast
-          itime,  # nowcast
+          itime,
+          itime,
+          itime,
+          itime,
+          itime,
+          itime,
+          itime,
+          itime,
+          itime,
+          itime,
+          itime,
+          itime,
          ]
 
+di = 2
+for i, time in enumerate( time_l ):
+    time_l[i] = itime + timedelta( seconds=i*di*30 )
 
 
 hgt = 2000.0
 
 tlev_l = [ 0, 0, 0, 0, 
-           stlev1, stlev2, stlev3, stlev4, 
-           tlev1, tlev2, tlev3, tlev4, 
+           0, 0, 0, 0,
+           0, 0, 0, 0,
          ]
 
 
@@ -450,8 +423,8 @@ lab_n = "nowcast"
 lab_s = "scale"
 
 lab_l = [ lab_p, lab_p, lab_p, lab_p,
-          lab_s, lab_s, lab_s, lab_s,
-          lab_n, lab_n, lab_n, lab_n,
+          lab_p, lab_p, lab_p, lab_p,
+          lab_p, lab_p, lab_p, lab_p,
         ]
 
 clon = 139.75

@@ -18,7 +18,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
 
@@ -206,7 +206,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
                bbox=bbox )
 
        if i <= 2:
-          ax.text( 0.5, 1.01, itime.strftime('%H%M:%S UTC %m/%d') ,
+          ax.text( 0.5, 1.01, itime.strftime('%H:%M:%S UTC %m/%d') ,
                   va='bottom', 
                   ha='center',
                   transform=ax.transAxes,
@@ -222,7 +222,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
        if i <= 2:
           tit = "MP-PAWR obs"
        else:
-          tit = "Forecast"
+          #tit = "Forecast"
+          tit = "Forecast\n(FT={0:.0f} min)".format( tlev*30/60 )
    
        ax.text( 0.5, 0.99, tit,
                va='top', 
@@ -277,7 +278,7 @@ INFO = { "TOP": TOP,
 
 
 itime = datetime( 2019, 8, 19, 13, 30 )
-#itime = datetime( 2019, 8, 24, 15, 30 )
+itime = datetime( 2019, 8, 24, 15, 30 )
 
 tlev1 = 20
 tlev2 = 40

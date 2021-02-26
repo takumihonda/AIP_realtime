@@ -18,7 +18,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 def main( INFO, time_l=[], hgt=3000.0 ):
 
@@ -220,7 +220,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
                bbox=bbox )
 
        if i <= 2:
-          ax.text( 0.5, 1.01, itime.strftime('%H%M:%S UTC %m/%d') ,
+          ax.text( 0.5, 1.01, itime.strftime('%H:%M:%S UTC %m/%d') ,
                   va='bottom', 
                   ha='center',
                   transform=ax.transAxes,
@@ -298,14 +298,14 @@ time_l = [
           datetime( 2019, 8, 24, 16,  0),
          ]
 
-#time_l = [
-#          datetime( 2019, 8, 19, 13, 20),
-#          datetime( 2019, 8, 19, 13, 40),
-#          datetime( 2019, 8, 19, 14,  0),
-#          datetime( 2019, 8, 19, 13, 20),
-#          datetime( 2019, 8, 19, 13, 40),
-#          datetime( 2019, 8, 19, 14,  0),
-#         ]
+time_l = [
+          datetime( 2019, 8, 19, 13, 20),
+          datetime( 2019, 8, 19, 13, 40),
+          datetime( 2019, 8, 19, 14,  0),
+          datetime( 2019, 8, 19, 13, 20),
+          datetime( 2019, 8, 19, 13, 40),
+          datetime( 2019, 8, 19, 14,  0),
+         ]
 
 hgt = 3000.0
 
