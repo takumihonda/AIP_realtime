@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
           CRS="ZONAL", lab_l=[], ores='500m' ):
@@ -233,10 +233,10 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
        ctitx_l = [ 0.03, 0.97 ]
 
        if CRS == "ZONAL":
-          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.1fE' ) )
+          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.2fE' ) )
           ctit_l = [ "A", "B"]
        elif CRS == "MERID":
-          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.1fN' ) )
+          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.2fN' ) )
           #ctit_l = [ "C", "D"]
           ctit_l = [ "A", "B"]
 

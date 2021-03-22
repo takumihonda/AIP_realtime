@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False, 
           clon=139.75, clat=36.080 ):
@@ -44,14 +44,16 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
     mask, mlon2d, mlat2d = read_mask_full()
     mask2d = mask[mzidx,:,:]
 
-    fig = plt.figure( figsize=(13, 9) )
-    fig.subplots_adjust( left=0.04, bottom=0.03, right=0.96, top=0.97,
-                         wspace=0.2, hspace=0.06)
+    fig = plt.figure( figsize=(13, 7) )
+    fig.subplots_adjust( left=0.3, bottom=0.03, right=0.96, top=0.97,
+                         wspace=0.05, hspace=0.01)
  
     # original data is lon/lat coordinate
     data_crs = ccrs.PlateCarree()
 
-    ax_l = prep_proj_multi_cartopy( fig, xfig=4, yfig=3, proj='merc', 
+    xfig = 4
+    yfig = 3
+    ax_l = prep_proj_multi_cartopy( fig, xfig=xfig, yfig=yfig, proj='merc', 
                          latitude_true_scale=lat_r )
  
     res = '10m'
@@ -158,16 +160,17 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
     lons = flon2d[0,0] + 0.5
-    lone = flon2d[-2,-2] - 0.15
+    lone = flon2d[-2,-2] - 0.15 - 0.2
 
-    lats = flat2d[0,0] + 0.5
-    late = flat2d[-2,-2] -0.05
+    lats = flat2d[0,0] + 0.5 + 0.05
+    late = flat2d[-2,-2] -0.05 - 0.08
  
     xticks = np.arange( 134.0, 142, 0.2 )
     yticks = np.arange( 30.0, 45, 0.2 )
 
 
     for i, ax in enumerate( ax_l ):
+
        itime = time_l[i]
        tlev = tlev_l[i]
        lab_ = lab_l[i]
@@ -176,8 +179,16 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
        ax.add_feature( land, zorder=0 )
        ax.add_feature( coast, zorder=0 )
 
+       yfs = 0
+       xfs = 0
+       if i % xfig == 0:
+          yfs = 10
+       if i >= (xfig*2):
+          xfs = 10
+#       yfs = 10
+#       xfs = 10
        setup_grids_cartopy( ax, xticks=xticks, yticks=yticks, 
-                            fs=9, lw=0.0 )
+                            xfs=xfs, yfs=yfs, lw=0.0 )
 
 #       ax.add_feature(cfeature.LAND, color='g') 
 #       ax.add_feature(cfeature.COASTLINE, linewidth=10.8)
@@ -311,13 +322,14 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                bbox=bbox )
 
        vtime = itime + timedelta( seconds=tlev*30 )
-       ax.text( 0.5, 0.01, vtime.strftime('%H:%M:%S UTC') ,
-               va='bottom', 
-               ha='center',
-               transform=ax.transAxes,
-               color='k', fontsize=11,
-               bbox=bbox, 
-               zorder=4 )
+       if i < xfig:
+          ax.text( 0.5, 1.01, vtime.strftime('%H:%M:%S UTC') ,
+                  va='bottom', 
+                  ha='center',
+                  transform=ax.transAxes,
+                  color='k', fontsize=11,
+                  #bbox=bbox, 
+                  zorder=4 )
 
        if i == 3:
           ax.text( 0.9, 1.01, "Z={0:.0f} km".format( hgt/1000 ),
@@ -326,19 +338,34 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                   transform=ax.transAxes,
                   color='k', fontsize=10, )
 
-       if lab_ == "obs":
-          tit = "MP-PAWR obs"
-       elif lab_ == "scale":
-          tit = "Forecast (FT={0:.1f} min)".format( tlev*30/60 )
-       elif lab_ == "nowcast":
-          tit = "JMA nowcast (FT={0:.0f} min)".format( tlev*30/60 )
-   
-       ax.text( 0.5, 0.99, tit,
-               va='top', 
-               ha='center',
-               transform=ax.transAxes,
-               color='k', fontsize=11, 
-               bbox=bbox )
+       if i % xfig == 0:
+          if lab_ == "obs":
+             tit = "MP-PAWR obs"
+          elif lab_ == "scale":
+             tit = "SCALE-LETKF forecast"
+          elif lab_ == "nowcast":
+             tit = "JMA nowcast"
+
+          ax.text( -0.3, 0.5, tit,
+                  va='center', 
+                  ha='right',
+                  transform=ax.transAxes,
+                  rotation=90,
+                  color='k', fontsize=13, )
+
+       if lab_ == "scale" or lab_ == "nowcast":
+          if lab_ == "scale":
+             tit = "FT={0:.1f} min".format( tlev*30/60 )
+          elif lab_ == "nowcast":
+             tit = "FT={0:.1f} min".format( tlev*30/60 )
+      
+          ax.text( 0.5, 0.98, tit,
+                  va='top', 
+                  ha='center',
+                  transform=ax.transAxes,
+                  color='k', fontsize=10, 
+                  bbox=bbox )
+
 
 
     ofig = "12p_obs_fcst_nowcast_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_stime{3:}.png".format( itime.strftime('%m%d'), clon, clat, time_l[4].strftime('%m%d%H%M%S')  )
@@ -388,6 +415,9 @@ INFO = { "TOP": TOP,
 itime = datetime( 2019, 8, 19, 13, 30 )
 itime = datetime( 2019, 8, 24, 15, 30 )
 sitime = datetime( 2019, 8, 24, 15, 30 )
+
+#itime = datetime( 2019, 8, 24, 15, 25 )
+#sitime = datetime( 2019, 8, 24, 15, 25 )
 
 tlev1 = 0
 tlev2 = 10

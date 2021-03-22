@@ -833,6 +833,74 @@ def read_fcst_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True
 
     return( input3d )
 
+def read_ga_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), nvar="p", typ="g" ):
+    # read guess/analsis ensemble mean  
+
+    if typ == "g":
+       fn_ = itime.strftime( 'gues%Y%m%d-%H%M%S.grd')
+    elif typ == "a":
+       fn_ = itime.strftime( 'anal%Y%m%d-%H%M%S.grd')
+
+    fn = os.path.join( INFO["TOP"], INFO["EXP"],
+                       INFO["time0"].strftime('%Y%m%d%H%M%S'),
+                       "mean_grads", fn_ )
+
+    try:
+       infile = open(fn)
+    except:
+       print("Failed to open")
+       print( fn )
+       return( None, False )
+       sys.exit()
+
+    gz = 60
+    gx = INFO["gx"]
+    gy = INFO["gy"]
+
+    rec3d = gx*gy*gz
+    rec2d = gx*gy
+
+    # u, v, w, t, p, qv, qc, qr, qi, qs, qg
+    nv3d = 11
+    # PW PRCP
+    nv2d = 0
+
+    nv2d_ = 0
+    nv3d_ = 0
+    if nvar == "u":
+       nv3d_ = 0
+    elif nvar == "v":
+       nv3d_ = 1
+    elif nvar == "w":
+       nv3d_ = 2
+    elif nvar == "t":
+       nv3d_ = 3
+    elif nvar == "p":
+       nv3d_ = 4
+    elif nvar == "qv":
+       nv3d_ = 5
+    elif nvar == "qc":
+       nv3d_ = 6
+    elif nvar == "qr":
+       nv3d_ = 7
+    elif nvar == "qi":
+       nv3d_ = 8
+    elif nvar == "qs":
+       nv3d_ = 9
+    elif nvar == "qg":
+       nv3d_ = 10
+
+    rec = rec3d * nv3d_ + rec2d * nv2d_
+
+    try:
+       infile.seek( rec*4 )
+       tmp3d = np.fromfile( infile, dtype=np.dtype('>f4'), count=rec3d )  # big endian   
+       input3d = np.reshape( tmp3d, (gz,gy,gx) )
+    except:
+       input3d = None
+
+    return( input3d )
+
 def get_cfeature( typ='land', res='10m' ):
 
     if typ == 'land': 
@@ -851,7 +919,7 @@ def get_cfeature( typ='land', res='10m' ):
     return( feature )
 
 def setup_grids_cartopy( ax, xticks=np.array([]), yticks=np.array([]), lw=0.5, 
-                         fs=10, fc='k' ):
+                         fs=10, fc='k', xfs=-1, yfs=-1 ):
        gl = ax.gridlines( crs=ccrs.PlateCarree(), linewidth=lw, 
                           draw_labels=True  )
        gl.xlabels_top = False
@@ -867,8 +935,13 @@ def setup_grids_cartopy( ax, xticks=np.array([]), yticks=np.array([]), lw=0.5,
        gl.xformatter = LONGITUDE_FORMATTER
        gl.yformatter = LATITUDE_FORMATTER
 
-       gl.xlabel_style = {'size': fs, 'color': fc, }
-       gl.ylabel_style = {'size': fs, 'color': fc, }
+       if xfs < 0:
+          xfs = fs
+       if yfs < 0:
+          yfs = fs
+
+       gl.xlabel_style = {'size': xfs, 'color': fc, }
+       gl.ylabel_style = {'size': yfs, 'color': fc, }
 
 def prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='none', latitude_true_scale=35.0 ):
 
@@ -890,7 +963,11 @@ def read_nowcast_hires( stime=datetime(2019,9,10,9), ft=timedelta(minutes=5) ):
 
     time = stime + ft
 
-    fn = os.path.join( top, time.strftime('%Y%m%d%H%M%S.nc') )
+#    fn = os.path.join( top, time.strftime('%Y%m%d%H%M%S.nc') )
+    fn = os.path.join( top, stime.strftime('%Y%m%d%H%M%S'),
+              time.strftime('%Y%m%d%H%M%S.nc') )
+    print( fn )
+    print( "" )
 
     nc = Dataset( fn, "r", format="NETCDF4" )
 

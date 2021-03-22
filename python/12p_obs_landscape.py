@@ -149,10 +149,10 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
     lons = flon2d[0,0] + 0.5
-    lone = flon2d[-2,-2] - 0.15
+    lone = flon2d[-2,-2] - 0.15 - 0.1
 
     lats = flat2d[0,0] + 0.5
-    late = flat2d[-2,-2] -0.05
+    late = flat2d[-2,-2] -0.05 - 0.1
  
     xticks = np.arange( 134.0, 142, 0.2 )
     yticks = np.arange( 30.0, 45, 0.2 )

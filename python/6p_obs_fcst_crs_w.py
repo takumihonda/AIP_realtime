@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
           CRS="ZONAL", lab_l=[], ores='500m', nvar="w" ):
@@ -131,8 +131,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
     bbox = { 'facecolor':'w', 'alpha':0.95, 'pad':0.5,
              'edgecolor':'w' }
 
-#    pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(f)" ]
-    pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(e)" ]
+    pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(f)" ]
 
 
 #    lons = flon2d[0,0]
@@ -260,6 +259,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
                           linestyles='solid',     
                           )
 
+
 #          CONT2 = ax.contour( x2d, y2d*0.001, var2d_qv[:,:]*1.e3, 
 #                          levels=np.arange( 14, 30, 2 ), 
 #                          colors='g',
@@ -273,8 +273,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
 #                          norm=norm_qv, 
 #                          )
 
-#          ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
-#                      fontsize=8, fmt='%.0f', colors="k" )
+          ax.clabel( CONT, [2], inline=True, #inline_spacing=1, 
+                      fontsize=10, fmt='%.0f', colors="k" )
 
 #          CONT2 = ax.contour( x2d, y2d*0.001, var2d_c[:,:], 
 #                           levels=levs_wd, 
@@ -290,10 +290,10 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
        ctitx_l = [ 0.03, 0.97 ]
 
        if CRS == "ZONAL":
-          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.1fE' ) )
+          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.2fE' ) )
           ctit_l = [ "A", "B"]
        elif CRS == "MERID":
-          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.1fN' ) )
+          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.2fN' ) )
           #ctit_l = [ "C", "D"]
           ctit_l = [ "A", "B"]
 
@@ -490,6 +490,15 @@ vtime1 = datetime( 2019, 8, 24, 15, 30, 0 )
 vtime2 = datetime( 2019, 8, 24, 15, 35, 0 )
 sitime1 = datetime( 2019, 8, 24, 15, 30, 0 )
 sitime2 = datetime( 2019, 8, 24, 15, 25, 0 )
+
+
+vtime1 = datetime( 2019, 8, 24, 15, 30, 0 )
+vtime2 = datetime( 2019, 8, 24, 15, 40, 0 )
+sitime1 = datetime( 2019, 8, 24, 15, 30, 0 )
+sitime2 = datetime( 2019, 8, 24, 15, 25, 0 )
+
+tlev_l = [ 0, 0, 10, 
+           0, 20, 30, ]
 
 time_l = [
           vtime1, 
