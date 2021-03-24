@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_nowcast_hires, dbz2rain
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_nowcast_hires, dbz2rain, draw_rec_4p
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -19,10 +19,16 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False, 
           clon=139.75, clat=36.080 ):
+
+    rec_lats = 36.05
+    rec_late = 36.1
+   
+    rec_lons = 139.7
+    rec_lone = 139.8
 
     # cross section
     clons = 139.5 + 0.001
@@ -331,6 +337,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                   #bbox=bbox, 
                   zorder=4 )
 
+
        if i == 3:
           ax.text( 0.9, 1.01, "Z={0:.0f} km".format( hgt/1000 ),
                   va='bottom', 
@@ -339,6 +346,12 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                   color='k', fontsize=10, )
 
        if i % xfig == 0:
+
+          lon_l = [ rec_lons, rec_lone ]
+          lat_l = [ rec_lats, rec_late ]
+   
+          draw_rec_4p( ax, lon_l=lon_l, lat_l=lat_l, lc='k', lw=2.0, transform=data_crs )
+
           if lab_ == "obs":
              tit = "MP-PAWR obs"
           elif lab_ == "scale":

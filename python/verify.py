@@ -12,6 +12,8 @@ quick = True
 PLOT = False
 quick = False
 
+REGION = True
+REGION = False
 
 #def read_fcst_nc( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 ):
 #
@@ -62,7 +64,8 @@ def vint_fcst( hgt3d, fcst3d, theight=3000.0 ):
 
 #############
 
-def main( INFO, itime=datetime(2019,9,3,2,0), tlev=0, theight=3000, dbz_thrs_l=[], ):
+def main( INFO, itime=datetime(2019,9,3,2,0), tlev=0, theight=3000, dbz_thrs_l=[], 
+          lons=0.0, lone=0.0, lats=0.0, late=0.0 ):
 
     tlev = int( tlev )
     ftime = itime + timedelta( seconds=int(tlev)*30 )
@@ -98,18 +101,28 @@ def main( INFO, itime=datetime(2019,9,3,2,0), tlev=0, theight=3000, dbz_thrs_l=[
                       )
 
 
+    olon2d = INFO["olon2d"]
+    olat2d = INFO["olat2d"]
     if PLOT:
-       olon2d = INFO["olon2d"]
-       olat2d = INFO["olat2d"]
        plot( olon2d, olat2d,
              ifcst2d, itime=itime, tit="Fcst", ftsec=30*tlev )
        plot( olon2d, olat2d,
              iobs2d, itime=itime, tit="Obs", ftsec=30*tlev )
 
+
     ts_l = []
     bs_l = []
     for i, dbz in enumerate( dbz_thrs_l ):
-        ts_, bs_ = get_ts_bs( ifcst2d, iobs2d,
+        if REGION:
+           ifcst2d_ = ifcst2d[ ( olon2d >= lons ) & ( olon2d <= lone ) &
+                              ( olat2d >= lats ) & ( olat2d <= late ) ]
+           iobs2d_ = iobs2d[ ( olon2d >= lons ) & ( olon2d <= lone ) & 
+                            ( olat2d >= lats ) & ( olat2d <= late ) ]
+        else:
+           ifcst2d_ = ifcst2d
+           iobs2d_ = iobs2d
+        print( 'debug {0:} {1:}'.format( ifcst2d_.shape, iobs2d_.shape ) )
+        ts_, bs_ = get_ts_bs( ifcst2d_, iobs2d_,
                              thrs=dbz )
         ts_l.append( ts_ )
         bs_l.append( bs_ )
@@ -119,6 +132,7 @@ def main( INFO, itime=datetime(2019,9,3,2,0), tlev=0, theight=3000, dbz_thrs_l=[
 
 def plot( lon2d, lat2d, data2d, itime=datetime(2019, 6, 10, 8,0), tit="Fcst", ftsec=0 ):
 
+    print( 'Max: {0:.2f}, Min:{1:.2f}'.format( np.max( data2d ), np.min( data2d ) ) )
     vtime = itime + timedelta(seconds=ftsec)
 
     import matplotlib.pyplot as plt
@@ -132,12 +146,14 @@ def plot( lon2d, lat2d, data2d, itime=datetime(2019, 6, 10, 8,0), tit="Fcst", ft
                                        'orange', 'red', 'firebrick', 'magenta',
                                        'purple'])
 #    cmap_dbz = plt.cm.get_cmap("jet")
-    cmap_dbz.set_over('gray', alpha=1.0)
+    cmap_dbz.set_over('k', alpha=1.0)
     cmap_dbz.set_under('w', alpha=1.0)
 
     cmap = cmap_dbz
     levs = levs_dbz 
     norm = BoundaryNorm(levs, ncolors=cmap.N, clip=False)
+
+    cmap.set_bad( color='gray', alpha=0.3 )
 
 #    data2d[ data2d < np.min(levs)] = np.nan
 
@@ -177,13 +193,14 @@ def plot( lon2d, lat2d, data2d, itime=datetime(2019, 6, 10, 8,0), tit="Fcst", ft
     x2d, y2d = np.meshgrid( x1d, y1d )
 
 
-    SHADE = ax1.contourf(x2d, y2d,
+    #SHADE = ax1.contourf(x2d, y2d,
+    SHADE = ax1.pcolormesh(x2d, y2d,
                          data2d[:,:],
-                         levels=levs, 
-                         #vmin=np.min(levs), 
-                         #vmax=np.max(levs), 
+                         #levels=levs, 
+                         vmin=np.min(levs), 
+                         vmax=np.max(levs), 
                          cmap=cmap, norm=norm,
-                         extend='both',
+                         #extend='both',
                          )
 
     pos = ax1.get_position()
@@ -238,11 +255,12 @@ TOP = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY"
 
 
 
-EXP = "D4_500m_CTRL"
 EXP = "D4_500m_H4V1"
 EXP = "D4_500m_H8V8"
 
 EXP = "D4_500m_CTRL_NOCLRZ"
+EXP = "D4_500m_CTRL_NOVR"
+EXP = "D4_500m_CTRL"
 
 theight = 3000.0
 #theight = 6000.0
@@ -251,6 +269,11 @@ theight = 3000.0
 #etime = stime
 stime = datetime( 2019, 8, 24, 15, 0, 30 )
 etime = datetime( 2019, 8, 24, 16, 0, 0 )
+
+stime = datetime( 2019, 8, 24, 15, 20, 0 )
+etime = datetime( 2019, 8, 24, 15, 40, 0 )
+etime = stime
+
 #stime = datetime( 2019, 8, 19, 13, 0, 30 )
 #etime = datetime( 2019, 8, 19, 14, 0, 0 )
 
@@ -311,6 +334,13 @@ os.makedirs( odir, exist_ok=True)
 
 
 
+
+lats = 36.05
+late = 36.1
+
+lons = 139.7
+lone = 139.8
+
 time = stime
 while (time <= etime):
   print( "Initial time:", time )
@@ -319,7 +349,7 @@ while (time <= etime):
   ftime_l = []
   for i, tlev in enumerate( tlevs ):
       ts_l_, bs_l_, stat = main( INFO, itime=time, tlev=tlev, theight=theight, 
-                            dbz_thrs_l=dbz_thrs_l )
+                            dbz_thrs_l=dbz_thrs_l, lons=lons, lone=lone, lats=lats, late=late )
 
       ts_l[i,:] = ts_l_
       bs_l[i,:] = bs_l_
@@ -328,7 +358,10 @@ while (time <= etime):
       ftime_l.append( time + timedelta(seconds=int( tlev*30 )) )
   
   for i, dbz in enumerate( dbz_thrs_l ):
-      fn_ts = "TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
+      if REGION:
+         fn_ts = "TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}_lon{3:.2f}-{4:.2f}_lat{5:.2f}-{6:.2f}.npz".format( dbz, theight, time.strftime('%H%M%S_%Y%m%d'), lons, lone, lats, late )
+      else:
+         fn_ts = "TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
       np.savez( os.path.join(odir,fn_ts), ts=np.array(ts_l[:,i]), bs=np.array(bs_l[:,i]), 
              times=ftime_l )
   

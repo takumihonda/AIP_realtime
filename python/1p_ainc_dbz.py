@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_ga_grads_all
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_ga_grads_all, read_ga_grads_dbz
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 def read_qh_grads_all( INFO, itime=datetime( 2019,8,24,15,30,0 ), typ='g'):
 
@@ -55,20 +55,17 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
     mask = mask_[:22,:,:]
     mask2d = mask[mzidx,:,:]
 
-    fig = plt.figure( figsize=( 9.5, 8.5) )
+    fig = plt.figure( figsize=( 5.5, 4.5) )
     fig.subplots_adjust( left=0.05, bottom=0.03, right=0.93, top=0.93,
                          wspace=0.2, hspace=0.15 )
  
     # original data is lon/lat coordinate
+    data_crs = ccrs.PlateCarree()
 
-    yfig = 2
-    xfig = 2
-    ax_l = []
-    for i in range( 1, xfig*yfig+1 ):
-       ax_l.append( fig.add_subplot( yfig,xfig,i, ) ) #projection=projection ) )
+    ax_l = prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='merc', 
+                         latitude_true_scale=lat_r )
 
-#    ax_l = prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='merc', 
-#                         latitude_true_scale=lat_r )
+
  
     res = '10m'
     if quick:
@@ -153,20 +150,24 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
     cmap_p = cmap_t
     levs_p = np.arange( -10, 12, 2 )
 
+    cmap_dbz = cmap_qv
+#    levs_dbz = np.arange( -10, 12, 2 )
+    levs_dbz = [ -10, -8, -6, -4, -2, -1, 1, 2, 4, 6, 8, 10 ]
+
     bbox = { 'facecolor':'w', 'alpha':0.95, 'pad':0.5,
              'edgecolor':'w' }
 
     pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(f)" ]
 
 
-#    lons = flon2d[0,0]
-#    lone = flon2d[-2,-2]
+    lons = flon2d[0,0]
+    lone = flon2d[-2,-2]
 
     lats = flat2d[0,0]
     late = flat2d[-2,-2]
  
-    lons = flon2d[0,0] + 0.5 
-    lone = flon2d[-2,-2] - 0.15
+#    lons = flon2d[0,0] + 0.5 
+#    lone = flon2d[-2,-2] - 0.15
 
     print( "Cross at lon: {0:.3f}-{1:.3f}".format( lons, lone ) )
     print( "Cross at lat: {0:.3f}-{1:.3f}".format( clat, clat ) )
@@ -174,8 +175,8 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
     xticks = np.arange( 134.0, 142, 0.2 )
     yticks = np.arange( 30.0, 45, 0.2 )
 
-    ymin = 0.0 + 0.01
-    ymax = 9.0 - 0.01
+#    ymin = 0.0 + 0.01
+#    ymax = 9.0 - 0.01
 
 #    xmin = lons + 0.05
 #    xmax = lone - 0.05
@@ -186,14 +187,30 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
        xmin = clats
        xmax = clate
 
+ 
 
     dfz1d = np.diff( fz1d ) * 0.5
     dfz1d = np.append( dfz1d, dfz1d[-1] )
 
     ylab = 'Height (km)'
 
+    # for pcolor mesh
+    xlen2 = flon2d.shape[0] // 2
+    ylen2 = flon2d.shape[1] // 2
+    xlen = flon2d.shape[0] 
+    ylen = flon2d.shape[1] 
+    x2d = flon2d - ( flon2d[xlen2+1,ylen2] - flon2d[xlen2,ylen2] )
+    y2d = flat2d - ( flat2d[xlen2,ylen2+1] - flat2d[xlen2,ylen2] )
+
     for i, ax in enumerate( ax_l ):
-      
+ 
+       ax.set_extent([ lons, lone, lats, late ] )
+       ax.add_feature( land, zorder=0 )
+       ax.add_feature( coast, zorder=0 )
+
+       setup_grids_cartopy( ax, xticks=xticks, yticks=yticks, 
+                            fs=8, lw=0.0 )
+     
        nvar = nvar_l[i]
 
        if nvar == "w":
@@ -258,14 +275,6 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
           unit = unit_hdiv
           tvar = "HDIV"
 
-       elif nvar == "qhdiv":
-          fac = 1.e3*1.e3
-          cmap = cmap_w
-          levs = levs_hdiv
-          unit = unit_hdiv
-          tvar = "QHDIV"
-          unit = r'(kg10$^{-3}$s)'
-
        elif nvar == "u" or nvar == "v":
           fac = 1.0
           cmap = cmap_u
@@ -275,6 +284,13 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
              tvar = "U"
           elif nvar == "v":
              tvar = "V"
+
+       elif nvar == "dbz":
+          fac = 1.0
+          cmap = cmap_dbz
+          levs = levs_dbz
+          unit = "dBZ"
+          tvar = "DBZ"
 
        cmap.set_over('k', alpha=1.0 )
        cmap.set_under('gray', alpha=1.0 )
@@ -287,23 +303,15 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
              if nvar == "qh":
                 g3d = read_qh_grads_all( INFO, itime=vtime, typ='g')
                 a3d = read_qh_grads_all( INFO, itime=vtime, typ='a')
+             elif nvar == "dbz":
+                g3d = read_ga_grads_dbz( INFO, itime=vtime, typ='g')
+                a3d = read_ga_grads_dbz( INFO, itime=vtime, typ='a')
              elif nvar == "hdiv":
                 g3d = ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='g' ), axis=2)  \
                       + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='g' ), axis=1) ) / ( 500.0*2 )
 
                 a3d = ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='a' ), axis=2) \
                       + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='a' ), axis=1) ) / ( 500.0*2 ) 
-
-             elif nvar == "qhdiv":
-                
-                gqv_ = read_ga_grads_all( INFO, itime=vtime, nvar='qv', typ='g' )
-                g3d = ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='g' )*gqv_, axis=2)  \
-                      + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='g' )*gqv_, axis=1) ) / ( 500.0*2 )
-
-                aqv_ = read_ga_grads_all( INFO, itime=vtime, nvar='qv', typ='a' )
-                a3d = ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='a' )*aqv_, axis=2)  \
-                      + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='a' )*aqv_, axis=1) ) / ( 500.0*2 )
-
              else:
                 g3d = read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='g' ) 
                 a3d = read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='a' ) 
@@ -317,86 +325,70 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
 
                 a3d += ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='a' ), axis=2) \
                        + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='a' ), axis=1) ) / ( 500.0*2 )
-
-             elif nvar == "qhdiv":
-                gqv_ = read_ga_grads_all( INFO, itime=vtime, nvar='qv', typ='g' )
-                g3d += ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='g' )*gqv_, axis=2) \
-                       + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='g' )*gqv_, axis=1) ) / ( 500.0*2 )
-
-                aqv_ = read_ga_grads_all( INFO, itime=vtime, nvar='qv', typ='a' )
-                a3d += ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='a' )*aqv_, axis=2) \
-                       + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='a' )*aqv_, axis=1) ) / ( 500.0*2 )
-
+             elif nvar == "dbz":
+                g3d += read_ga_grads_dbz( INFO, itime=vtime, typ='g' ) 
+                a3d += read_ga_grads_dbz( INFO, itime=vtime, typ='a' ) 
              else:
                 g3d += read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='g' ) 
                 a3d += read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='a' ) 
 
        var3d = ( a3d - g3d ) / len( time_l )
       
-       if CRS == "ZONAL":
-          var2d = var3d[:,fyidx,: ]
-          x2d, y2d = np.meshgrid( flon2d[fyidx,:], 
-                                  fz1d - dfz1d )   # pcolormesh
-
-       elif CRS == "MERID":
-          var2d = var3d[:,:,fxidx ]
-          x2d, y2d = np.meshgrid( flat2d[:,fxidx], 
-                                  fz1d - dfz1d )   # pcolormesh
+       var2d = var3d[fzidx,:,: ]
 
        xlen = x2d.shape[0] 
        ylen = x2d.shape[1] 
        print( np.max( var2d ), np.min( var2d) )
 
 
-       SHADE = ax.pcolormesh( x2d, y2d*0.001, var2d[:xlen-1,:ylen-1]*fac, 
+       SHADE = ax.pcolormesh( x2d, y2d, var2d[:xlen-1,:ylen-1]*fac, 
                        cmap=cmap, vmin=np.min(levs),
                        vmax=np.max(levs),
                        norm=norm, 
+                       transform=data_crs,
                        )
  
-       ax.set_ylim( ymin, ymax )
-       ax.set_xlim( xmin, xmax )
 
        ctitx_l = [ 0.03, 0.97 ]
 
        if CRS == "ZONAL":
-          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.2fE' ) )
+          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.1fE' ) )
           ctit_l = [ "A", "B"]
        elif CRS == "MERID":
-          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.2fN' ) )
+          ax.xaxis.set_major_formatter( FormatStrFormatter( '%.1fN' ) )
           #ctit_l = [ "C", "D"]
           ctit_l = [ "A", "B"]
 
-       if i == 0: 
-          ax.text( -0.06, -0.05, ylab,
-                  va='center', 
-                  ha='right',
-                  rotation=90,
-                  transform=ax.transAxes,
-                  color='k', fontsize=12, )
+#       if i == 0: 
+#          ax.text( -0.06, -0.05, ylab,
+#                  va='center', 
+#                  ha='right',
+#                  rotation=90,
+#                  transform=ax.transAxes,
+#                  color='k', fontsize=12, )
 
 #          ax.set_ylabel( ylab, fontsize=10 )
 
-#       ax.plot( lon_r, lat_r, ms=8.0, marker='o', color='r',
-#                 markeredgecolor='w', transform=data_crs, )
-#
-#       CONT = ax.contour( flon2d, flat2d, dist2d, 
-#                          levels=[20, 40, 60], zorder=1,
-#                          colors='k', linewidths=0.5,
-#                          linestyles='dashed',
-#                          transform=data_crs,
-#                          )
-#
-#       ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
-#                   fontsize=8, fmt='%.0f km', colors="k" )
+       ax.plot( lon_r, lat_r, ms=8.0, marker='o', color='r',
+                 markeredgecolor='w', transform=data_crs, )
+
+       CONT = ax.contour( flon2d, flat2d, dist2d, 
+                          levels=[20, 40, 60], zorder=1,
+                          colors='k', linewidths=0.5,
+                          linestyles='dashed',
+                          transform=data_crs,
+                          )
+
+       ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
+                   fontsize=8, fmt='%.0f km', colors="k" )
 
 #       ax.plot( [ lons, lone ], [ clat, clat ], transform=data_crs, 
 #                linewidth=5.0, color='r',
 #                  )
   
-       if i == 1 or i == 3:
+       if i == 0:
           pos = ax.get_position()
-          cb_width = 0.006
+          cb_width = 0.009
           cb_height = pos.height*0.9
           ax_cb = fig.add_axes( [ pos.x1+0.003, pos.y0, #-cb_height*0.5, 
                                   cb_width, cb_height] )
@@ -426,43 +418,34 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
                bbox=bbox )
 
 
-       for j in range( 2 ):
-           ax.text( ctitx_l[j], 0.01, ctit_l[j],
-                   va='bottom', 
-                   ha='center',
-                   transform=ax.transAxes,
-                   color='r', fontsize=11, 
-                   bbox=bbox )
+#       for j in range( 2 ):
+#           ax.text( ctitx_l[j], 0.01, ctit_l[j],
+#                   va='bottom', 
+#                   ha='center',
+#                   transform=ax.transAxes,
+#                   color='r', fontsize=11, 
+#                   bbox=bbox )
     
 
-#       ax.text( 0.5, 1.01, vtime.strftime('%H%M:%S UTC %m/%d') ,
-#               va='bottom', 
-#               ha='center',
-#               transform=ax.transAxes,
-#               color='k', fontsize=11, )
 
-       if i == 1:
-          if CRS == "ZONAL":
-             ctit_ = '{0:.2f}N'.format( clat )
-          elif CRS == "MERID":
-             ctit_ = '{0:.2f}E'.format( clon )
-          ax.text( 0.9, 1.01, ctit_,
+       if i == 1: 
+          trange = '{0:}-{1:}'.format( 
+                      time_l[0].strftime('%H%M:%S'), 
+                      time_l[-1].strftime('%H%M:%S UTC %m/%d/%Y'), 
+                    )
+          ax.text( 0.0, 1.01, trange,
+                  va='bottom', 
+                  ha='left',
+                  transform=ax.transAxes,
+                  color='k', fontsize=12, 
+                   )
+
+       if i == 0:
+          ax.text( 0.95, 1.01, "Z={0:.1f} km".format( hgt/1000 ),
                   va='bottom', 
                   ha='left',
                   transform=ax.transAxes,
                   color='k', fontsize=10, )
-
-          if i == ( xfig - 1 ): 
-             trange = '{0:}-{1:}'.format( 
-                         time_l[0].strftime('%H%M:%S'), 
-                         time_l[-1].strftime('%H%M:%S UTC %m/%d/%Y'), 
-                       )
-             ax.text( 0.0, 1.01, trange,
-                     va='bottom', 
-                     ha='left',
-                     transform=ax.transAxes,
-                     color='k', fontsize=12, 
-                      )
 
 
 #       tit = "Forecast (FT={0:.1f} min)".format( tlev*30/60 )
@@ -470,11 +453,8 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
     tit = 'Time-averaged analysis increment'
     fig.suptitle( tit, fontsize=14 ) 
 
-    cll = clat
-    if CRS == "MERID":
-       cll = clon
 
-    ofig = "4p_ainc_crs_{0:}_cll{1:.3f}.png".format( CRS, cll, )
+    ofig = "1p_ainc_dbz_z{0:.1f}km.png".format( hgt/1000, )
     print(ofig)
 
     if not quick:
@@ -519,7 +499,8 @@ INFO = { "TOP": TOP,
 
 
 
-hgt = 3000.0
+hgt = 500.0
+hgt = 2500.0
 
 
 clon = 139.8
@@ -534,17 +515,15 @@ CRS = 'MERID'
 
 
 nvar_l = [
-          "qv",
-#          "qh",
-          "w",
-#          "u",
-          "t",
+          "dbz",
+          #"qv",
+          "qh",
           "hdiv",
-#          "qhdiv",
+          "t",
          ]
 
-stime = datetime( 2019, 8, 24, 15, 25, 0 )
-etime = datetime( 2019, 8, 24, 15, 30, 0 )
+stime = datetime( 2019, 8, 24, 15, 30, 0 )
+etime = datetime( 2019, 8, 24, 16, 0, 0 )
 
 time_l = []
 time = stime
@@ -552,5 +531,8 @@ while time <= etime:
       time_l.append( time )
       time += timedelta( seconds=30 ) 
 
-main( INFO, time_l=time_l, hgt=hgt, clat=clat, nvar_l=nvar_l, CRS=CRS, clon=clon )
+hgt_l = np.arange( 1, 11, 1 ) * 1000
+for hgt in hgt_l:
+
+    main( INFO, time_l=time_l, hgt=hgt, clat=clat, nvar_l=nvar_l, CRS=CRS, clon=clon )
 

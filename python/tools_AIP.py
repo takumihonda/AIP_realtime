@@ -989,6 +989,74 @@ def dbz2rain( dbz ):
     return( np.power( 10, ( dbz*0.1 - const_ ) / beta_ ) )
     #return( np.power( np.power( 10, dbz*0.1) / 200.0, 1.0/1.6 ) ) 
 
+def read_ga_grads_dbz( INFO, itime=datetime(2019,9,3,2,0,0), typ="g" ):
+    # read guess/analsis ensemble mean  
+
+    if typ == "g":
+       fn_ = itime.strftime( 'gues_pawr_%Y%m%d-%H%M%S.grd')
+    elif typ == "a":
+       fn_ = itime.strftime( 'anal_pawr_%Y%m%d-%H%M%S.grd')
+
+    fn = os.path.join( INFO["TOP"], INFO["EXP"],
+                       INFO["time0"].strftime('%Y%m%d%H%M%S'),
+                       "mean_grads", fn_ )
+
+    try:
+       infile = open(fn)
+    except:
+       print("Failed to open")
+       print( fn )
+       return( None, False )
+       sys.exit()
+
+    print( fn )
+    gz = 60
+    gx = INFO["gx"]
+    gy = INFO["gy"]
+
+    rec3d = gx*gy*gz
+    rec2d = gx*gy
+
+    # u, v, w, t, p, qv, qc, qr, qi, qs, qg
+    nv3d = 11
+    # PW PRCP
+    nv2d = 0
+
+    nv2d_ = 0
+    nv3d_ = 0
+
+    rec = rec3d * nv3d_ + rec2d * nv2d_
+
+    try:
+       infile.seek( rec*4 )
+       tmp3d = np.fromfile( infile, dtype=np.dtype('>f4'), count=rec3d )  # big endian   
+       input3d = np.reshape( tmp3d, (gz,gy,gx) )
+    except:
+       input3d = None
+
+    return( input3d )
+
+def draw_rec_4p( ax, lon_l=[], lat_l=[], lc='k', lw=1.0, transform=None ):
+
+    ax.plot( [ lon_l[0], lon_l[0] ], [ lat_l[0], lat_l[1] ],  color=lc, lw=lw, 
+             transform=transform )
+
+    ax.plot( [ lon_l[1], lon_l[1] ], [ lat_l[0], lat_l[1] ],  color=lc, lw=lw, 
+             transform=transform )
+    ax.plot( [ lon_l[0], lon_l[1] ], [ lat_l[0], lat_l[0] ],  color=lc, lw=lw, 
+             transform=transform )
+
+    ax.plot( [ lon_l[0], lon_l[1] ], [ lat_l[1], lat_l[1] ],  color=lc, lw=lw, 
+             transform=transform )
+
+#    x, y = m( lon2d[-1,:], lat2d[-1,:] )
+#    ax.plot( x, y, color=lc, lw=lw )
+#
+#    x, y = m( lon2d[:,0], lat2d[:,0] )
+#    ax.plot( x, y, color=lc, lw=lw )
+#
+#    x, y = m( lon2d[:,-1], lat2d[:,-1] )
+#    ax.plot( x, y, color=lc, lw=lw )
 
 #############################
 if __name__ == "__main__":

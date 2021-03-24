@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_ga_grads_all
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_ga_grads_all, read_ga_grads_dbz
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -40,6 +40,13 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
 #       clate = 36.3 - 0.001
        clats = 35.85 + 0.001 + 0.1
        clate = 36.25 - 0.001
+
+    # cross section
+    clons = 139.5 + 0.001
+    clone = 140.1 - 0.001
+
+    clats = 35.85 + 0.001 + 0.1
+    clate = 36.25 - 0.001
 
     # radar location
     lon_r = 139.609
@@ -281,6 +288,13 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
           elif nvar == "v":
              tvar = "V"
 
+       elif nvar == "dbz":
+          fac = 1.0
+          cmap = cmap_w
+          levs = levs_hdiv
+          unit = unit_hdiv
+          tvar = "DBZ"
+
        cmap.set_over('k', alpha=1.0 )
        cmap.set_under('gray', alpha=1.0 )
 
@@ -292,6 +306,9 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
              if nvar == "qh":
                 g3d = read_qh_grads_all( INFO, itime=vtime, typ='g')
                 a3d = read_qh_grads_all( INFO, itime=vtime, typ='a')
+             elif nvar == "dbz":
+                g3d = read_ga_grads_dbz( INFO, itime=vtime, typ='g')
+                a3d = read_ga_grads_dbz( INFO, itime=vtime, typ='a')
              elif nvar == "hdiv":
                 g3d = ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='g' ), axis=2)  \
                       + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='g' ), axis=1) ) / ( 500.0*2 )
@@ -311,6 +328,9 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
 
                 a3d += ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='a' ), axis=2) \
                        + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='a' ), axis=1) ) / ( 500.0*2 )
+             elif nvar == "dbz":
+                g3d += read_ga_grads_dbz( INFO, itime=vtime, typ='g' ) 
+                a3d += read_ga_grads_dbz( INFO, itime=vtime, typ='a' ) 
              else:
                 g3d += read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='g' ) 
                 a3d += read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='a' ) 
@@ -400,6 +420,10 @@ def main( INFO, time_l=[], hgt=3000.0, clat=40.0, nvar_l=["w"],
                color='k', fontsize=14, 
                bbox=bbox )
 
+       ax.plot( [ clon, clon ], [ clats, clate ], 
+                 color='r', linewidth=1.0, linestyle='dotted',
+                 transform=data_crs )
+
 
        for j in range( 2 ):
            ax.text( ctitx_l[j], 0.01, ctit_l[j],
@@ -483,6 +507,8 @@ INFO = { "TOP": TOP,
 
 
 hgt = 500.0
+hgt = 4000.0
+hgt = 8000.0
 
 
 clon = 139.8
@@ -497,10 +523,12 @@ CRS = 'MERID'
 
 
 nvar_l = [
+          #"dbz",
           "qv",
           "qh",
+          "w",
           "hdiv",
-          "t",
+#          "t",
          ]
 
 stime = datetime( 2019, 8, 24, 15, 25, 0 )
