@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, draw_rec_4p
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -18,7 +18,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
 
@@ -29,7 +29,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
     lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
-    mz1d, _, _ = read_obs_grads_latlon()
+    mz1d = INFO["obsz"]
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
     mask, mlon2d, mlat2d = read_mask_full()
@@ -232,6 +232,13 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
                color='k', fontsize=12, 
                bbox=bbox )
 
+       lon_l = [ 139.35, 139.9 ]
+       lat_l = [ 35.9, 36.22 ]
+
+       lon_l = [ 139.2, 139.7 ]
+       lat_l = [ 35.7, 36.1 ]
+#       draw_rec_4p( ax, lon_l=lon_l, lat_l=lat_l, lc='magenta', lw=2.0, 
+#                    transform=data_crs )
 
     ofig = "6p_obs_fcst_" + itime.strftime('%m%d') + ".png"
     print(ofig)
@@ -274,15 +281,22 @@ INFO = { "TOP": TOP,
          "lon2d": lon2d,
          "lat2d": lat2d,
          "cz": cz,
+         "olon2d": olon2d,
+         "olat2d": olat2d,
+         "obsz": obsz,
        }
 
 
 itime = datetime( 2019, 8, 19, 13, 30 )
-itime = datetime( 2019, 8, 24, 15, 30 )
+#itime = datetime( 2019, 8, 24, 15, 30 )
 
 tlev1 = 20
 tlev2 = 40
 tlev3 = 60
+
+tlev1 = 0
+tlev2 = 10
+tlev3 = 20
 
 time_l = [
           itime + timedelta( seconds=tlev1*30 ),

@@ -10,7 +10,7 @@ from matplotlib.colors import BoundaryNorm
 from tools_AIP import read_nc_topo, draw_rec, dist
 
 quick = False
-#quick = True
+quick = True
 
 def prep_map( ax, method='merc',lon_0=139.609, lat_0=35.861, 
               ll_lon=1, ur_lon=2,

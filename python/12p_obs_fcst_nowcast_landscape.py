@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_nowcast_hires, dbz2rain, draw_rec_4p
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_nowcast_hires, dbz2rain, draw_rec_4p, read_obs,read_mask
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False, 
           clon=139.75, clat=36.080 ):
@@ -31,11 +31,17 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
     rec_lone = 139.8
 
     # cross section
-    clons = 139.5 + 0.001
-    clone = 140.1 - 0.001
+#    clons = 139.5 + 0.001
+#    clone = 140.1 - 0.001
+#
+#    clats = 35.85 + 0.001 + 0.1
+#    clate = 36.25 - 0.001
+#  
+#    clats = 35.951 
+#    clate = 36.2
 
-    clats = 35.85 + 0.001 + 0.1
-    clate = 36.25 - 0.001
+    clats = 35.951 + 0.05
+    clate = 36.2   - 0.02
 
     # radar location
     lon_r = 139.609
@@ -44,13 +50,16 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
     lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
-    mz1d, _, _ = read_obs_grads_latlon()
+    mz1d = INFO["obsz"]
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
-    mask, mlon2d, mlat2d = read_mask_full()
+    #mask, mlon2d, mlat2d = read_mask_full()
+    mask = read_mask()
+    mlon2d = INFO["olon2d"]
+    mlat2d = INFO["olat2d"]
     mask2d = mask[mzidx,:,:]
 
-    fig = plt.figure( figsize=(13, 7) )
+    fig = plt.figure( figsize=(14, 7) )
     fig.subplots_adjust( left=0.3, bottom=0.03, right=0.96, top=0.97,
                          wspace=0.05, hspace=0.01)
  
@@ -71,7 +80,11 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
     time = datetime( 2019, 8, 24, 15, 0, 30 )
-    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time )
+    #obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time )
+    obs3d = read_obs( utime=time, mask=mask )
+    olon2d = INFO["olon2d"]
+    olat2d = INFO["olat2d"]
+    oz1d = INFO["obsz"]
     ozidx = np.argmin( np.abs( oz1d - hgt ) )
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
@@ -171,6 +184,18 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
     lats = flat2d[0,0] + 0.5 + 0.05
     late = flat2d[-2,-2] -0.05 - 0.08
  
+    print( lons, lone )
+    print( lats, late )
+
+    lons = 139.40159606933594 
+    lone = 139.9608367919922
+
+    lats = 35.84
+    late = 36.22
+
+    lons = 139.4
+    lone = 139.9
+
     xticks = np.arange( 134.0, 142, 0.2 )
     yticks = np.arange( 30.0, 45, 0.2 )
 
@@ -201,8 +226,9 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 #       ax.coastlines( color='k', linestyle='solid', linewidth=10.5, zorder=1 )
       
        if lab_ == "obs":
-          obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
-          obs3d[ obs3d == -9.99e33 ] = np.nan 
+          #obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
+          obs3d, _ = read_obs( utime=itime, mask=mask )
+#          obs3d[ obs3d == -9.99e33 ] = np.nan 
 #          obs2d_ = griddata( ( olon2d.ravel(), olat2d.ravel() ), 
 #                             obs3d[ozidx,:,:].ravel(),
 #                             (flon2d, flat2d),
@@ -210,6 +236,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 #                            )
 
           #var2d = np.where( ( imask2d < 1.0 ) , obs2d_, np.nan )
+          print( obs3d.shape )
+          print( mask.shape,  )
           var2d = np.where( ( mask[mzidx,:,:] < 1.0 ) , obs3d[ozidx,:,:], np.nan )
           x2d = ox2d
           y2d = oy2d
@@ -262,7 +290,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                           )
 
        ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
-                   fontsize=8, fmt='%.0f km', colors="k" )
+                   fontsize=10, fmt='%.0f km', colors="k" )
 
        if CRS and ( i <= 2 or ( i >= 4 and i <= 6 ) ):
 
@@ -294,7 +322,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
           va_l = [ "bottom", "top" ]
           for j in range( 2 ):
               print( clon )
-              ax.text( clon, clat_l[j] + dlat_l[j], ctit_l[j], 
+              ax.text( clon+0.01, clat_l[j] + dlat_l[j], ctit_l[j], 
                        fontsize=10,
                        ha='left',
                        va=va_l[j], 
@@ -324,7 +352,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                va='top', 
                ha='left',
                transform=ax.transAxes,
-               color='k', fontsize=10, 
+               color='k', fontsize=12, 
                bbox=bbox )
 
        vtime = itime + timedelta( seconds=tlev*30 )
@@ -333,7 +361,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                   va='bottom', 
                   ha='center',
                   transform=ax.transAxes,
-                  color='k', fontsize=11,
+                  color='k', fontsize=13,
                   #bbox=bbox, 
                   zorder=4 )
 
@@ -345,26 +373,30 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                   transform=ax.transAxes,
                   color='k', fontsize=10, )
 
-       if i % xfig == 0:
 
-          lon_l = [ rec_lons, rec_lone ]
-          lat_l = [ rec_lats, rec_late ]
+       if i % xfig == 0:
+          if i <= 5:
+             lon_l = [ rec_lons, rec_lone ]
+             lat_l = [ rec_lats, rec_late ]
+             draw_rec_4p( ax, lon_l=lon_l, lat_l=lat_l, 
+                    lc='magenta', lw=2.0, transform=data_crs )
    
-          draw_rec_4p( ax, lon_l=lon_l, lat_l=lat_l, lc='k', lw=2.0, transform=data_crs )
+   
 
           if lab_ == "obs":
-             tit = "MP-PAWR obs"
+             tit = "MP-PAWR\n obs"
           elif lab_ == "scale":
-             tit = "SCALE-LETKF forecast"
+             tit = "SCALE-LETKF\nforecast"
           elif lab_ == "nowcast":
-             tit = "JMA nowcast"
+             tit = "JMA\nnowcast"
 
-          ax.text( -0.3, 0.5, tit,
+          ax.text( -0.7, 0.5, tit,
                   va='center', 
-                  ha='right',
+                  ha='left',
                   transform=ax.transAxes,
-                  rotation=90,
-                  color='k', fontsize=13, )
+                  weight='bold',
+#                  rotation=90,
+                  color='k', fontsize=14, )
 
        if lab_ == "scale" or lab_ == "nowcast":
           if lab_ == "scale":
@@ -421,6 +453,9 @@ INFO = { "TOP": TOP,
          "gx": lon2d.shape[1],
          "lon2d": lon2d,
          "lat2d": lat2d,
+         "olon2d": olon2d,
+         "olat2d": olat2d,
+         "obsz": obsz,
          "cz": cz,
        }
 

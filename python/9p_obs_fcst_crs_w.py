@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_fcst_grads_all
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, read_fcst_grads_all, read_obs, read_mask
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
           CRS="ZONAL", lab_l=[], ores='500m', nvar="w" ):
@@ -32,6 +32,9 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
        clats = 35.85 + 0.001 + 0.1
        clate = 36.25 - 0.001
 
+       clats = 35.951 + 0.05
+       clate = 36.2   - 0.02
+
     # radar location
 
 
@@ -42,38 +45,38 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
     lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
-    mz1d, _, _ = read_obs_grads_latlon( ores=ores )
+    mz1d = INFO["obsz"]
+#    mz1d, _, _ = read_obs_grads_latlon( ores=ores )
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
-    mask_, mlon2d, mlat2d = read_mask_full()
+#    mask_, mlon2d, mlat2d = read_mask_full()
+    mask_ = read_mask()
+    mlon2d = INFO["olon2d"]
+    mlat2d = INFO["olat2d"]
     mask = mask_[:22,:,:]
     mask2d = mask[mzidx,:,:]
 
-    fig = plt.figure( figsize=(13, 8.5) )
-    fig.subplots_adjust( left=0.04, bottom=0.03, right=0.96, top=0.97,
-                         wspace=0.15, hspace=0.25 )
+    fig = plt.figure( figsize=(12, 8) )
+    fig.subplots_adjust( left=0.15, bottom=0.03, right=0.96, top=0.97,
+                         wspace=0.02, hspace=0.05 )
  
     # original data is lon/lat coordinate
 
-    yfig = 2
+    yfig = 3
     xfig = 3
     ax_l = []
     for i in range( 1, xfig*yfig+1 ):
        ax_l.append( fig.add_subplot( yfig,xfig,i, ) ) #projection=projection ) )
 
-#    ax_l = prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='merc', 
-#                         latitude_true_scale=lat_r )
  
-    res = '10m'
-    if quick:
-       res = '50m'
-
-    land = get_cfeature( typ='land', res=res )
-    coast = get_cfeature( typ='coastline', res=res )
 
 
     time = datetime( 2019, 8, 24, 15, 0, 30 )
-    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time, ores=ores )
+#    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time, ores=ores )
+    obs3d, _ = read_obs( utime=time, mask=mask_ )
+    olon2d = INFO["olon2d"]
+    olat2d = INFO["olat2d"]
+    oz1d = INFO["obsz"]
     ozidx = np.argmin( np.abs( oz1d - hgt ) )
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
@@ -131,7 +134,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
     bbox = { 'facecolor':'w', 'alpha':0.95, 'pad':0.5,
              'edgecolor':'w' }
 
-    pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(f)" ]
+    pnum_l = [ "(a)", "(b)", "(c)", "(d)", "(e)", "(f)",
+               '(g)', '(h)', '(i)' ]
 
 
 #    lons = flon2d[0,0]
@@ -173,42 +177,23 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
 
     for i, ax in enumerate( ax_l ):
 
-       if i == 1 or i == 4:
-          vtime = itime + timedelta( seconds=tlev*30 )
-          ax.text( 0.5, 1.01, vtime.strftime('Valid: %H:%M:%S UTC %m/%d') ,
+       if i <= 2:
+          vtime = time_l[i]
+          ax.text( 0.5, 1.01, vtime.strftime('%H:%M:%S') ,
                   va='bottom', 
                   ha='center',
                   transform=ax.transAxes,
                   color='k', fontsize=13, )
-#
-#       if i == 4:
-#          ax.axis( 'off' )
-#          continue
 
        itime = time_l[i]
        tlev = tlev_l[i]
        lab_ = lab_l[i]
 
-#       ax.set_extent([ lons, lone, lats, late ] )
-#       ax.add_feature( land, zorder=0 )
-#       ax.add_feature( coast, zorder=0 )
-#
-#       setup_grids_cartopy( ax, xticks=xticks, yticks=yticks, 
-#                            fs=8, lw=0.0 )
-
-#       ax.add_feature(cfeature.LAND, color='g') 
-#       ax.add_feature(cfeature.COASTLINE, linewidth=10.8)
-#       ax.coastlines( color='k', linestyle='solid', linewidth=10.5, zorder=1 )
       
        if lab_ == "obs": 
-          obs3d, _, _, _ = read_obs_grads( INFO, itime=itime, ores=ores )
-#          obs2d_ = griddata( ( olon2d.ravel(), olat2d.ravel() ), 
-#                             obs3d[ozidx,:,:].ravel(),
-#                             (flon2d, flat2d),
-#                             #method='cubic',
-#                             method='nearest',
-#                            )
-          obs3d[ obs3d == -9.99e33 ] = np.nan
+          #obs3d, _, _, _ = read_obs_grads( INFO, itime=itime, ores=ores )
+          #obs3d[ obs3d == -9.99e33 ] = np.nan
+          obs3d, _ = read_obs( utime=itime, mask=mask_ )
 
 
           if CRS == "ZONAL":
@@ -297,38 +282,28 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
           #ctit_l = [ "C", "D"]
           ctit_l = [ "A", "B"]
 
+       if i <= 5:
+          ax.tick_params( axis='x', labelsize=0 )
+       if i % 3 != 0:
+          ax.tick_params( axis='y', labelsize=0 )
+       
 
-       if i == 0 or i == 3:
-          ax.set_ylabel( ylab, fontsize=10 )
+       if i == 3:
+          ax.set_ylabel( ylab, fontsize=11 )
 
-#       ax.plot( lon_r, lat_r, ms=8.0, marker='o', color='r',
-#                 markeredgecolor='w', transform=data_crs, )
-#
-#       CONT = ax.contour( flon2d, flat2d, dist2d, 
-#                          levels=[20, 40, 60], zorder=1,
-#                          colors='k', linewidths=0.5,
-#                          linestyles='dashed',
-#                          transform=data_crs,
-#                          )
-#
-#       ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
-#                   fontsize=8, fmt='%.0f km', colors="k" )
-
-#       ax.plot( [ lons, lone ], [ clat, clat ], transform=data_crs, 
-#                linewidth=5.0, color='r',
-#                  )
   
-       if i== 2 or i == 5:
+       if i == ( 2*xfig - 1 ):
           pos = ax.get_position()
           cb_width = 0.006
-          cb_height = pos.height*0.9
-          ax_cb = fig.add_axes( [ pos.x1+0.002, pos.y0, #-cb_height*0.5, 
+          cb_height = pos.height*2.0
+          ax_cb = fig.add_axes( [ pos.x1+0.002, pos.y1-cb_height*0.75, 
                                   cb_width, cb_height] )
           cb = plt.colorbar( SHADE, cax=ax_cb, orientation='vertical',  
                              ticks=levs_dbz[::1], extend='both' )
           cb.ax.tick_params( labelsize=8 )
 
-          ax.text( 1.01, 0.99, "(dBZ)",
+       if i == ( xfig - 1):
+          ax.text( 1.01, 0.6, "(dBZ)",
                   va='top', 
                   ha='left',
                   transform=ax.transAxes,
@@ -339,18 +314,19 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
                va='top', 
                ha='left',
                transform=ax.transAxes,
-               color='k', fontsize=10, 
+               color='k', fontsize=12, 
                bbox=bbox )
 
-       for j in range( 2 ):
-           ax.text( ctitx_l[j], 0.01, ctit_l[j],
-                   va='bottom', 
-                   ha='center',
-                   transform=ax.transAxes,
-                   color='r', 
-                   fontsize=11, 
-                   bbox=bbox )
-    
+       if i >= xfig*2:
+          for j in range( 2 ):
+              ax.text( ctitx_l[j], 0.01, ctit_l[j],
+                      va='bottom', 
+                      ha='center',
+                      transform=ax.transAxes,
+                      color='r', 
+                      fontsize=11, 
+                      bbox=bbox )
+       
 
 
        if i == 2:
@@ -365,25 +341,38 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
                   transform=ax.transAxes,
                   color='k', fontsize=10, )
 
-       if lab_ == "obs":
-          tit = "MP-PAWR obs"
-       else:
-          tit = "Forecast (FT={0:.1f} min)".format( tlev*30/60 )
+       if lab_ != "obs":
+          tit = "FT={0:.1f} min".format( tlev*30/60 )
           vtime = itime + timedelta( seconds=tlev*30 )
           print( "vtime for SCALE", vtime )
    
-       ax.text( 0.5, 0.99, tit,
-               va='top', 
-               ha='center',
-               transform=ax.transAxes,
-               color='k', fontsize=12, 
-               bbox=bbox )
+          ax.text( 0.5, 0.99, tit,
+                  va='top', 
+                  ha='center',
+                  transform=ax.transAxes,
+                  color='k', fontsize=12, 
+                  bbox=bbox )
+
+       if i % 3 == 0:
+          if lab_ == "obs":
+             tit_ = "MP-PAWR\nobs"
+          else:
+             tit_ = "SCALE-LETKF\nforecast\ninit:{0:}".format( itime.strftime('%H:%M:%S' ) )
+
+          ax.text( -0.55, 0.5, tit_,
+                  va='center', 
+                  ha='left',
+                  weight='bold',
+                  transform=ax.transAxes,
+                  color='k', fontsize=13, )
+
+
 
     cll = clat
     if CRS == "MERID":
        cll = clon
 
-    ofig = "6p_obs_fcst_w_crs_{0:}_{1:}_cll{2:.3f}_{3:}.png".format(  itime.strftime('%m%d'), CRS, cll, time_l[3].strftime('%m%d%H%M%S') )
+    ofig = "9p_obs_fcst_w_crs_{0:}_{1:}_cll{2:.3f}_{3:}.png".format(  itime.strftime('%m%d'), CRS, cll, time_l[3].strftime('%m%d%H%M%S') )
     print(ofig)
 
     if not quick:
@@ -424,6 +413,9 @@ INFO = { "TOP": TOP,
          "lon2d": lon2d,
          "lat2d": lat2d,
          "cz": cz,
+         "olon2d": olon2d,
+         "olat2d": olat2d,
+         "obsz": obsz,
          "fcst_zmax": fcst_zmax,
        }
 
@@ -489,40 +481,36 @@ sitime2 = datetime( 2019, 8, 24, 15, 25, 0 )
 
 
 vtime1 = datetime( 2019, 8, 24, 15, 30, 0 )
-vtime2 = datetime( 2019, 8, 24, 15, 40, 0 )
+vtime2 = datetime( 2019, 8, 24, 15, 35, 0 )
+vtime3 = datetime( 2019, 8, 24, 15, 40, 0 )
 sitime1 = datetime( 2019, 8, 24, 15, 30, 0 )
 sitime2 = datetime( 2019, 8, 24, 15, 25, 0 )
 
-tlev_l = [ 0, 0, 10, 
-           0, 20, 30, ]
+
+lab_l = [ lab_p, lab_p, lab_p, 
+          lab_s, lab_s, lab_s, 
+          lab_s, lab_s, lab_s, 
+        ]
+
+
+tlev_l = [ 0, 0, 0, 
+           0, 10, 20,
+           10, 20, 30,
+          ]
 
 time_l = [
           vtime1, 
+          vtime2, 
+          vtime3, 
+          sitime1, # scale
+          sitime1, # scale
           sitime1, # scale
           sitime2, # scale
-          vtime2,
-          sitime1, # scale
+          sitime2, # scale
           sitime2, # scale
          ]
 
 
-#lab_l = [ lab_s, lab_s, lab_s, 
-#          lab_s, lab_s, lab_s, 
-#        ]
-#
-#
-#stime = datetime( 2019, 8, 24, 15, 30, 0 )
-#vtime = datetime( 2019, 8, 24, 15, 30, 0 )
-#time_l = [ stime, 
-#           stime - timedelta( seconds=60*1 ), 
-#           stime - timedelta( seconds=60*2 ), 
-#           stime - timedelta( seconds=60*3 ), 
-#           stime - timedelta( seconds=60*4 ), 
-#           stime - timedelta( seconds=60*5 ), 
-#         ]
-#for i, stime_ in enumerate( time_l ):
-#    tlev_l[i] = int( ( vtime - stime_ ).total_seconds() / 30 )
-##    tlev_l[i] = 0
 
 clon = 139.75
 clat = 36.09

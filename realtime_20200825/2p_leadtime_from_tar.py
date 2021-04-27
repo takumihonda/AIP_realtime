@@ -8,7 +8,7 @@ import glob
 import tarfile
 
 quick = False
-#quick = True
+quick = True
 
 path = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_20200825"
 path_a = "/data_ballantine02/miyoshi-t/amemiya/SCALE-LETKF-rt-archive/result/ope/d4_500m"

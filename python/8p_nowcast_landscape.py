@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_nowcast_hires, dbz2rain, draw_rec_4p, read_obs,read_mask
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_nowcast_hires, dbz2rain, draw_rec_4p
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -26,7 +26,6 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
     rec_lats = 36.05
     rec_late = 36.1
-#    rec_late = 36.15
    
     rec_lons = 139.7
     rec_lone = 139.8
@@ -37,9 +36,6 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
     clats = 35.85 + 0.001 + 0.1
     clate = 36.25 - 0.001
-  
-    clats = 35.951 
-    clate = 36.2
 
     # radar location
     lon_r = 139.609
@@ -48,24 +44,21 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
     lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
-    mz1d = INFO["obsz"]
+    mz1d, _, _ = read_obs_grads_latlon()
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
-    #mask, mlon2d, mlat2d = read_mask_full()
-    mask = read_mask()
-    mlon2d = INFO["olon2d"]
-    mlat2d = INFO["olat2d"]
+    mask, mlon2d, mlat2d = read_mask_full()
     mask2d = mask[mzidx,:,:]
 
-    fig = plt.figure( figsize=(14, 7) )
-    fig.subplots_adjust( left=0.3, bottom=0.03, right=0.96, top=0.97,
+    fig = plt.figure( figsize=(16, 6) )
+    fig.subplots_adjust( left=0.3, bottom=0.1, right=0.96, top=0.97,
                          wspace=0.05, hspace=0.01)
  
     # original data is lon/lat coordinate
     data_crs = ccrs.PlateCarree()
 
     xfig = 4
-    yfig = 3
+    yfig = 2
     ax_l = prep_proj_multi_cartopy( fig, xfig=xfig, yfig=yfig, proj='merc', 
                          latitude_true_scale=lat_r )
  
@@ -78,11 +71,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
     time = datetime( 2019, 8, 24, 15, 0, 30 )
-    #obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time )
-    obs3d = read_obs( utime=time, mask=mask )
-    olon2d = INFO["olon2d"]
-    olat2d = INFO["olat2d"]
-    oz1d = INFO["obsz"]
+    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time )
     ozidx = np.argmin( np.abs( oz1d - hgt ) )
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
@@ -183,20 +172,16 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
     late = flat2d[-2,-2] -0.05 - 0.08
  
 
-    lons = 139.40159606933594 
-    lone = 139.9608367919922
-
     lats = 35.84
     late = 36.22
 
     lons = 139.4
     lone = 139.9
 
+
     xticks = np.arange( 134.0, 142, 0.2 )
     yticks = np.arange( 30.0, 45, 0.2 )
 
-    lon_l = [ rec_lons, rec_lone ]
-    lat_l = [ rec_lats, rec_late ]
 
     for i, ax in enumerate( ax_l ):
 
@@ -212,7 +197,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
        xfs = 0
        if i % xfig == 0:
           yfs = 10
-       if i >= (xfig*2):
+       if i >= (xfig*1):
           xfs = 10
 #       yfs = 10
 #       xfs = 10
@@ -224,9 +209,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 #       ax.coastlines( color='k', linestyle='solid', linewidth=10.5, zorder=1 )
       
        if lab_ == "obs":
-          #obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
-          obs3d, _ = read_obs( utime=itime, mask=mask )
-#          obs3d[ obs3d == -9.99e33 ] = np.nan 
+          obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
+          obs3d[ obs3d == -9.99e33 ] = np.nan 
 #          obs2d_ = griddata( ( olon2d.ravel(), olat2d.ravel() ), 
 #                             obs3d[ozidx,:,:].ravel(),
 #                             (flon2d, flat2d),
@@ -286,7 +270,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                           )
 
        ax.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
-                   fontsize=10, fmt='%.0f km', colors="k" )
+                   fontsize=8, fmt='%.0f km', colors="k" )
 
        if CRS and ( i <= 2 or ( i >= 4 and i <= 6 ) ):
 
@@ -317,7 +301,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
           dlat_l = [ -0.0, 0.0 ]
           va_l = [ "bottom", "top" ]
           for j in range( 2 ):
-              ax.text( clon+0.01, clat_l[j] + dlat_l[j], ctit_l[j], 
+              print( clon )
+              ax.text( clon, clat_l[j] + dlat_l[j], ctit_l[j], 
                        fontsize=10,
                        ha='left',
                        va=va_l[j], 
@@ -350,15 +335,13 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                color='k', fontsize=10, 
                bbox=bbox )
 
-#       vtime = itime + timedelta( seconds=tlev*30 )
-#       if i < xfig:
-#          ax.text( 0.5, 1.01, vtime.strftime('%H:%M:%S UTC') ,
-#                  va='bottom', 
-#                  ha='center',
-#                  transform=ax.transAxes,
-#                  color='k', fontsize=13,
-#                  #bbox=bbox, 
-#                  zorder=4 )
+       vtime = itime + timedelta( seconds=tlev*30 )
+       ax.text( 0.5, 1.01, vtime.strftime('%H:%M:%S UTC') ,
+               va='bottom', 
+               ha='center',
+               transform=ax.transAxes,
+               color='k', fontsize=13,
+               zorder=4 )
 
 
        if i == 3:
@@ -368,36 +351,34 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
                   transform=ax.transAxes,
                   color='k', fontsize=10, )
 
-       draw_rec_4p( ax, lon_l=lon_l, lat_l=lat_l, lc='magenta', lw=2.0, transform=data_crs )
-
-
        if i % xfig == 0:
 
           lon_l = [ rec_lons, rec_lone ]
           lat_l = [ rec_lats, rec_late ]
    
+#          if i <= 5:
+#             draw_rec_4p( ax, lon_l=lon_l, lat_l=lat_l, lc='magenta', lw=2.0, transform=data_crs )
+
           if lab_ == "obs":
              tit = "MP-PAWR\n obs"
           elif lab_ == "scale":
              tit = "SCALE-LETKF\nforecast"
           elif lab_ == "nowcast":
-             tit = "JMA\nnowcast"
+             tit = "JMA nowcast\ninit: {0:}".format( itime.strftime('%H:%M:%S') )
 
           ax.text( -0.7, 0.5, tit,
-                  va='center', 
+                  va='bottom', 
                   ha='left',
                   transform=ax.transAxes,
-                  weight='bold',
 #                  rotation=90,
+                  weight='bold',
                   color='k', fontsize=14, )
 
-       if lab_ == "scale" or lab_ == "nowcast" or lab_ == "obs":
+       if lab_ == "scale" or lab_ == "nowcast":
           if lab_ == "scale":
              tit = "FT={0:.1f} min".format( tlev*30/60 )
           elif lab_ == "nowcast":
              tit = "FT={0:.1f} min".format( tlev*30/60 )
-          elif lab_ == "obs":
-             tit = itime.strftime('%H:%M:%S')
       
           ax.text( 0.5, 0.98, tit,
                   va='top', 
@@ -408,7 +389,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
 
-    ofig = "12p_obs_{0:}_lats{1:.2f}_late{2:.2f}_landscape_stime{3:}.png".format( itime.strftime('%m%d'), rec_lats, rec_late, time_l[4].strftime('%m%d%H%M%S')  )
+    ofig = "8p_nowcast_{0:}_landscape_stime{1:}.png".format( itime.strftime('%m%d'),  time_l[4].strftime('%m%d%H%M%S')  )
     print(ofig)
 
     if not quick:
@@ -448,9 +429,6 @@ INFO = { "TOP": TOP,
          "gx": lon2d.shape[1],
          "lon2d": lon2d,
          "lat2d": lat2d,
-         "olon2d": olon2d,
-         "olat2d": olat2d,
-         "obsz": obsz,
          "cz": cz,
        }
 
@@ -459,8 +437,6 @@ itime = datetime( 2019, 8, 19, 13, 30 )
 itime = datetime( 2019, 8, 24, 15, 30 )
 sitime = datetime( 2019, 8, 24, 15, 30 )
 
-#itime = datetime( 2019, 8, 24, 15, 25 )
-#sitime = datetime( 2019, 8, 24, 15, 25 )
 
 tlev1 = 0
 tlev2 = 10
@@ -472,34 +448,27 @@ stlev2 = 10
 stlev3 = 20
 stlev4 = 30
 
-time_l = [
-          itime + timedelta( seconds=tlev1*30 ),
-          itime + timedelta( seconds=tlev2*30 ),
-          itime + timedelta( seconds=tlev3*30 ),
-          itime + timedelta( seconds=tlev4*30 ),
-          sitime,  # SCALE
-          sitime,  # SCALE
-          sitime,  # SCALE
-          sitime,  # SCALE
-          itime,  # nowcast
-          itime,  # nowcast
-          itime,  # nowcast
-          itime,  # nowcast
-         ]
+itime1 = datetime( 2019, 8, 24, 15, 25 )
+itime2 = datetime( 2019, 8, 24, 15, 35 )
 
-time_l = []
-for i in range( 12 ):
-    dt = timedelta( seconds=30*i*4)
-    time_l.append( itime + dt )
+time_l = [
+          itime1,  # nowcast
+          itime1,  # nowcast
+          itime1,  # nowcast
+          itime1,  # nowcast
+          itime2,  # nowcast
+          itime2,  # nowcast
+          itime2,  # nowcast
+          itime2,  # nowcast
+         ]
 
 
 
 hgt = 2000.0
 
-tlev_l = [ 0, 0, 0, 0, 
-           0, 0, 0, 0,
-           0, 0, 0, 0,
-           #tlev1, tlev2, tlev3, tlev4, 
+tlev_l = [ 
+           0, 10, 20, 30, 
+           0, 10, 20, 30, 
          ]
 
 
@@ -510,15 +479,15 @@ lab_p = "obs"
 lab_n = "nowcast"
 lab_s = "scale"
 
-lab_l = [ lab_p, lab_p, lab_p, lab_p,
-          lab_p, lab_p, lab_p, lab_p,
-          lab_p, lab_p, lab_p, lab_p,
+lab_l = [ 
+          lab_n, lab_n, lab_n, lab_n,
+          lab_n, lab_n, lab_n, lab_n,
         ]
 
 clon = 139.75
 clat = 36.080
 clat = 36.09
 
-CRS = True
+CRS = False
 main( INFO, time_l=time_l, hgt=hgt, tlev_l=tlev_l, lab_l=lab_l, CRS=CRS )
 

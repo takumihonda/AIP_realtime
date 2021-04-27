@@ -919,8 +919,8 @@ def get_cfeature( typ='land', res='10m' ):
     return( feature )
 
 def setup_grids_cartopy( ax, xticks=np.array([]), yticks=np.array([]), lw=0.5, 
-                         fs=10, fc='k', xfs=-1, yfs=-1 ):
-       gl = ax.gridlines( crs=ccrs.PlateCarree(), linewidth=lw, 
+                         fs=10, fc='k', xfs=-1, yfs=-1, color='k' ):
+       gl = ax.gridlines( crs=ccrs.PlateCarree(), linewidth=lw, color=color,
                           draw_labels=True  )
        gl.xlabels_top = False
        gl.ylabels_right = False 
@@ -943,10 +943,10 @@ def setup_grids_cartopy( ax, xticks=np.array([]), yticks=np.array([]), lw=0.5,
        gl.xlabel_style = {'size': xfs, 'color': fc, }
        gl.ylabel_style = {'size': yfs, 'color': fc, }
 
-def prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='none', latitude_true_scale=35.0 ):
+def prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='none', latitude_true_scale=35.0, central_longitude=130.0 ):
 
-    if proj == 'none':
-       projection = ccrs.PlateCarree()
+    if proj == 'none' or 'PlateCarree':
+       projection = ccrs.PlateCarree( central_longitude=central_longitude, )
 
     elif proj == 'merc':
        projection = ccrs.Mercator( latitude_true_scale=latitude_true_scale, ) 
@@ -1009,7 +1009,7 @@ def read_ga_grads_dbz( INFO, itime=datetime(2019,9,3,2,0,0), typ="g" ):
        return( None, False )
        sys.exit()
 
-    print( fn )
+#    print( fn )
     gz = 60
     gx = INFO["gx"]
     gy = INFO["gy"]
@@ -1043,6 +1043,7 @@ def draw_rec_4p( ax, lon_l=[], lat_l=[], lc='k', lw=1.0, transform=None ):
 
     ax.plot( [ lon_l[1], lon_l[1] ], [ lat_l[0], lat_l[1] ],  color=lc, lw=lw, 
              transform=transform )
+
     ax.plot( [ lon_l[0], lon_l[1] ], [ lat_l[0], lat_l[0] ],  color=lc, lw=lw, 
              transform=transform )
 
@@ -1057,6 +1058,15 @@ def draw_rec_4p( ax, lon_l=[], lat_l=[], lc='k', lw=1.0, transform=None ):
 #
 #    x, y = m( lon2d[:,-1], lat2d[:,-1] )
 #    ax.plot( x, y, color=lc, lw=lw )
+
+def read_fcst_qh_grads_all( INFO, itime=datetime( 2019,8,24,15,30,0 ), tlev=0, FT0=True ):
+
+    qh = read_fcst_grads_all( INFO, itime=itime, tlev=tlev, FT0=FT0, nvar="qc" ) 
+    for nvar in [ "qr", "qi", "qs", "qg" ]:
+        qh += read_fcst_grads_all( INFO, itime=itime, tlev=tlev, FT0=FT0, nvar=nvar ) 
+
+    return( qh )
+
 
 #############################
 if __name__ == "__main__":

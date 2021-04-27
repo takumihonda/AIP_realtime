@@ -9,8 +9,8 @@ from tools_AIP import read_obs, read_mask, read_nc_lonlat, read_fcst_grads, read
 
 PLOT = True
 quick = True
-PLOT = False
-quick = False
+#PLOT = False
+#quick = False
 
 REGION = True
 REGION = False
@@ -259,8 +259,9 @@ EXP = "D4_500m_H4V1"
 EXP = "D4_500m_H8V8"
 
 EXP = "D4_500m_CTRL_NOCLRZ"
-EXP = "D4_500m_CTRL_NOVR"
 EXP = "D4_500m_CTRL"
+EXP = "D4_500m_CTRL_MELT"
+EXP = "D4_500m_CTRL_NOVR"
 
 theight = 3000.0
 #theight = 6000.0
@@ -269,10 +270,11 @@ theight = 3000.0
 #etime = stime
 stime = datetime( 2019, 8, 24, 15, 0, 30 )
 etime = datetime( 2019, 8, 24, 16, 0, 0 )
+stime = etime
 
-stime = datetime( 2019, 8, 24, 15, 20, 0 )
-etime = datetime( 2019, 8, 24, 15, 40, 0 )
-etime = stime
+#stime = datetime( 2019, 8, 24, 15, 20, 0 )
+#etime = datetime( 2019, 8, 24, 15, 40, 0 )
+#etime = stime
 
 #stime = datetime( 2019, 8, 19, 13, 0, 30 )
 #etime = datetime( 2019, 8, 19, 14, 0, 0 )
@@ -351,8 +353,9 @@ while (time <= etime):
       ts_l_, bs_l_, stat = main( INFO, itime=time, tlev=tlev, theight=theight, 
                             dbz_thrs_l=dbz_thrs_l, lons=lons, lone=lone, lats=lats, late=late )
 
-      ts_l[i,:] = ts_l_
-      bs_l[i,:] = bs_l_
+      if stat:
+         ts_l[i,:] = ts_l_
+         bs_l[i,:] = bs_l_
 
       print( ts_l_, i )
       ftime_l.append( time + timedelta(seconds=int( tlev*30 )) )

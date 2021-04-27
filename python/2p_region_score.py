@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 
 from tools_AIP import read_obs, read_mask, read_nc_lonlat, read_fcst_grads, read_obs_grads_latlon, read_fcst_grads_all
 
+quick = False
+#quick = True
 
 ###########
 
@@ -114,11 +116,18 @@ while (time <= etime):
   print( tlev, time, vtime)
 
   dbz = 30.0
-  fn_ts = "TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}_lon{3:.2f}-{4:.2f}_lat{5:.2f}-{6:.2f}.npz".format( dbz, theight, time.strftime('%H%M%S_%Y%m%d'), lons, lone, lats, late )
+#  fn_ts = "TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}_lon{3:.2f}-{4:.2f}_lat{5:.2f}-{6:.2f}.npz".format( dbz, theight, time.strftime('%H%M%S_%Y%m%d'), lons, lone, lats, late )
+  fn_ts = "TS_3d_thrs{0:.1f}dbz_i{1:}_lon{2:.2f}-{3:.2f}_lat{4:.2f}-{5:.2f}.npz".format( dbz, time.strftime('%H%M%S_%Y%m%d'), lons, lone, lats, late )
 
   fn = os.path.join( odir, fn_ts )
-  dat = np.load( fn )[ 'ts' ]
-  ts_l.append( dat[tlev] )
+  try:
+    dat = np.load( fn )[ 'ts' ]
+    ts_l.append( dat[tlev] )
+  except:
+    print( 'Failed to read. Skip')
+    sys.exit()
+    time += timedelta(seconds=30)
+    continue
 
 
   w3d = read_fcst_grads_all( INFO, itime=time, tlev=tlev , FT0=True, nvar="w" ) 
@@ -136,7 +145,7 @@ while (time <= etime):
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-fig, (ax1) = plt.subplots(1, 1, figsize=(8,6) )
+fig, (ax1) = plt.subplots(1, 1, figsize=(7,5) )
 fig.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.9, )
 
 
@@ -161,6 +170,22 @@ ax1.set_xlabel( 'Forecast initial time (UTC)', fontsize=12 )
 ax1.set_ylim( 0.0, 0.99 )
 ax2.set_ylim( 2, 14 )
 
+ax1.vlines( x=datetime( 2019, 8, 24, 15, 25, 0) , ymin=0.0, ymax=0.99, colors='gray', ls='dashed',
+        lw=0.5)
+
+ax1.annotate('', xy=[ datetime( 2019, 8, 24, 15, 25, 0), 0.1], 
+                 xytext=[ datetime( 2019, 8, 24, 15, 30, 0), 0.1], 
+            arrowprops=dict( arrowstyle='<->',
+                             #shrink=0, width=1, headwidth=8, 
+                             #headlength=10, 
+                             connectionstyle='arc3',
+                             facecolor='gray', edgecolor='gray')
+           )
+ax1.text( datetime( 2019, 8, 24, 15, 27, 30), 0.11, 'JMA nowcast\n updated every 5 min',
+         fontsize=12, #transform=ax.transAxes,
+         ha='center',
+         va='bottom' )
+
 ax1.set_ylabel( 'Threat score', fontsize=12 )
 ax2.set_ylabel( r'Wmax (m s$^{-1}$)', fontsize=12 )
 ax2.yaxis.label.set_color( color_l[1] )
@@ -170,7 +195,18 @@ ax2.legend( loc='upper left', fontsize=12, bbox_to_anchor=(0, 0.9), )
 ax2.tick_params(axis='y', colors=color_l[1] )
 fig.suptitle( 'Threat score and Wmax\nvalid at {0:}'.format( vtime.strftime('%H:%M:%S %m/%d/%Y') ), fontsize=13)
 
-plt.show()
+ofig = "2p_scores.png"
+print(ofig)
+
+if not quick:
+   opath = "png"
+   ofig = os.path.join(opath, ofig)
+   plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
+   print(ofig)
+   plt.clf()
+else:
+   plt.show()
+
 
 
 #fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.0,4) )

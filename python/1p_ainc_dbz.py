@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 def read_qh_grads_all( INFO, itime=datetime( 2019,8,24,15,30,0 ), typ='g'):
 
