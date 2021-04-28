@@ -326,7 +326,7 @@ def main( stime=datetime( 2019, 8, 24, 15, 30), ft=timedelta(minutes=5) ):
 
     fig.suptitle( tit, fontsize=16 )
 
-    ofig = "3p_s{0:}_FT{1:0=2}m_hires".format( stime.strftime('%Y%m%d%H%M%S'), int( fts / 60 ) )
+    ofig = "report_3p_s{0:}_FT{1:0=2}m_hires".format( stime.strftime('%Y%m%d%H%M%S'), int( fts / 60 ) )
     print( ofig )
 
     if not quick:
@@ -334,7 +334,7 @@ def main( stime=datetime( 2019, 8, 24, 15, 30), ft=timedelta(minutes=5) ):
        opath = "png/3p_press_hires"
        os.makedirs(opath, exist_ok=True)
  
-       ofig = os.path.join(opath, ofig + ".png")
+       ofig = os.path.join(opath, ofig + ".pdf")
        plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
        print(ofig)
        plt.clf()
@@ -349,8 +349,8 @@ def main( stime=datetime( 2019, 8, 24, 15, 30), ft=timedelta(minutes=5) ):
 
 stime = datetime( 2019, 8, 24, 15, 30, 0 ) 
 
-ft = 0
-while ft <= 30:
+ft = 10
+while ft <= 10:
    ft_ = timedelta( minutes=ft )
    main( stime=stime, ft=ft_ )
 

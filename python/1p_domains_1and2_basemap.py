@@ -124,8 +124,8 @@ def main():
        yloc = np.max(lat2d_) + 1
 
        if dom == 4:
-          fc = 'b'
-          lc = 'b'
+          fc = 'r'
+          lc = 'r'
           yloc = np.min(lat2d_) - 3
 
        x2, y2 = m( lon2d_, lat2d_ )
@@ -152,7 +152,7 @@ def main():
                 transform=ax.transData,
                 bbox=bbox )
 
-    ofig = 'doms_1and2_basemap.png'
+    ofig = 'report_doms_1and2_basemap.png'
 
     print( ofig )
     if quick:
