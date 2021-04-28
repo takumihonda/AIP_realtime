@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 def read_qh_grads_all( INFO, itime=datetime( 2019,8,24,15,30,0 ), typ='g'):
 
@@ -83,6 +83,9 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
     time = datetime( 2019, 8, 24, 15, 0, 30 )
     obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=otime )
     ozidx = np.argmin( np.abs( oz1d - hgt ) )
+
+    
+
 #    mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
     olen2 = olat2d.shape[1] // 2
@@ -111,6 +114,21 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
 
     dist2d = np.sqrt( np.square(i2d) + np.square(j2d) )
 
+    # for pcolor mesh
+    fxlen2 = flon2d.shape[0] // 2
+    fylen2 = flon2d.shape[1] // 2
+    fxlen = flon2d.shape[0] 
+    fylen = flon2d.shape[1] 
+    fx2d = flon2d - ( flon2d[fxlen2+1,fylen2] - flon2d[fxlen2,fylen2] )
+    fy2d = flat2d - ( flat2d[fxlen2,fylen2+1] - flat2d[fxlen2,fylen2] )
+
+    # for pcolor mesh
+    oxlen2 = olon2d.shape[0] // 2
+    oylen2 = olon2d.shape[1] // 2
+    oxlen = olon2d.shape[0] 
+    oylen = olon2d.shape[1] 
+    ox2d_ = olon2d - ( olon2d[oxlen2+1,oylen2] - olon2d[oxlen2,oylen2] )
+    oy2d_ = olat2d - ( olat2d[oxlen2,oylen2+1] - olat2d[oxlen2,oylen2] )
 
     #levs_w = np.arange( -1, 1.2, 0.2)
     levs_w = [ -1., -0.8, -0.6, -0.4, -0.2, 0.2, 0.4, 0.6, 0.8, 1.0] 
@@ -281,10 +299,10 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
        if i <= 2:
           yfac = 1.0
           var2d = var3d[fzidx,:,:]
-          x2d, y2d = flon2d, flat2d 
+          x2d, y2d = fx2d, fy2d 
 
           ovar2d = obs3d[ozidx,:,:]
-          ox2d, oy2d = olon2d, olat2d 
+          ox2d, oy2d = ox2d_, oy2d_ 
        else:
           yfac = 1.e-3
           if CRS == "ZONAL":
@@ -294,12 +312,14 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
    
           elif CRS == "MERID":
              var2d = var3d[:,:,fxidx ]
-             x2d, y2d = np.meshgrid( flat2d[:,fxidx], 
+             x2d, y2d = np.meshgrid( fy2d[:,fxidx], 
                                      fz1d - dfz1d )   # pcolormesh
    
              ovar2d = obs3d[:,:,oxidx ]
-             ox2d, oy2d = np.meshgrid( olat2d[:,oxidx], 
-                                       oz1d  )
+             ox2d, oy2d = np.meshgrid( olat2d[:,oxidx] - ( olat2d[1,oxidx] - olat2d[0,oxidx] ), # pcolormesh
+                                     oz1d - ( oz1d[1] - oz1d[0] ) * 0.5 )                     # pcolormesh
+#             ox2d, oy2d = np.meshgrid( olat2d[:,oxidx], 
+#                                       oz1d  )
 
        xlen = x2d.shape[0] 
        ylen = x2d.shape[1] 
@@ -313,9 +333,14 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
                        )
  
        # draw obs
-       CONT = ax.contour( ox2d, oy2d*yfac, ovar2d,
-                          levels=[ 15, 30, 45 ],
-                          linewidths=0.5, colors='k' )
+#       CONT = ax.contour( ox2d, oy2d*yfac, ovar2d,
+#                          levels=[ 20, ],
+#                          linewidths=0.5, colors='k' )
+       ovar2d[ ovar2d<20.0] = np.nan
+       ocmap = mcolors.ListedColormap( ['w', 'gray', ] )
+       OPLOT = ax.pcolormesh( ox2d, oy2d*yfac, ovar2d,
+                             vmin=15, vmax=20, cmap=ocmap, alpha=0.1,
+                             edgecolors='face', linewidths=0.0 )
 
        ctitx_l = [ 0.03, 0.97 ]
 
