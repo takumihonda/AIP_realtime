@@ -5,7 +5,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 
 quick = False
-quick = True
+#quick = True
 
 def prep_dat( stime=datetime( 2020, 8, 27, 0, 0 ), etime=datetime( 2020, 8, 28, 0, 0 ), 
               dtmin=1 ):
@@ -121,17 +121,17 @@ d1c_node = 156
 stime1 = stime + timedelta( minutes=40 )
 
 # D1/D2 fcst
-min_d12 = 45
+min_d12 = 30
 d12_node = 182
 d12it = 2
 
 # D3 fcst
-min_d3 = 45
+min_d3 = 105
 d3_node = 208
 d3it = 1
 
 # D4 init
-min_d4i = 10
+min_d4i = 15
 d4i_node = 208
 d4it = 4
 
