@@ -13,7 +13,7 @@ from scipy.interpolate import griddata
 
 
 quick = True
-quick = False
+#quick = False
 
 def main( INFO, itime_l=[], EXP_l=[], tit_l=[] ):
 

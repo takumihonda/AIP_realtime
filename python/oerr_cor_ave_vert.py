@@ -11,6 +11,7 @@ quick = True
 #quick = False
 
 AVE = False
+#AVE = True
 
 
 
@@ -29,12 +30,12 @@ def main( otyp=4002,
    fig, (ax1) = plt.subplots(1, 1, figsize=(7,4))
    fig.subplots_adjust(left=0.1, bottom=0.12, right=0.98, top=0.9, )
 
-   ax1.set_ylim( 0.0, 1.0 )
+   ax1.set_ylim( -1.0, 1.0 )
 
    if AVE:
 
       cor1d, cnt1d, oerr, x1d = read_oerr_npz( range_inl=range_inl, elv_inl=elv_inl, dr=dr, de=de, mode=mode,
-                                azm_inl=azm_inl, da=da, DR=DR, exp=exp, oytp=otyp )
+                                azm_inl=azm_inl, da=da, DR=DR, exp=exp, otyp=otyp )
    
    
       print( cor1d )
@@ -55,6 +56,8 @@ def main( otyp=4002,
       min_ = -dx * np_
       max_ = dx * np_ + dx
       pdist1d = np.arange( min_, max_, dx )
+
+      center = int( ( pdist1d.shape[0] - 1 ) / 2 )
 
       cor1d = np.zeros( pdist1d.shape )
       cnt1d = np.zeros( pdist1d.shape )
@@ -84,6 +87,7 @@ def main( otyp=4002,
       for i, range_in_ in enumerate( range_inl ):
           ii = i + 1
           range_inl_ = [ range_in_ ]
+          print( i )
 
           cor1d_, cnt1d_, oerr_, x1d_ = read_oerr_npz( range_inl=range_inl_, elv_inl=elv_inl, dr=dr, de=de, mode=mode,
                                      azm_inl=azm_inl, da=da, DR=DR, 
@@ -92,6 +96,7 @@ def main( otyp=4002,
           x1d_ = np.sin( np.deg2rad( x1d_ ) ) * range_in_ * DR # [m]
           idx1d_ = ( np.round( x1d_ / dx ) + np_ ).astype( int ) # index for plot distance array
 
+#          idx1d_ = np.where( idx1d_ < center, center-idx1d_+center, idx1d_ )
 
           len2 = len( cor1d_ ) // 2 
           cor1d[ idx1d_] += cor1d_ * cnt1d_
@@ -131,6 +136,7 @@ def main( otyp=4002,
              else:
                lc = 'k'
 
+             print( pcor1d[:] )
              ax1.plot( pdist1d_, pcor1d, label=label, 
                        color=lc, lw=lw )
 
@@ -197,11 +203,9 @@ etime = datetime( 2019, 8, 24, 16, 0, 0 )
 
 de = 1
 da = 1
-
 dr = 1
 rskip = 10
 
-dr = 1
 rskip = 8
 rskip = 16
 rskip = 32
@@ -210,15 +214,15 @@ rskip = 128
 
 
 range_inl = np.arange( 40, 120+dr, dr )
-#range_inl = np.arange( 40, 100+dr, dr )
 elv_inl = np.arange( 1, 60+de, de )
 azm_inl = np.arange( 0, 360, da )
 
 
 mode = "az"
-#mode = "el"
+mode = "el"
 #mode = "ra"
 
+range_inl = np.arange( 60, 60+dr, dr ) # debug
 
 main( otyp=otyp, exp=exp, 
       range_inl=range_inl, elv_inl=elv_inl, azm_inl=azm_inl, dr=dr, de=de, da=da, mode=mode,

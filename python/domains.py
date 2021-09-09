@@ -121,7 +121,7 @@ def main( dom=1, bar=False ):
        if dom == 3:
           lc = 'r'
           x_r, y_r = m( lon_r, lat_r )
-          ax1.plot( x_r, y_r, ms=4.0, marker='o', color='r',
+          ax1.plot( x_r, y_r, ms=8.0, marker='o', color='r',
                     markeredgecolor='w' )
        draw_rec( ax1, m, lon2d_2, lat2d_2, lw=lw, lc=lc )
 

@@ -17,7 +17,7 @@ from tools_AIP import read_nc_topo, get_GFS_grads, get_grads_JMA, draw_rec
 
 
 quick = False
-#quick = True
+quick = True
 
 res = 'i'
 if quick:

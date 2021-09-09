@@ -8,7 +8,7 @@ from datetime import timedelta
 from tools_AIP import read_dat, get_nbin, desroz_diag_R
 
 quick = True
-quick = False
+#quick = False
 
 HIST = False
 HIST = True

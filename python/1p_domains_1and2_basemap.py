@@ -7,7 +7,7 @@ from mpl_toolkits.basemap import Basemap
 from tools_AIP import read_nc_topo
 
 quick = True
-quick = False
+#quick = False
 
 def prep_map( ax, method='merc',lon_0=139.609, lat_0=35.861, 
               ll_lon=1, ur_lon=2,

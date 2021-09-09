@@ -39,6 +39,7 @@ def main( INFO, stime_l=[], etime_l=[],
             for n in range( INFO["NEXP"]) :
                 odir = "ts_npz/" + INFO["EXP" + str(n+1)]
                 fn_ts = odir + "/TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
+                print( fn_ts )
                 ts_l[i,n,it,:], bs_l[i,n,it,:], _ = read_ts( fn_ts )
     
             it += 1
@@ -244,7 +245,7 @@ INFO = { "TOP": TOP,
 theight = 3000.0
 #theight = 6000.0
 thrs_dbz = 15.0
-#thrs_dbz = 30.0
+thrs_dbz = 30.0
 
 
 stime1 = datetime( 2019, 8, 24, 15, 0, 30)

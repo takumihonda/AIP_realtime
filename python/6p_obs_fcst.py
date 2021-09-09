@@ -294,9 +294,9 @@ tlev1 = 20
 tlev2 = 40
 tlev3 = 60
 
-tlev1 = 0
-tlev2 = 10
-tlev3 = 20
+#tlev1 = 0
+#tlev2 = 10
+#tlev3 = 20
 
 time_l = [
           itime + timedelta( seconds=tlev1*30 ),

@@ -739,7 +739,7 @@ def read_oerr_npz( range_inl=[1.0], elv_inl=[5.0], dr=1.0, de=1.0, mode="az",
                 ofile = os.path.join( dir_in, "oerr_{0:}_e{1:03}_{2:03}_r{3:03}_{4:03}_a{5:03}_{6:03}_{7:03}.npz".format( mode, elv_in, de, range_in, dr, azm_in, da, int( DR ) ) )
  
                 try:
-                   #print( "Found npz file ", ofile )
+                   print( "Found npz file ", ofile )
                    data = np.load( ofile )
                    cor1d_ = data["cor1d"]
                    cnt1d_ = data["cnt1d"]
@@ -1067,6 +1067,24 @@ def read_fcst_qh_grads_all( INFO, itime=datetime( 2019,8,24,15,30,0 ), tlev=0, F
 
     return( qh )
 
+def calc_fss( ng=0, thrs=0.0, fcst2d=np.array([]), obs2d=np.array([]) ):
+
+    fcst2d = np.where( fcst2d >= thrs, 1.0, 0.0 )
+    obs2d  = np.where( obs2d  >= thrs, 1.0, 0.0 )
+
+    ng2 = 2*ng+1
+    kernel = np.ones( (ng2,ng2) ) / ng2**2
+
+    xmax_ = fcst2d.shape[0]
+    ymax_ = fcst2d.shape[1]
+    from scipy import ndimage
+    fcst2d_ = ndimage.convolve( fcst2d, kernel, mode='reflect' )[ng:xmax_:ng2,ng:xmax_:ng2]
+    obs2d_  = ndimage.convolve(  obs2d, kernel, mode='reflect' )[ng:xmax_:ng2,ng:xmax_:ng2]
+    mse_     = np.mean( np.square( fcst2d_ - obs2d_ ) )
+    mse_ref_ = np.mean( np.square( fcst2d_ ) + np.square( obs2d_ ) )
+    fss_ = 1 - ( mse_ / mse_ref_ )
+
+    return( fss_ )
 
 #############################
 if __name__ == "__main__":

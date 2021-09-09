@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from tools_AIP import read_obs, read_mask, read_nc_lonlat, read_fcst_grads, read_obs_grads_latlon, read_fcst_grads_all
 
 quick = False
-#quick = True
+quick = True
 
 ###########
 
