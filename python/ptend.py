@@ -13,9 +13,18 @@ from scipy.interpolate import griddata
 
 
 quick = True
-#quick = False
+quick = False
+
+USE_ARCH_DAT = True
+#USE_ARCH_DAT = False
 
 def main( INFO, itime_l=[], EXP_l=[], tit_l=[] ):
+
+    data_path = "../../dat4figs_JAMES/Fig17"
+    ofig = "Fig17.pdf"
+    os.makedirs( data_path, exist_ok=True )
+    fn = '{0:}/data.npz'.format( data_path, )
+
 
     nd = 2 # second derivative
 
@@ -23,32 +32,39 @@ def main( INFO, itime_l=[], EXP_l=[], tit_l=[] ):
     ptend_l = np.zeros( ( len( EXP_l ), INFO["TMAX"]-nd ) )
     
 
-    for i, EXP_ in enumerate( EXP_l ):
+    if not USE_ARCH_DAT:
 
-       INFO["FCST_DIR"] = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY/{0:}/dafcst".format( EXP_ )
-       for itime in itime_l: 
-          print( "initial", itime )
-          dir_in = os.path.join( "dat_ptend", EXP_, )
-          os.makedirs( dir_in, exist_ok=True)
-          ofile = os.path.join( dir_in, "ptend2_abs_{0:}.npz".format(  itime.strftime('%Y%m%d%H%M%S') ) )
+       for i, EXP_ in enumerate( EXP_l ):
    
-          try:
-             data = np.load( ofile )
-             ptend_ = data["ptend"]
-          except:
-             print( "No npz file ", ofile)
-   
-             for tlev in range( INFO["TMAX"] ):
-                prs3d_ = read_fcst_grads_all( INFO, itime=itime, tlev=tlev , FT0=True, nvar="p" )
-                ps3d[tlev,:,:] = prs3d_[0,:,:]
+          INFO["FCST_DIR"] = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY/{0:}/dafcst".format( EXP_ )
+          for itime in itime_l: 
+             print( "initial", itime )
+             dir_in = os.path.join( "dat_ptend", EXP_, )
+             os.makedirs( dir_in, exist_ok=True)
+             ofile = os.path.join( dir_in, "ptend2_abs_{0:}.npz".format(  itime.strftime('%Y%m%d%H%M%S') ) )
       
-             ptend_ = np.average( np.abs( np.diff( ps3d, axis=0, n=nd ), ), axis=(1,2) ) / ( INFO["DT"]**2 )
-             np.savez( ofile, ptend=ptend_ )
+             try:
+                data = np.load( ofile )
+                ptend_ = data["ptend"]
+             except:
+                print( "No npz file ", ofile)
+      
+                for tlev in range( INFO["TMAX"] ):
+                   prs3d_ = read_fcst_grads_all( INFO, itime=itime, tlev=tlev , FT0=True, nvar="p" )
+                   ps3d[tlev,:,:] = prs3d_[0,:,:]
+         
+                ptend_ = np.average( np.abs( np.diff( ps3d, axis=0, n=nd ), ), axis=(1,2) ) / ( INFO["DT"]**2 )
+                np.savez( ofile, ptend=ptend_ )
+      
+             ptend_l[i,:] += ptend_
    
-          ptend_l[i,:] += ptend_
+       ptend_l = ptend_l / len( itime_l )
+ 
+       np.savez( fn, ptend_l=ptend_l )   
 
-    ptend_l = ptend_l / len( itime_l )
+    else:
 
+       ptend_l = np.load( fn )['ptend_l']
 
     fig, (ax1) = plt.subplots(1, 1, figsize= (6,4 ))
     fig.subplots_adjust(left=0.15, bottom=0.12, right=0.98, top=0.9, )
@@ -99,12 +115,11 @@ def main( INFO, itime_l=[], EXP_l=[], tit_l=[] ):
             )
 
 
-    opath = "png"
-    ofig = "1p_dpdt2.png"
+    opath = "pdf"
+    #ofig = "1p_dpdt2.png"
     print(ofig)
 
     if not quick:
-       opath = "png"
        ofig = os.path.join(opath, ofig)
        plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
        print(ofig)

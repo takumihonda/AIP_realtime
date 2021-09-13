@@ -130,5 +130,6 @@ dmypy.json
 
 realtime_20200825/ts_npz/*
 *.png
+*.pdf
 log*
 *.npz

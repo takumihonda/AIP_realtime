@@ -9,6 +9,12 @@ from matplotlib.colors import BoundaryNorm
 
 from tools_AIP import read_nc_topo, draw_rec, dist
 
+data_path = "../../dat4figs_JAMES/Fig01"
+os.makedirs( data_path, exist_ok=True )
+
+USE_ARCH_DAT = True
+USE_ARCH_DAT = False
+
 quick = False
 quick = True
 
@@ -38,7 +44,15 @@ def prep_map( ax, method='merc',lon_0=139.609, lat_0=35.861,
 
 def main( dom=1, bar=False ):
  
-    lon2d_1, lat2d_1, topo2d_1 = read_nc_topo( dom=dom )
+    fn = '{0:}/topo1_dom{1:}.npz'.format( data_path, dom )
+
+    if USE_ARCH_DAT:
+       topo2d_1 = np.load( fn )['topo']
+       lat2d_1 = np.load( fn )['lat']
+       lon2d_1 = np.load( fn )['lon']
+    else:
+       lon2d_1, lat2d_1, topo2d_1 = read_nc_topo( dom=dom )
+       np.savez( fn, lon=lon2d_1, lat=lat2d_1, topo=topo2d_1 )
 
     print( lon2d_1.shape )
 
@@ -108,9 +122,19 @@ def main( dom=1, bar=False ):
                         )
 
     if dom <= 3:
-       lon2d_2, lat2d_2, topo2d_2 = read_nc_topo( dom=dom+1 )
+
+       fn = '{0:}/dom{1:}.npz'.format( data_path, dom )
+       if USE_ARCH_DAT:
+          data = np.load( fn )['data']
+          lon2d_2 = np.load( fn )['lon']
+          lat2d_2 = np.load( fn )['lat']
+       else:
+          lon2d_2, lat2d_2, topo2d_2 = read_nc_topo( dom=dom+1 )
+          data = topo2d_2
+          np.savez( fn, data=topo2d_2, lon=lon2d_2, lat=lat2d_2 )
        x2, y2 = m( lon2d_2, lat2d_2 )
-       SHADE2 = m.contourf( x2, y2, topo2d_2, 
+       #SHADE2 = m.contourf( x2, y2, topo2d_2, 
+       SHADE2 = m.contourf( x2, y2, data, 
                             levels=levs, zorder=1,
                             cmap=cmap, norm=norm,
                             extend='max',
@@ -183,7 +207,7 @@ bar = True
 bar = False
 
 dom = 3
-#dom = 2
+dom = 2
 #dom = 1
 #dom = 4
 main( dom=dom, bar=bar )

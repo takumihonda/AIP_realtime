@@ -8,9 +8,12 @@ from datetime import timedelta
 from tools_AIP import read_dat, read_oerr_npz
 
 quick = True
-#quick = False
+quick = False
 
 AVE = False
+
+USE_ARCH_DAT = True
+#USE_ARCH_DAT = False
 
 
 
@@ -20,6 +23,11 @@ def main( otyp=4002,
           exp="D4_500m_20190910_THIN", range_inl=[1.0], elv_inl=[5.0], dr=1.0, de=1.0, mode="az",
           azm_inl=[10.0], da=1.0, 
           rskip=5 ):
+
+   data_path = "../../dat4figs_JAMES/Fig16"
+   ofig = "Fig16.pdf"
+   os.makedirs( data_path, exist_ok=True )
+   fn = '{0:}/data.npz'.format( data_path, )
 
 
    DR = 500.0
@@ -33,8 +41,14 @@ def main( otyp=4002,
 
    if AVE:
 
-      cor1d, cnt1d, oerr, x1d = read_oerr_npz( range_inl=range_inl, elv_inl=elv_inl, dr=dr, de=de, mode=mode,
-                                azm_inl=azm_inl, da=da, DR=DR, exp=exp, oytp=otyp )
+      if not USE_ARCH_DAT:
+         cor1d, cnt1d, oerr, x1d = read_oerr_npz( range_inl=range_inl, elv_inl=elv_inl, dr=dr, de=de, mode=mode,
+                                   azm_inl=azm_inl, da=da, DR=DR, exp=exp, oytp=otyp )
+#         np.savez( fn, cor1d=cor1d, cnt1d=cnt1d, oerr=oerr, x1d=x1d )
+#         cor1d = np.load( fn )['cor1d']
+#         cnt1d = np.load( fn )['cnt1d']
+#         oerr = np.load( fn )['oerr']
+#         x1d = np.load( fn )['x1d']
    
    
       print( cor1d )
@@ -85,19 +99,20 @@ def main( otyp=4002,
           ii = i + 1
           range_inl_ = [ range_in_ ]
 
-          cor1d_, cnt1d_, oerr_, x1d_ = read_oerr_npz( range_inl=range_inl_, elv_inl=elv_inl, dr=dr, de=de, mode=mode,
-                                     azm_inl=azm_inl, da=da, DR=DR, 
-                                     exp=exp, otyp=otyp )
+          if not USE_ARCH_DAT:
+             cor1d_, cnt1d_, oerr_, x1d_ = read_oerr_npz( range_inl=range_inl_, elv_inl=elv_inl, dr=dr, de=de, mode=mode,
+                                        azm_inl=azm_inl, da=da, DR=DR, 
+                                        exp=exp, otyp=otyp )
 
-          x1d_ = np.sin( np.deg2rad( x1d_ ) ) * range_in_ * DR # [m]
-          idx1d_ = ( np.round( x1d_ / dx ) + np_ ).astype( int ) # index for plot distance array
+             x1d_ = np.sin( np.deg2rad( x1d_ ) ) * range_in_ * DR # [m]
+             idx1d_ = ( np.round( x1d_ / dx ) + np_ ).astype( int ) # index for plot distance array
 
 
-          len2 = len( cor1d_ ) // 2 
-          cor1d[ idx1d_] += cor1d_ * cnt1d_
-          cnt1d[ idx1d_ ] += cnt1d_
-          oerr += oerr_ * cnt1d_[ len2 ]
-          range1 = range_in_ * DR * 0.001 # km
+             len2 = len( cor1d_ ) // 2 
+             cor1d[ idx1d_] += cor1d_ * cnt1d_
+             cnt1d[ idx1d_ ] += cnt1d_
+             oerr += oerr_ * cnt1d_[ len2 ]
+             range1 = range_in_ * DR * 0.001 # km
 
           if ii % rskip == 0 or ii == len( range_inl ):
              print( "plot", i )
@@ -131,6 +146,12 @@ def main( otyp=4002,
              else:
                lc = 'k'
 
+             if not USE_ARCH_DAT:
+                np.savez( fn, pdist1d_=pdist1d_, pcor1d=pcor1d )
+             else:
+                pcor1d = np.load( fn )['pcor1d']
+                pdist1d_ = np.load( fn )['pdist1d_']
+ 
              ax1.plot( pdist1d_, pcor1d, label=label, 
                        color=lc, lw=lw )
 
@@ -159,10 +180,11 @@ def main( otyp=4002,
                 va='bottom',
               )
 
+ 
+#      odir = "png/oerr/{0:}_{1:}".format( exp, otyp_ )
+#      ofig = "oerr_{0:}_e{1:03}_r{2:03}_a{3:03}_dr{4:03}_skip{5:03}.png".format( mode, de, dr, da, int( DR ), rskip ) 
    
-      odir = "png/oerr/{0:}_{1:}".format( exp, otyp_ )
-      ofig = "oerr_{0:}_e{1:03}_r{2:03}_a{3:03}_dr{4:03}_skip{5:03}.png".format( mode, de, dr, da, int( DR ), rskip ) 
-   
+      odir = "pdf"  
       print( odir, ofig )
       if quick:
          plt.show()

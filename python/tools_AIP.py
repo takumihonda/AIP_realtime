@@ -4,7 +4,6 @@ import os
 import sys
 from netCDF4 import Dataset
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
 
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
@@ -345,6 +344,7 @@ def prep_proj_multi( METHOD, axs, res="c", ll_lon=120, ur_lon=150, ll_lat=20, ur
                      fs=10,zorder=2,contc='burlywood',cont_alp=0.2, lw=0.1, pdlon=0.1, pdlat=0.1, 
                      blon=139.609, blat=35.861, oc="aqua" ):
 
+    from mpl_toolkits.basemap import Basemap
 
     lat2 = 40.0
 
@@ -909,10 +909,11 @@ def get_cfeature( typ='land', res='10m' ):
        ecolor = 'face'
     elif typ == 'coastline': 
        name = 'coastline'
-       fcolor = 'none'
+       #fcolor = 'none'
+       fcolor = cfeature.COLORS['land']
        ecolor = 'k'
 
-    feature = cfeature.NaturalEarthFeature( 'physical', name, res, 
+    feature = cfeature.NaturalEarthFeature( category='physical', name=name, scale=res, 
                                             edgecolor=ecolor,
                                             facecolor=fcolor )
 
@@ -943,13 +944,17 @@ def setup_grids_cartopy( ax, xticks=np.array([]), yticks=np.array([]), lw=0.5,
        gl.xlabel_style = {'size': xfs, 'color': fc, }
        gl.ylabel_style = {'size': yfs, 'color': fc, }
 
-def prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='none', latitude_true_scale=35.0, central_longitude=130.0 ):
+def prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='none', latitude_true_scale=35.0, central_longitude=130.0, central_latitude=30.0 ):
 
     if proj == 'none' or 'PlateCarree':
        projection = ccrs.PlateCarree( central_longitude=central_longitude, )
 
     elif proj == 'merc':
        projection = ccrs.Mercator( latitude_true_scale=latitude_true_scale, ) 
+
+    elif proj == 'lcc':
+       projection = ccrs.LambertConformal( central_latitude=central_latitude,
+                        central_longitude=central_longitude ) 
 
     ax_l = []
     for i in range( 1, xfig*yfig+1 ):

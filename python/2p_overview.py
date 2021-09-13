@@ -16,8 +16,11 @@ import matplotlib.colors as mcolors
 from tools_AIP import read_nc_topo, get_GFS_grads, get_grads_JMA, draw_rec
 
 
+USE_ARCH_DAT = True
+#USE_ARCH_DAT = False
+
 quick = False
-quick = True
+#quick = True
 
 res = 'i'
 if quick:
@@ -33,16 +36,60 @@ blat = 36.3
 def main( gtime=datetime( 2019, 8, 24, 12, 0 ), htime=datetime( 2019, 8, 24, 12, 0 ), 
           jtime=datetime(2019, 8, 24, 15, 0 ), FT=2 ):
 
-    # get MSLP
-    slp2d, glon2d, glat2d = get_GFS_grads( gtime, var="MSLETmsl",zdim=-1)
 
-    lon2d, lat2d, _ = read_nc_topo( dom=1 )
-    lon2d_2, lat2d_2, _ = read_nc_topo( dom=2 )
-    lon2d_3, lat2d_3, _ = read_nc_topo( dom=3 )
-    lon2d_4, lat2d_4, _ = read_nc_topo( dom=4 )
+    # If directly produce a pdf, the file size becomes too large (~2 MB)
+    # As a remedy, a temporary png file is converted to pdf on Mac
+    if jtime == datetime(2019, 8, 24, 15, 0, 0 ):
+       data_path = "../../dat4figs_JAMES/Fig08"
+       ofig = "Fig08.png"
+    elif jtime == datetime(2019, 8, 19, 12, 0, 0 ):
+       data_path = "../../dat4figs_JAMES/Fig11"
+       ofig = "Fig11.png"
+    else:
+       sys.exit()
+    os.makedirs( data_path, exist_ok=True )
+    fn = '{0:}/data.npz'.format( data_path, )
+
+    if not USE_ARCH_DAT:
+       # get MSLP
+       slp2d, glon2d, glat2d = get_GFS_grads( gtime, var="MSLETmsl",zdim=-1)
+   
+       lon2d, lat2d, _ = read_nc_topo( dom=1 )
+       lon2d_2, lat2d_2, _ = read_nc_topo( dom=2 )
+       lon2d_3, lat2d_3, _ = read_nc_topo( dom=3 )
+       lon2d_4, lat2d_4, _ = read_nc_topo( dom=4 )
+
+       rain2d, rlon2d, rlat2d = get_grads_JMA( jtime, FT=FT, ACUM=True )
+
+       np.savez( fn, lon2d=lon2d, lat2d=lat2d, 
+                     lon2d_2=lon2d_2, lat2d_2=lat2d_2,
+                     lon2d_3=lon2d_3, lat2d_3=lat2d_3,
+                     lon2d_4=lon2d_4, lat2d_4=lat2d_4,
+                     rain2d=rain2d, rlon2d=rlon2d, rlat2d=rlat2d,
+                     slp2d=slp2d, glon2d=glon2d, glat2d=glat2d,
+               )
+
+    else:
+       lon2d = np.load( fn )['lon2d']
+       lat2d = np.load( fn )['lat2d']
+   
+       lon2d_2 = np.load( fn )['lon2d_2']
+       lat2d_2 = np.load( fn )['lat2d_2']
+   
+       lon2d_3 = np.load( fn )['lon2d_3']
+       lat2d_3 = np.load( fn )['lat2d_3']
+       lon2d_4 = np.load( fn )['lon2d_4']
+       lat2d_4 = np.load( fn )['lat2d_4']
+
+       slp2d = np.load( fn )['slp2d']
+       glon2d = np.load( fn )['glon2d']
+       glat2d = np.load( fn )['glat2d']
+   
+       rain2d = np.load( fn )['rain2d']
+       rlon2d = np.load( fn )['rlon2d']
+       rlat2d = np.load( fn )['rlat2d']
 
 
-    rain2d, rlon2d, rlat2d = get_grads_JMA( jtime, FT=FT, ACUM=True )
     jtime2 = jtime + timedelta( hours=FT )
 
 
@@ -196,11 +243,11 @@ def main( gtime=datetime( 2019, 8, 24, 12, 0 ), htime=datetime( 2019, 8, 24, 12,
                 color='k', fontsize=10 )
 
 
-    ofig = "2p_overiew_" + gtime.strftime('%m%d') + ".png"
+#    ofig = "2p_overiew_" + gtime.strftime('%m%d') + ".pdf"
     print(ofig)
 
     if not quick:
-       opath = "png"
+       opath = "pdf"
        ofig = os.path.join(opath, ofig)
        plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
        print(ofig)
@@ -219,9 +266,9 @@ htime = datetime(2019, 8, 24, 12, 0, 0 )
 jtime = datetime(2019, 8, 24, 15, 0, 0 )
 FT = 1
 
-gtime = datetime( 2019, 8, 19, 12, 0, 0 )
-jtime = datetime( 2019, 8, 19, 12, 0, 0 )
-FT = 2
+#gtime = datetime( 2019, 8, 19, 12, 0, 0 )
+#jtime = datetime( 2019, 8, 19, 12, 0, 0 )
+#FT = 2
 
 htime = gtime
 main( gtime=gtime, htime=htime, jtime=jtime, FT=FT )

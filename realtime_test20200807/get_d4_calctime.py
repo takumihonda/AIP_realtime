@@ -4,9 +4,15 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
+data_path = "../../dat4figs_JAMES/Fig06"
+os.makedirs( data_path, exist_ok=True )
+
+USE_ARCH_DAT = True
+#USE_ARCH_DAT = False
+
 quick_hist = False
 quick_bar = True
-#quick_bar = False
+quick_bar = False
 
 
 def d4_computation_time_nparray( top='' ):
@@ -413,7 +419,7 @@ def plot_bar_2p( dic={}, ftimes=np.array([]) ):
                  ha='left',
                  va='bottom' )
 
-    ofig = 'png/2p_d4_bar.png'
+    ofig = 'pdf/Fig06.pdf'
     print( ofig )
     if quick_bar:
        plt.show()
@@ -517,7 +523,7 @@ def plot_bar_2p_scale( dic={}, ftimes=np.array([]), dic2={} ):
                  ha='left',
                  va='bottom' )
 
-    ofig = 'png/2p_d4_bar_scale.png'
+#    ofig = 'png/2p_d4_bar_scale.png'
     print( ofig )
     if quick_bar:
        plt.show()
@@ -574,89 +580,6 @@ def plot_bar( dic={} ):
        plt.close('all')
 
 ####
-top = '/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_20200825/log_from_amemiya/d4_500m/exp'
-top = '/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/amemiya/d4_500m'
-
-top_test = '/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_test20200807/data/D4_500m_TEST_DEFAULT_0708_NOBS100_NEAR_HV4/exp/3008084_cycle_20190824150000'
-
-#dtime_max = 1000
-
-ftimes, ctimes, DETAIL = d4_computation_time_nparray( top=top,  )
-ftimes_test, ctimes_test, DETAIL_test = d4_computation_time_nparray( top=top_test,  )
-
-#print( DETAIL["DAS_LETKF"][0:5], DETAIL["WRITE_ANAL"][0:5])
-
-#ftimes, ctimes, DETAIL = d4_computation_time( top=top,  )
-ctimes = np.array( ctimes )
-print( '{0:} average: {1:} (N: {2:})'.format( "cycle", np.nanmean( ctimes ), len(ctimes) ) )
-print( '{0:} average: {1:} (N: {2:})'.format( "fcst ", np.mean( ftimes ), len(ftimes) ) )
-
-print("")
-DETAIL_MODE = { }
-DETAIL_MODE_test = { }
-
-
-min_read_obs = 1.0
-max_read_obs = 30.0
-read_obs_ = DETAIL["READ_OBS"]
-
-
-dat_jit = DETAIL['JIT_GET']
-dat_jit[ ( read_obs_ < min_read_obs ) | ( read_obs_ > max_read_obs )] = np.nan
-dat_jit_ = dat_jit[ ~np.isnan(dat_jit) ]
-for key in DETAIL.keys():
-    DETAIL[key][ ( read_obs_ < min_read_obs ) | ( read_obs_ > max_read_obs )] = np.nan
-    time_ = np.nanmean( DETAIL[key] )
-
-    dat = DETAIL[key]
-    dat_ = dat[ ~np.isnan(dat) & ~np.isnan( dat_jit ) ]
-    num = len( dat_ ) 
-
-    if key == "READ_OBS":
-       dat_ -= dat_jit_
-
-    print( "#### ", key, time_, num, np.nanmax( DETAIL[key] ), np.nanmin( DETAIL[key] ) )
-
-    if num > 100:
-       mode_, mean_ = plot_hist( key=key, dat=dat_ )
-
-       #DETAIL_MODE[key] = mode_
-       DETAIL_MODE[key] = mean_
-
-    else:
-       print( 'Not plot ', key)
-
-
-
-
-read_obs_test = DETAIL_test["READ_OBS"]
-#dat_jit_test = DETAIL_test['JIT_GET']
-#dat_jit_test[ ( read_obs_test < min_read_obs ) | ( read_obs_test > max_read_obs )] = np.nan
-#dat_jit_test = dat_jit_test[ ~np.isnan(dat_jit_test) ]
-for key in DETAIL_test.keys():
-    DETAIL_test[key][ ( read_obs_test < min_read_obs ) | ( read_obs_test > max_read_obs )] = np.nan
-    time_ = np.nanmean( DETAIL_test[key] )
-
-    dat = DETAIL_test[key]
-    print( key, dat )
-    #dat_ = dat[ ~np.isnan(dat) & ~np.isnan( dat_jit_test ) ]
-    dat_ = dat[ ~np.isnan(dat) ]
-    num = len( dat_ ) 
-
-#    if key == "READ_OBS":
-#       dat_ -= dat_jit_
-
-    print( "#### ", key, time_, num, np.nanmax( DETAIL_test[key] ), np.nanmin( DETAIL_test[key] ) )
-
-    if num > 100:
-       mode_, mean_ = plot_hist( key=key, dat=dat_ )
-
-       DETAIL_MODE_test[key] = mean_
-
-    else:
-       print( 'Not plot ', key)
-
-
 
 SUM = { "SCALE": 0.0,
         "LETKF": 0.0,
@@ -665,49 +588,143 @@ SUM = { "SCALE": 0.0,
         "JIT-DT": 0.0,
       }
 
+fn_sum = '{0:}/SUM.npz'.format( data_path, )
+fn_ftimes = '{0:}/ftimes.npz'.format( data_path, )
+if not USE_ARCH_DAT:
+   
+   
+   top = '/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_20200825/log_from_amemiya/d4_500m/exp'
+   top = '/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/amemiya/d4_500m'
+   
+   top_test = '/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_test20200807/data/D4_500m_TEST_DEFAULT_0708_NOBS100_NEAR_HV4/exp/3008084_cycle_20190824150000'
+   
+   #dtime_max = 1000
+   
+   ftimes, ctimes, DETAIL = d4_computation_time_nparray( top=top,  )
+   ftimes_test, ctimes_test, DETAIL_test = d4_computation_time_nparray( top=top_test,  )
+   
+   #print( DETAIL["DAS_LETKF"][0:5], DETAIL["WRITE_ANAL"][0:5])
+   
+   #ftimes, ctimes, DETAIL = d4_computation_time( top=top,  )
+   ctimes = np.array( ctimes )
+   print( '{0:} average: {1:} (N: {2:})'.format( "cycle", np.nanmean( ctimes ), len(ctimes) ) )
+   print( '{0:} average: {1:} (N: {2:})'.format( "fcst ", np.mean( ftimes ), len(ftimes) ) )
+   
+   print("")
+   DETAIL_MODE = { }
+   DETAIL_MODE_test = { }
+   
+   
+   min_read_obs = 1.0
+   max_read_obs = 30.0
+   read_obs_ = DETAIL["READ_OBS"]
+   
+   
+   dat_jit = DETAIL['JIT_GET']
+   dat_jit[ ( read_obs_ < min_read_obs ) | ( read_obs_ > max_read_obs )] = np.nan
+   dat_jit_ = dat_jit[ ~np.isnan(dat_jit) ]
+   for key in DETAIL.keys():
+       DETAIL[key][ ( read_obs_ < min_read_obs ) | ( read_obs_ > max_read_obs )] = np.nan
+       time_ = np.nanmean( DETAIL[key] )
+   
+       dat = DETAIL[key]
+       dat_ = dat[ ~np.isnan(dat) & ~np.isnan( dat_jit ) ]
+       num = len( dat_ ) 
+   
+       if key == "READ_OBS":
+          dat_ -= dat_jit_
+   
+       print( "#### ", key, time_, num, np.nanmax( DETAIL[key] ), np.nanmin( DETAIL[key] ) )
+   
+       if num > 100:
+          mode_, mean_ = plot_hist( key=key, dat=dat_ )
+   
+          #DETAIL_MODE[key] = mode_
+          DETAIL_MODE[key] = mean_
+   
+       else:
+          print( 'Not plot ', key)
+   
+   
+   read_obs_test = DETAIL_test["READ_OBS"]
+   #dat_jit_test = DETAIL_test['JIT_GET']
+   #dat_jit_test[ ( read_obs_test < min_read_obs ) | ( read_obs_test > max_read_obs )] = np.nan
+   #dat_jit_test = dat_jit_test[ ~np.isnan(dat_jit_test) ]
+   for key in DETAIL_test.keys():
+       DETAIL_test[key][ ( read_obs_test < min_read_obs ) | ( read_obs_test > max_read_obs )] = np.nan
+       time_ = np.nanmean( DETAIL_test[key] )
+   
+       dat = DETAIL_test[key]
+       print( key, dat )
+       #dat_ = dat[ ~np.isnan(dat) & ~np.isnan( dat_jit_test ) ]
+       dat_ = dat[ ~np.isnan(dat) ]
+       num = len( dat_ ) 
+   
+   #    if key == "READ_OBS":
+   #       dat_ -= dat_jit_
+   
+       print( "#### ", key, time_, num, np.nanmax( DETAIL_test[key] ), np.nanmin( DETAIL_test[key] ) )
+   
+       if num > 100:
+          mode_, mean_ = plot_hist( key=key, dat=dat_ )
+   
+          DETAIL_MODE_test[key] = mean_
+   
+       else:
+          print( 'Not plot ', key)
+   
+   
+   
+   
+   
+   for key in DETAIL_MODE.keys():
+       print( key )
+       if key == "SCALE":
+          SUM["SCALE"] += DETAIL_MODE[key]   
+       elif key == "READ_OBS":
+          SUM["OBS"] += DETAIL_MODE[key]   
+   #    elif key == "READ_GUES" or key == "WRITE_ANAL":
+   #       SUM["DATA TRANSFER"] += DETAIL_MODE[key]   
+       elif key == "JIT_GET":
+          SUM["JIT-DT"] += DETAIL_MODE[key]   
+       else:
+          SUM["LETKF"] += DETAIL_MODE[key]   
+   
+   
+   SUM_test = { "SCALE": 0.0,
+                "LETKF": 0.0,
+                "OBS": 0.0,
+               "JIT-DT": 0.0,
+              } 
+   
+   for key in DETAIL_MODE_test.keys():
+       if key == "SCALE":
+          SUM_test["SCALE"] += DETAIL_MODE_test[key]   
+       elif key == "READ_OBS":
+          SUM_test["OBS"] += DETAIL_MODE_test[key]   
+   #    elif key == "READ_GUES" or key == "WRITE_ANAL":
+   #       SUM["DATA TRANSFER"] += DETAIL_MODE[key]   
+       elif key == "JIT_GET":
+          SUM_test["JIT-DT"] += DETAIL_MODE_test[key]   
+       else:
+          SUM_test["LETKF"] += DETAIL_MODE_test[key]   
+   
+   
+   np.savez( fn_sum, **SUM, ftimes=ftimes )
+   np.savez( fn_ftimes, ftimes=ftimes )
 
-for key in DETAIL_MODE.keys():
-    print( key )
-    if key == "SCALE":
-       SUM["SCALE"] += DETAIL_MODE[key]   
-    elif key == "READ_OBS":
-       SUM["OBS"] += DETAIL_MODE[key]   
-#    elif key == "READ_GUES" or key == "WRITE_ANAL":
-#       SUM["DATA TRANSFER"] += DETAIL_MODE[key]   
-    elif key == "JIT_GET":
-       SUM["JIT-DT"] += DETAIL_MODE[key]   
-    else:
-       SUM["LETKF"] += DETAIL_MODE[key]   
+else:
 
-
-SUM_test = { "SCALE": 0.0,
-             "LETKF": 0.0,
-             "OBS": 0.0,
-            "JIT-DT": 0.0,
-           } 
-
-for key in DETAIL_MODE_test.keys():
-    if key == "SCALE":
-       SUM_test["SCALE"] += DETAIL_MODE_test[key]   
-    elif key == "READ_OBS":
-       SUM_test["OBS"] += DETAIL_MODE_test[key]   
-#    elif key == "READ_GUES" or key == "WRITE_ANAL":
-#       SUM["DATA TRANSFER"] += DETAIL_MODE[key]   
-    elif key == "JIT_GET":
-       SUM_test["JIT-DT"] += DETAIL_MODE_test[key]   
-    else:
-       SUM_test["LETKF"] += DETAIL_MODE_test[key]   
-
-
-
-
-
+   with np.load( fn_sum, allow_pickle=True ) as npz:
+      for key in SUM.keys():
+          SUM[key] = npz[key]
+   ftimes = np.load( fn_ftimes, allow_pickle=True )['ftimes']
 
 
 print( SUM )
-print( DETAIL_MODE )
-print( SUM_test )
-print( DETAIL_MODE_test )
+#print( DETAIL_MODE )
+#print( SUM_test )
+#print( DETAIL_MODE_test )
 #sys.exit()
 #plot_bar( dic=SUM )
 plot_bar_2p( dic=SUM, ftimes=ftimes )

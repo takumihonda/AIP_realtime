@@ -5,7 +5,10 @@ import os
 import sys
 
 quick = True
-#quick = False
+quick = False
+
+USE_ARCH_DAT = True
+#USE_ARCH_DAT = False
 
 
 def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
@@ -22,6 +25,10 @@ def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
 def main( INFO, stime_l=[], etime_l=[],
            theight=3000, thrs_dbz=15.0, lab_l=[]):
 
+    data_path = "../../dat4figs_JAMES/Fig15"
+    ofig = "Fig15.pdf"
+    os.makedirs( data_path, exist_ok=True )
+    fn = '{0:}/data.npz'.format( data_path, )
 
     itmax = int( ( etime_l[0] - stime_l[0] ).total_seconds()/30.0 + 1 )
 
@@ -32,18 +39,29 @@ def main( INFO, stime_l=[], etime_l=[],
 
     for i in range( len( stime_l ) ):
 
-        it = 0
-        time = stime_l[i]
-        while time <= etime_l[i]:
-    
-            for n in range( INFO["NEXP"]) :
-                odir = "ts_npz/" + INFO["EXP" + str(n+1)]
-                fn_ts = odir + "/TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
-                print( fn_ts )
-                ts_l[i,n,it,:], bs_l[i,n,it,:], _ = read_ts( fn_ts )
-    
-            it += 1
-            time += timedelta( seconds=30 ) 
+        fn = '{0:}/data{1:}.npz'.format( data_path, i )
+
+        if not USE_ARCH_DAT:
+
+           it = 0
+           time = stime_l[i]
+           while time <= etime_l[i]:
+       
+               for n in range( INFO["NEXP"]) :
+                   odir = "ts_npz/" + INFO["EXP" + str(n+1)]
+                   fn_ts = odir + "/TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
+                   print( fn_ts )
+                   ts_l[i,n,it,:], bs_l[i,n,it,:], _ = read_ts( fn_ts )
+       
+               it += 1
+               time += timedelta( seconds=30 ) 
+
+           np.savez( fn, ts_l=ts_l[i,:,:,:],  bs_l=bs_l[i,:,:,:] )
+        else:
+
+           ts_l[i,:,:,:] = np.load( fn )["ts_l"]
+           bs_l[i,:,:,:] = np.load( fn )["bs_l"]
+
 
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
@@ -143,13 +161,13 @@ def main( INFO, stime_l=[], etime_l=[],
         ax.set_xlabel( xlab, fontsize=12 )
 
 
-    ofig = "2p_scores_thinning.png"
+#    ofig = "2p_scores_thinning.png"
  
     print( ofig )
     if quick:
        plt.show()
     else:
-       odir = "png/"
+       odir = "pdf/"
        os.makedirs( odir, exist_ok=True)
        plt.savefig( os.path.join(odir, ofig), 
                     bbox_inches="tight", pad_inches = 0.1)
