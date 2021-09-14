@@ -18,7 +18,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 USE_ARCH_DAT = True
 #USE_ARCH_DAT = False
@@ -166,7 +166,7 @@ def main( INFO, time_l=[], hgt=3000.0 ):
        itime = time_l[i]
 
        ax.set_extent([ lons, lone, lats, late ] )
-       ax.add_feature( land, zorder=0 )
+#       ax.add_feature( land, zorder=0 )
        ax.add_feature( coast, zorder=0 )
 
        setup_grids_cartopy( ax, xticks=xticks, yticks=yticks, 

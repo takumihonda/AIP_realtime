@@ -20,7 +20,7 @@ USE_ARCH_DAT = True
 #USE_ARCH_DAT = False
 
 quick = False
-#quick = True
+quick = True
 
 res = 'i'
 if quick:
