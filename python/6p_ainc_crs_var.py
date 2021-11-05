@@ -21,6 +21,12 @@ GeoAxes._pcolormesh_patched = Axes.pcolormesh
 quick = True
 #quick = False
 
+data_path = "../../dat4figs_GRL/Fig04"
+os.makedirs( data_path, exist_ok=True )
+
+USE_ARCH_DAT = False
+#USE_ARCH_DAT = True
+
 def read_qh_grads_all( INFO, itime=datetime( 2019,8,24,15,30,0 ), typ='g'):
 
     qh = read_ga_grads_all( INFO, itime=itime, nvar="qc", typ=typ ) 
@@ -59,13 +65,25 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
     lon_r = 139.609
     lat_r = 35.861
 
-    lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
+    fn = '{0:}/topo.npz'.format( data_path, )
+
+    if USE_ARCH_DAT:
+       topo2d_4 = np.load( fn )['topo']
+       lat2d_4 = np.load( fn )['lat']
+       lon2d_4 = np.load( fn )['lon']
+       mask_ = np.load( fn )['mask_']
+    else:
+       lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
+       mask_, mlon2d, mlat2d = read_mask_full()
+       np.savez( fn, lon=lon2d_4, lat=lat2d_4, topo=topo2d_4, mask_=mask_ )
+
+
+#    lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
     mz1d, _, _ = read_obs_grads_latlon()
 #    mzidx = np.argmin( np.abs( mz1d - hgt_l[i] ) )
 
-    mask_, mlon2d, mlat2d = read_mask_full()
     mask = mask_[:22,:,:]
 #    mask2d = mask[mzidx,:,:]
 
@@ -208,6 +226,9 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
 
 
     for i, ax in enumerate( ax_l ):
+
+       fn = '{0:}/data{1:}.npz'.format( data_path, i )
+
        fzidx = np.argmin( np.abs( INFO["cz"][:] - hgt_l[i] ) )
        print( "chk", i )
      
@@ -263,37 +284,42 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
        norm = BoundaryNorm( levs, ncolors=cmap.N, clip=False )
 
  
-       for j, vtime in enumerate( time_l ):
-          if j == 0:
-             if nvar == "qh":
-                g3d = read_qh_grads_all( INFO, itime=vtime, typ='g')
-                a3d = read_qh_grads_all( INFO, itime=vtime, typ='a')
-             elif nvar == "hdiv":
-                g3d = ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='g' ), axis=2)  \
-                      + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='g' ), axis=1) ) / ( 500.0*2 )
-
-                a3d = ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='a' ), axis=2) \
-                      + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='a' ), axis=1) ) / ( 500.0*2 ) 
-
+       if not USE_ARCH_DAT:
+          for j, vtime in enumerate( time_l ):
+             if j == 0:
+                if nvar == "qh":
+                   g3d = read_qh_grads_all( INFO, itime=vtime, typ='g')
+                   a3d = read_qh_grads_all( INFO, itime=vtime, typ='a')
+                elif nvar == "hdiv":
+                   g3d = ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='g' ), axis=2)  \
+                         + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='g' ), axis=1) ) / ( 500.0*2 )
+   
+                   a3d = ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='a' ), axis=2) \
+                         + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='a' ), axis=1) ) / ( 500.0*2 ) 
+   
+                else:
+                   g3d = read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='g' ) 
+                   a3d = read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='a' ) 
              else:
-                g3d = read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='g' ) 
-                a3d = read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='a' ) 
-          else:
-             if nvar == "qh":
-                g3d += read_qh_grads_all( INFO, itime=vtime, typ='g')
-                a3d += read_qh_grads_all( INFO, itime=vtime, typ='a')
-             elif nvar == "hdiv":
-                g3d += ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='g' ), axis=2) \
-                       + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='g' ), axis=1) ) / ( 500.0*2 )
+                if nvar == "qh":
+                   g3d += read_qh_grads_all( INFO, itime=vtime, typ='g')
+                   a3d += read_qh_grads_all( INFO, itime=vtime, typ='a')
+                elif nvar == "hdiv":
+                   g3d += ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='g' ), axis=2) \
+                          + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='g' ), axis=1) ) / ( 500.0*2 )
+   
+                   a3d += ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='a' ), axis=2) \
+                          + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='a' ), axis=1) ) / ( 500.0*2 )
+   
+                else:
+                   g3d += read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='g' ) 
+                   a3d += read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='a' ) 
+   
+          var3d = ( a3d - g3d ) / len( time_l )
+          np.savez( fn, var3d=var3d )
 
-                a3d += ( np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='u', typ='a' ), axis=2) \
-                       + np.gradient( read_ga_grads_all( INFO, itime=vtime, nvar='v', typ='a' ), axis=1) ) / ( 500.0*2 )
-
-             else:
-                g3d += read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='g' ) 
-                a3d += read_ga_grads_all( INFO, itime=vtime, nvar=nvar, typ='a' ) 
-
-       var3d = ( a3d - g3d ) / len( time_l )
+       else:
+          var3d = np.load( fn )['var3d']
       
 
        if i <= 2:

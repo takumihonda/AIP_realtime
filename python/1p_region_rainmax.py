@@ -5,10 +5,15 @@ from netCDF4 import Dataset
 
 from datetime import datetime, timedelta
 
-from tools_AIP import read_obs, read_mask, read_nc_lonlat, read_fcst_grads, read_obs_grads_latlon, read_fcst_grads_all
+from tools_AIP import read_obs, read_nc_lonlat, read_fcst_grads, read_obs_grads_latlon, read_fcst_grads_all
 
 quick = False
 quick = True
+
+data_path = "../../dat4figs_GRL/Fig02"
+os.makedirs( data_path, exist_ok=True )
+
+
 
 ###########
 
@@ -42,7 +47,7 @@ etime_ = datetime( 2019, 8, 24, 15, 40, 0 )
 
 
 
-odir = "rainmax_npz/" + EXP
+odir = "{0:}/rainmax_npz/{1:}".format( data_path, EXP )
 os.makedirs( odir, exist_ok=True )
 
 

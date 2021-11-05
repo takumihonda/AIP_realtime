@@ -10,6 +10,13 @@ from tools_AIP import read_obs, read_mask, read_nc_lonlat, read_fcst_grads, read
 quick = False
 quick = True
 
+data_path = "../../dat4figs_GRL/FigS02"
+os.makedirs( data_path, exist_ok=True )
+
+USE_ARCH_DAT = False
+#USE_ARCH_DAT = True
+
+
 ###########
 
 TOP = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY"
@@ -42,7 +49,10 @@ etime_ = datetime( 2019, 8, 24, 15, 40, 0 )
 
 
 
-odir = "rainmax_npz/" + EXP
+#odir = "rainmax_npz/" + EXP
+#os.makedirs( odir, exist_ok=True )
+
+odir = "{0:}/rainmax_npz/{1:}".format( data_path, EXP )
 os.makedirs( odir, exist_ok=True )
 
 

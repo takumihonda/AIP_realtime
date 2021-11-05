@@ -21,6 +21,12 @@ GeoAxes._pcolormesh_patched = Axes.pcolormesh
 quick = True
 #quick = False
 
+data_path = "../../dat4figs_GRL/Fig03"
+os.makedirs( data_path, exist_ok=True )
+
+USE_ARCH_DAT = False
+#USE_ARCH_DAT = True
+
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
           CRS="ZONAL", lab_l=[], ores='500m', nvar="w" ):
 
@@ -42,7 +48,20 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
     lon_r = 139.609
     lat_r = 35.861
 
-    lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
+    #lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
+    fn = '{0:}/topo.npz'.format( data_path, )
+
+    if USE_ARCH_DAT:
+       topo2d_4 = np.load( fn )['topo']
+       lat2d_4 = np.load( fn )['lat']
+       lon2d_4 = np.load( fn )['lon']
+       mask_ = np.load( fn )['mask_']
+    else:
+       lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
+       mask_ = read_mask()
+       np.savez( fn, lon=lon2d_4, lat=lat2d_4, topo=topo2d_4, mask_=mask_ )
+
+
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
     mz1d = INFO["obsz"]
@@ -50,7 +69,6 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
 #    mask_, mlon2d, mlat2d = read_mask_full()
-    mask_ = read_mask()
     mlon2d = INFO["olon2d"]
     mlat2d = INFO["olat2d"]
     mask = mask_[:22,:,:]
@@ -73,7 +91,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
 
     time = datetime( 2019, 8, 24, 15, 0, 30 )
 #    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time, ores=ores )
-    obs3d, _ = read_obs( utime=time, mask=mask_ )
+#    obs3d, _ = read_obs( utime=time, mask=mask_ )
     olon2d = INFO["olon2d"]
     olat2d = INFO["olat2d"]
     oz1d = INFO["obsz"]
@@ -177,6 +195,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
 
     for i, ax in enumerate( ax_l ):
 
+       fn = '{0:}/data{1:}.npz'.format( data_path, i )
+
        if i <= 2:
           vtime = time_l[i]
           ax.text( 0.5, 1.01, vtime.strftime('%H:%M:%S') ,
@@ -193,7 +213,11 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
        if lab_ == "obs": 
           #obs3d, _, _, _ = read_obs_grads( INFO, itime=itime, ores=ores )
           #obs3d[ obs3d == -9.99e33 ] = np.nan
-          obs3d, _ = read_obs( utime=itime, mask=mask_ )
+          if not USE_ARCH_DAT:
+             obs3d, _ = read_obs( utime=itime, mask=mask_ )
+             np.savez( fn, obs3d=obs3d )
+          else:
+             obs3d = np.load( fn )['obs3d']
 
 
           if CRS == "ZONAL":
@@ -211,9 +235,17 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
 
        else:
           print( "fcst", itime, tlev )
-          fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
-          fcst3d_nvar = read_fcst_grads_all( INFO, itime=itime, tlev=tlev , FT0=True, nvar=nvar ) 
-          fcst3d_qv = read_fcst_grads_all( INFO, itime=itime, tlev=tlev , FT0=True, nvar="qv" ) 
+          if not USE_ARCH_DAT:
+             fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
+             fcst3d_nvar = read_fcst_grads_all( INFO, itime=itime, tlev=tlev , FT0=True, nvar=nvar ) 
+             fcst3d_qv = read_fcst_grads_all( INFO, itime=itime, tlev=tlev , FT0=True, nvar="qv" ) 
+             np.savez( fn, fcst3d=fcst3d, fcst3d_nvar=fcst3d_nvar, fcst3d_qv=fcst3d_qv )
+          else:
+             fcst3d = np.load( fn )['fcst3d']
+             fcst3d_nvar = np.load( fn )['fcst3d_nvar']
+             fcst3d_qv = np.load( fn )['fcst3d_qv']
+
+
           if CRS == "ZONAL":
              var2d = fcst3d[:,fyidx,: ]
              x2d, y2d = np.meshgrid( flon2d[fyidx,:], 
@@ -400,8 +432,28 @@ time0 = datetime( 2019, 8, 24, 15, 0, 0 )
 
 fcst_zmax = 43
 
-obsz, olon2d, olat2d = read_obs_grads_latlon( )
-lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz, NEW=True )
+data_path_info = "../../dat4figs_GRL/info"
+os.makedirs( data_path_info, exist_ok=True )
+fn_info = '{0:}/data.npz'.format( data_path, )
+if not USE_ARCH_DAT:
+   obsz, olon2d, olat2d = read_obs_grads_latlon()
+   lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz, NEW=True )
+   np.savez( fn_info, obsz=obsz, olon2d=olon2d, olat2d=olat2d,
+                      lon2d=lon2d, lat2d=lat2d, hgt3d=hgt3d,
+                      cz=cz, ohgt3d=ohgt3d,
+            )
+else:
+   obsz = np.load( fn_info )['obsz']
+   olon2d = np.load( fn_info )['olon2d']
+   olat2d = np.load( fn_info )['olat2d']
+   lon2d = np.load( fn_info )['lon2d']
+   lat2d = np.load( fn_info )['lat2d']
+   hgt3d = np.load( fn_info )['hgt3d']
+   cz = np.load( fn_info )['cz']
+   ohgt3d = np.load( fn_info )['ohgt3d']
+
+#obsz, olon2d, olat2d = read_obs_grads_latlon( )
+#lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz, NEW=True )
 
 INFO = { "TOP": TOP,
          "EXP": EXP,

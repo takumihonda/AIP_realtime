@@ -9,6 +9,13 @@ from tools_AIP import read_nc_topo, dist
 quick = True
 #quick = False
 
+data_path = "../../dat4figs_GRL/FigS01-2"
+os.makedirs( data_path, exist_ok=True )
+
+USE_ARCH_DAT = False
+#USE_ARCH_DAT = True
+
+
 def prep_map( ax, method='merc',lon_0=139.609, lat_0=35.861, 
               ll_lon=1, ur_lon=2,
               ll_lat=1, ur_lat=2, res='c',
@@ -33,7 +40,18 @@ def prep_map( ax, method='merc',lon_0=139.609, lat_0=35.861,
 
 def main():
 
-    lon2d_, lat2d_, topo2d_ = read_nc_topo( dom=3 )
+    fn = '{0:}/topo.npz'.format( data_path, )
+
+    if USE_ARCH_DAT:
+       lat2d_ = np.load( fn )['lat2d_']
+       lon2d_ = np.load( fn )['lon2d_']
+       topo2d_ = np.load( fn )['topo2d_']
+       
+    else:
+       lon2d_, lat2d_, topo2d_ = read_nc_topo( dom=3 )
+       np.savez( fn, lat2d_=lat2d_, lon2d_=lon2d_, topo2d_=topo2d_ )
+
+
 
     lon2d_1 = lon2d_[2:-2,2:-2]
     lat2d_1 = lat2d_[2:-2,2:-2]
@@ -116,10 +134,22 @@ def main():
     fs = 14
     for dom in range( 3, 5 ):
  
+       fn = '{0:}/topo_{1:0=2}.npz'.format( data_path, dom )
+
+
+
        res = res_l[dom-1]
        unit = unit_l[dom-1]
 
-       lon2d_, lat2d_, topo2d_ = read_nc_topo( dom=dom )
+       if USE_ARCH_DAT:
+          lat2d_ = np.load( fn )['lat2d_']
+          lon2d_ = np.load( fn )['lon2d_']
+          topo2d_ = np.load( fn )['topo2d_']
+       
+       else:
+          lon2d_, lat2d_, topo2d_ = read_nc_topo( dom=dom )
+          np.savez( fn, lat2d_=lat2d_, lon2d_=lon2d_, topo2d_=topo2d_ )
+
        lon2d_ = lon2d_[2:-2,2:-2]
        lat2d_ = lat2d_[2:-2,2:-2]
        topo2d_ = topo2d_[2:-2,2:-2]

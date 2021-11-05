@@ -21,8 +21,15 @@ GeoAxes._pcolormesh_patched = Axes.pcolormesh
 quick = True
 #quick = False
 
+data_path = "../../dat4figs_GRL/Fig01"
+os.makedirs( data_path, exist_ok=True )
+
+USE_ARCH_DAT = True
+#USE_ARCH_DAT = False
+
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False, 
           clon=139.75, clat=36.080 ):
+
 
     rec_lats = 36.05
     rec_late = 36.1
@@ -47,14 +54,24 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
     lon_r = 139.609
     lat_r = 35.861
 
-    lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
+    fn = '{0:}/topo.npz'.format( data_path, )
+
+    if USE_ARCH_DAT:
+       topo2d_4 = np.load( fn )['topo']
+       lat2d_4 = np.load( fn )['lat']
+       lon2d_4 = np.load( fn )['lon']
+       mask = np.load( fn )['mask']
+    else:
+       lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
+       mask = read_mask()
+       np.savez( fn, lon=lon2d_4, lat=lat2d_4, topo=topo2d_4, mask=mask )
+
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
     mz1d = INFO["obsz"]
     mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
     #mask, mlon2d, mlat2d = read_mask_full()
-    mask = read_mask()
     mlon2d = INFO["olon2d"]
     mlat2d = INFO["olat2d"]
     mask2d = mask[mzidx,:,:]
@@ -81,7 +98,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
     time = datetime( 2019, 8, 24, 15, 0, 30 )
     #obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=time )
-    obs3d = read_obs( utime=time, mask=mask )
+    #obs3d = read_obs( utime=time, mask=mask )
     olon2d = INFO["olon2d"]
     olat2d = INFO["olat2d"]
     oz1d = INFO["obsz"]
@@ -202,6 +219,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
     for i, ax in enumerate( ax_l ):
 
+       fn = '{0:}/data{1:}.npz'.format( data_path, i )
+
        itime = time_l[i]
        tlev = tlev_l[i]
        lab_ = lab_l[i]
@@ -226,8 +245,13 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 #       ax.coastlines( color='k', linestyle='solid', linewidth=10.5, zorder=1 )
       
        if lab_ == "obs":
+          if not USE_ARCH_DAT:
           #obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
-          obs3d, _ = read_obs( utime=itime, mask=mask )
+             obs3d, _ = read_obs( utime=itime, mask=mask )
+             np.savez( fn, obs3d=obs3d )
+          else:
+             obs3d = np.load( fn )['obs3d']
+
 #          obs3d[ obs3d == -9.99e33 ] = np.nan 
 #          obs2d_ = griddata( ( olon2d.ravel(), olat2d.ravel() ), 
 #                             obs3d[ozidx,:,:].ravel(),
@@ -245,7 +269,11 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
           ylen = oylen
 
        elif lab_ == "scale":
-          fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
+          if not USE_ARCH_DAT:
+             fcst3d, _ = read_fcst_grads( INFO, itime=itime, tlev=tlev , FT0=True, )
+             np.savez( fn, fcst3d=fcst3d )
+          else:
+             fcst3d = np.load( fn )['fcst3d']
           var2d = fcst3d[fzidx,:,: ]
           x2d = fx2d
           y2d = fy2d
@@ -253,7 +281,11 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
           ylen = fylen
 
        elif lab_ == "nowcast":
-          jma2d, _, _ = read_nowcast_hires( stime=itime, ft=timedelta(seconds=tlev*30) )
+          if not USE_ARCH_DAT:
+             jma2d, _, _ = read_nowcast_hires( stime=itime, ft=timedelta(seconds=tlev*30) )
+             np.savez( fn, jma2d=jma2d )
+          else:
+             jma2d = np.load( fn )['jma2d']
 
           x2d = jx2d
           y2d = jy2d
@@ -413,11 +445,13 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
 
-    ofig = "12p_obs_fcst_nowcast_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_stime{3:}.png".format( itime.strftime('%m%d'), clon, clat, time_l[4].strftime('%m%d%H%M%S')  )
-    print(ofig)
+#    ofig = "12p_obs_fcst_nowcast_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_stime{3:}.png".format( itime.strftime('%m%d'), clon, clat, time_l[4].strftime('%m%d%H%M%S')  )
+#    print(ofig)
+    ofig = "Fig01.png"
 
     if not quick:
-       opath = "png"
+       opath = "GRL_pdf"
+       os.makedirs( opath, exist_ok=True )
        ofig = os.path.join(opath, ofig)
        plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
        print(ofig)
@@ -441,8 +475,31 @@ time0 = datetime( 2019, 8, 24, 15, 0, 0 )
 
 fcst_zmax = 43
 
-obsz, olon2d, olat2d = read_obs_grads_latlon()
-lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz, NEW=True )
+
+data_path_info = "../../dat4figs_GRL/info"
+os.makedirs( data_path_info, exist_ok=True )
+fn_info = '{0:}/data.npz'.format( data_path, )
+if not USE_ARCH_DAT:
+   obsz, olon2d, olat2d = read_obs_grads_latlon()
+   lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz, NEW=True )
+   np.savez( fn_info, obsz=obsz, olon2d=olon2d, olat2d=olat2d,
+                      lon2d=lon2d, lat2d=lat2d, hgt3d=hgt3d,
+                      cz=cz, ohgt3d=ohgt3d,
+            )
+else:
+   obsz = np.load( fn_info )['obsz']
+   olon2d = np.load( fn_info )['olon2d']
+   olat2d = np.load( fn_info )['olat2d']
+   lon2d = np.load( fn_info )['lon2d']
+   lat2d = np.load( fn_info )['lat2d']
+   hgt3d = np.load( fn_info )['hgt3d']
+   cz = np.load( fn_info )['cz']
+   ohgt3d = np.load( fn_info )['ohgt3d']
+
+
+
+#obsz, olon2d, olat2d = read_obs_grads_latlon()
+#lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz, NEW=True )
 
 INFO = { "TOP": TOP,
          "EXP": EXP,
