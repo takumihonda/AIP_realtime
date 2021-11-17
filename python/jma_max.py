@@ -26,13 +26,24 @@ lons = 139.02670288085938
 stime = datetime( 2020, 8, 24, 3 )
 etime = datetime( 2020, 9,  7, 3 )
 
+stime = datetime( 2020, 7, 31, 0 )
+etime = datetime( 2020, 8,  7, 0 )
+
 time_l = []
 rmax_l = []
 rarea_l = []
 
 rmin = 30.0 # mm/h
-rmin = 1.0 # mm/h
-rmin = 5.0 # mm/h
+#rmin = 1.0 # mm/h
+#rmin = 5.0 # mm/h
+
+#of = "JMA_rmax_rmin{0:.0f}.npz".format( rmin )    
+of = "JMA_rmax_rmin{0:.0f}_{1:}_{2:}.npz".format( rmin, 
+                                        stime.strftime( '%Y%m%d' ),    
+                                        etime.strftime( '%Y%m%d' ),    
+                                      )
+print( of )
+#sys.exit
 
 time = stime   
 while time <= etime:
@@ -58,7 +69,6 @@ while time <= etime:
 
     time += timedelta( minutes=10 )
 
-of = "JMA_rmax_rmin{0:.0f}.npz".format( rmin )    
 print( rmax_l )
 print( time_l )
 
