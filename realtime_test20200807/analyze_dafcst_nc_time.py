@@ -12,7 +12,6 @@ fn_a = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_test202
 
 stime = datetime( 2020, 7,  31, 12, 0 )
 etime = datetime( 2020, 8,  7, 14, 0 )
-etime2 = datetime( 2020, 8,  1, 0, 0 )
 
 dt = timedelta( seconds=30 )
 
@@ -75,7 +74,7 @@ def read_files( fn="", ftime_l=[],
         # When 30-min forecast is available
         time_ = datetime( year=int(cdate[0:4]), 
                           month=int(cdate[5:7]),
-                          day=int(cdate[9:11]),
+                          day=int(cdate[8:10]),
                           hour=int(ctime[0:2]),
                           minute=int(ctime[3:5]),
                           second=int(ctime[6:8]),
@@ -114,8 +113,8 @@ def read_files( fn="", ftime_l=[],
     
         dt_ = ( ftime_ - stime ).total_seconds() 
         idx_ = int( dt_ / 30 )
-        if ftime_ < datetime( 2020, 8, 1, 0 ):
-           print( dt_, ftime_, time_, idx_, ftime_l[idx_]  )
+#        if ftime_ < datetime( 2020, 8, 1, 0 ):
+#           print( dt_, ftime_, time_, idx_, ftime_l[idx_]  )
     
         lt_l[idx_] = ( ftime_ + ftime_delta - time_ ).total_seconds()
     
@@ -127,7 +126,6 @@ def read_files( fn="", ftime_l=[],
 lt_l = read_files( fn=fn_a, ftime_l=ftime_l, stime=stime, etime=etime, AMEMIYA=True )
 lt_l = read_files( fn=fn_h, ftime_l=ftime_l, stime=stime, etime=etime, AMEMIYA=True )
 
-sys.exit()
 ftime_l = np.array( ftime_l )
 lt_l = np.array( lt_l )
 
@@ -140,7 +138,7 @@ import matplotlib.dates as mdates
 #plt.plot( ftime_l )
 
 fig, ((ax)) = plt.subplots( 1, 1, figsize=( 12, 6.5 ) )
-fig.subplots_adjust(left=0.05, bottom=0.1, right=0.98, top=0.95, )
+fig.subplots_adjust(left=0.05, bottom=0.1, right=0.95, top=0.95, )
 
 # lead time
 
@@ -197,8 +195,7 @@ ax.text( 0.5, 1.01, tit,
           horizontalalignment='center',
           verticalalignment='bottom' )
 
-#ax.set_xlim( stime, etime )
-ax.set_xlim( stime, etime2 )
+ax.set_xlim( stime, etime )
 print( ftime_l[0], ftime_l[-1])
 print( stime, etime )
 
@@ -213,7 +210,7 @@ ylevs2 = [ 0, 8, 16, 24, 32, 40 ]
 
 rmin = 30.0
 rmin_l = [ 1.0, 20.0, ]
-rmin_l = [ 5.0, ]
+#rmin_l = [ 5.0, ]
 cc_l = [ "cyan", "b", ]
 for k, rmin in enumerate( rmin_l ):
 
@@ -230,6 +227,19 @@ for k, rmin in enumerate( rmin_l ):
 
 ax2.legend( bbox_to_anchor=( 0.05, 0.1), 
              loc='lower left', fontsize=9, ).get_frame().set_alpha( 1.0 )
+
+ylab2 = 'Precipitation area from JMA radar (x10$^2$km$^2$)\n(where >{0:.0f})mm h$^{{-1}}$)'.format( rmin )
+ax2.set_ylabel( ylab2, fontsize=9 )
+
+ax2.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6), tz=None) )
+ax2.xaxis.set_minor_formatter(mdates.DateFormatter('%H'))
+
+ax2.xaxis.set_major_locator(mdates.HourLocator(byhour=range(12, 13, 1), tz=None) )
+ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H\n%m/%d'))
+
+ax2.tick_params(axis='y', colors='b')
+ax2.yaxis.set_label_coords( 1.03, 0.15 )
+
 
 ofig = "realtime0807_leadtime.png"
 

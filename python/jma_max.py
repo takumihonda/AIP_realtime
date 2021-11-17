@@ -34,6 +34,7 @@ rmax_l = []
 rarea_l = []
 
 rmin = 30.0 # mm/h
+rmin = 20.0 # mm/h
 #rmin = 1.0 # mm/h
 #rmin = 5.0 # mm/h
 
