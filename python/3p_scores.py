@@ -5,7 +5,7 @@ import os
 import sys
 
 quick = True
-#quick = False
+quick = False
 
 USE_ARCH_DAT = True
 USE_ARCH_DAT = False
@@ -80,9 +80,9 @@ def main( INFO, stime_l=[], etime_l=[],
     import matplotlib.cm as cm
 
 
-    fig, ( ax1, ax2 ) = plt.subplots( 1, 2, figsize=( 11, 4 ) )
-    fig.subplots_adjust( left=0.05, bottom=0.15, right=0.98, top=0.9, 
-                         wspace=0.1 )
+    fig, ( ax1, ax2, ax3 ) = plt.subplots( 1, 3, figsize=( 14, 3.8 ) )
+    fig.subplots_adjust( left=0.04, bottom=0.15, right=0.99, top=0.9, 
+                         wspace=0.15 )
 
     # average
     ts_l = np.nanmean( ts_l, axis=2 )
@@ -95,9 +95,9 @@ def main( INFO, stime_l=[], etime_l=[],
 #    bs_l_new = np.nanmean( bs_l_new, axis=2 )
 
     lw = 2.0
-    c_l = [ 'k', 'k' ]
+    c_l = [ 'k', 'k', 'k' ]
     c_l_old = [ 'b', 'b' ]
-    ax_l = [ ax1, ax2 ]
+    ax_l = [ ax1, ax2, ax3 ]
     lab_l = [ "August 24", "August 19" ]
     ls_l = [ "solid", "dashed" ]
  
@@ -105,8 +105,8 @@ def main( INFO, stime_l=[], etime_l=[],
 
     for j in range( len(stime_l) ):
         ax1.plot( t_l, ts_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
-        ax2.plot( t_l, bs_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j]+" (Bias)", ls=ls_l[j] ) 
-        ax2.plot( t_l, fa_l[j,0,:], lw=lw, color='b', label=lab_l[j]+" (False alarm)", ls=ls_l[j] ) 
+        ax2.plot( t_l, bs_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
+        ax3.plot( t_l, fa_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
 
         ax1.plot( t_l, ts_l_persist[j,0,:], lw=lw, color='gray', label=lab_l[j]+"\n(persistent)", ls=ls_l[j] ) 
 
@@ -117,17 +117,25 @@ def main( INFO, stime_l=[], etime_l=[],
     ymax1 = 1
     ymin2 = 0.0
     ymax2 = 3.0
-    ymin_l = [ ymin1, ymin2 ]
-    ymax_l = [ ymax1, ymax2 ]
-    tit_l = [ "Threat score", "Bias score/False alarm ratio" ]
+    ymin3 = 0.0
+    ymax3 = 1.0
+    ymin_l = [ ymin1, ymin2, ymin3 ]
+    ymax_l = [ ymax1, ymax2, ymax3 ]
+    tit_l = [ "Threat score", 
+              "Bias score",
+              "False alarm ratio" ]
     note = "Z={:.1f} km\n{:.1f} dBZ".format(theight/1000, thrs_dbz )
-    pnum_l = [ "(a)", "(b)" ] 
+    pnum_l = [ "(a)", "(b)", "(c)" ] 
 
     xlab = "Forecast time (min)"
 
+    lloc_l = [ 'upper right', 
+               'upper right',
+               'lower right']
+
     for i, ax in enumerate( ax_l ):
         #ax.legend( fontsize=12, loc='lower left' )
-        ax.legend( fontsize=12, loc='upper right' )
+        ax.legend( fontsize=12, loc=lloc_l[i] )
         ax.set_xlim(0, 30)
         ax.set_ylim( ymin_l[i], ymax_l[i] )
 
@@ -141,10 +149,11 @@ def main( INFO, stime_l=[], etime_l=[],
                  ha='left',
                  va='bottom' )
 
-        ax.text( 1.0, 1.01, note,
-                 fontsize=10, transform=ax.transAxes,
-                 ha='right',
-                 va='bottom' )
+        if i == 2:
+           ax.text( 1.0, 1.01, note,
+                    fontsize=10, transform=ax.transAxes,
+                    ha='right',
+                    va='bottom' )
   
         ax.set_xlabel( xlab, fontsize=12 )
 

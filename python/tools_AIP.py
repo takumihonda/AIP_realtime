@@ -431,10 +431,10 @@ def read_obs( utime=datetime(2019,9,3,2,0,0), mask=np.array([]) ):
     OBS_EXIST = False
     for sec in range( 0, 30, 1 ):
         jtime2 = itime + timedelta( seconds=sec )
-        fn = os.path.join("/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/",
+        #fn = os.path.join("/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/",
+        fn = os.path.join("/data_ballantine02/miyoshi-t/otsuka/nowcast_pawr/saitama/obs/500m/",
                           jtime2.strftime('%Y/%m/%d/%H/%M/%S'),
                           "rain_cart_0002.nc")
-
         if os.path.isfile( fn ):
            OBS_EXIST = True
            break
@@ -453,14 +453,15 @@ def read_obs( utime=datetime(2019,9,3,2,0,0), mask=np.array([]) ):
     obs = nc.variables['rain'][0,:,:,:]
     nc.close()
 
-    obs = np.where( mask > 0.0, np.nan, obs )
+#    obs = np.where( mask > 0.0, np.nan, obs )
+    obs = np.where( obs <= -500.0, np.nan, obs )
 
     return( obs, True )
 
-def read_obs_grads( INFO, itime=datetime(2019,9,10,9), ores='500m' ):
-    fn = os.path.join( INFO["TOP"], INFO["EXP"],
+def read_obs_grads( INFO, itime=datetime(2019,9,10,9), ores='500m', fn=None ):
+    fn_ = os.path.join( INFO["TOP"], INFO["EXP"],
                        INFO["time0"].strftime('%Y%m%d%H0000'),  "pawr_grads/pawr_ref3d_" +
-                       itime.strftime('%Y%m%d-%H%M%S.grd') )
+                       itime.strftime('%Y%m%d-%H%M%S.grd')  )
     gz = 22
     dz = 500.0
     gx = 241
@@ -469,7 +470,7 @@ def read_obs_grads( INFO, itime=datetime(2019,9,10,9), ores='500m' ):
     dlat = 0.00449640
 
     if ores == "100m":
-       fn = os.path.join( INFO["TOP"], "20201117/D4_500m_NODA_O100M",
+       fn_ = os.path.join( INFO["TOP"], "20201117/D4_500m_NODA_O100M",
                           INFO["time0"].strftime('%Y%m%d%H0000'),  "pawr_grads/pawr_ref3d_" +
                           itime.strftime('%Y%m%d-%H%M%S.grd') )
        gz = 110
@@ -479,12 +480,15 @@ def read_obs_grads( INFO, itime=datetime(2019,9,10,9), ores='500m' ):
        dlon = 0.00110962
        dlat = 0.00089928
 
+    if fn is not None:
+       fn_ = fn
+
 
     try:
-       infile = open(fn)
+       infile = open( fn_ )
     except:
        print("Failed to open")
-       print( fn )
+       print( fn_ )
        sys.exit()
 
     rec3d = gx*gy*gz
@@ -569,7 +573,8 @@ def read_mask_grads():
     return( input2d )
 
 def read_mask_full():
-    fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_full/shadow/mask.nc"   
+#    fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_full/shadow/mask.nc"   
+    fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/git/AIP_realtime/python/dat/mask.nc"
     nc = Dataset( fn, "r", format="NETCDF4" )
     mask = nc.variables['mask'][0,:,:,:]
        
@@ -601,11 +606,15 @@ def read_mask_full():
 
 
 def read_mask():
-    fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/shadow/mask.nc"   
-    nc = Dataset( fn, "r", format="NETCDF4" )
-    mask = nc.variables['mask'][0,:,:,:]
-       
-    nc.close()
+    #fn = "/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/shadow/mask.nc"   
+    #fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/git/AIP_realtime/python/dat/mask.nc"
+    #nc = Dataset( fn, "r", format="NETCDF4" )
+    #mask = nc.variables['mask'][0,:,:,:]
+    #nc.close()
+
+    fn = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/git/dat4figs_JAMES/info/mask_not_full.npz"
+    data = np.load( fn )
+    mask = data['mask_']
 
     return( mask )
 

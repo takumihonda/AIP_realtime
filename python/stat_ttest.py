@@ -64,126 +64,109 @@ def main( INFO, stime_l=[], etime_l=[],
            bs_l[i,:,:,:] = np.load( fn )["bs_l"]
 
 
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
-    import matplotlib.cm as cm
-
-
-#    fig, ( ( ax1, ax2 ), ( ax3, ax4 ) ) = plt.subplots( 2, 2, figsize=( 11, 8 ) )
-#    fig.subplots_adjust( left=0.05, bottom=0.08, right=0.98, top=0.95, 
-#                         wspace=0.1, hspace=0.3 )
-
-
-    fig, ( ax1, ax2 ) = plt.subplots( 1, 2, figsize=( 11, 4 ) )
-    fig.subplots_adjust( left=0.05, bottom=0.15, right=0.98, top=0.9, 
-                         wspace=0.1 )
-
     print( ts_l.shape )
-    # count sample
-    for i in range( 3 ):
-        tmp = ts_l[:,i,:,0]
-        nnan = len( tmp[ np.isnan( tmp )] ) 
-        print( i, "Nan: ", nnan )
-#    sys.exit()
-    # average
-    ts_l = np.nanmean( ts_l, axis=2 )
-    bs_l = np.nanmean( bs_l, axis=2 )
 
-    lw = 2.0
-    c_l = [ 'r', 'k', 'b' ]
-    ax_l = [ ax1, ax2 ]
-#    lab_l = [ "August 24", "August 19" ]
-    ls_l = [ "solid", "solid", "solid" ]
-#    ls_l = [ "solid", "dashed" ]
+    e1 = 2
+    e2 = 1
+
+
+    tmin = 0
+    tmax = 61
+    t_l = np.zeros( tmax )
+    t_l[:] = np.nan
+
+    p_thrs = 0.05 # 95%
+
+    for t in range( tmin, tmax ):
+
+        data1 = ts_l[:,e1,:,t].flatten()
+        data2 = ts_l[:,e2,:,t].flatten()
+    
+    
+        dif = data1 - data2
+    
+        data1 = data1[~np.isnan( dif ) ]
+        data2 = data2[~np.isnan( dif ) ]
+    
+        dif = data1 - data2
+        print( dif.shape )
+    
+        import scipy.stats
+        result= scipy.stats.ttest_ind( dif,
+                                       np.zeros( len( dif ) ),
+                                       equal_var=False,
+                                     )
+        print( result )
+
+        p_value = result[1]
+        if p_value < p_thrs:
+           t_l[t] = t
  
-    t_l = t_l / 60 #sec 
+    print( lab_l[e1], lab_l[e2])       
+    print( t_l*30/60 )
+    #    sys.exit()
+    
+        
+    
+#        import matplotlib.pyplot as plt
+#        fig, ax = plt.subplots( 1, 1, figsize=( 8, 4 ) )
+#    
+#    
+#        data = dif
+#    
+#        xmin = -0.3
+#        xmax = 0.3
+#        sigma = np.std( data, ddof=1 )
+#        mu = np.mean( data, )
+#        h = 3.5*sigma / np.power( data.size, 1.0/3.0 )
+#        print( data )
+#        print( "check ", sigma, h )
+#        nbin = int( ( xmax - xmin ) / h )
+#        ax.hist( data, bins=nbin, range=( xmin, xmax ), density=True )
+#        ax.set_xlim( xmin, xmax )
+#    
+#        import scipy.stats as stats
+#        x_l = np.arange( xmin, xmax+h, h )
+#        ax.plot( x_l, stats.norm.pdf(x_l, mu, sigma))
+#    
+#        ax.text( 0.5, 1.02, '{0:}-{1:}'.format( lab_l[e1], lab_l[e2] ),
+#                 fontsize=12, transform=ax.transAxes,
+#                 ha='center',
+#                 va='bottom' )
+#    
+#        plt.show()
+#    
+    sys.exit()
 
-#    for j in range( len(stime_l) ):
-#        for n in range( INFO["NEXP"]) :
-#            ax1.plot( t_l, ts_l[j,n,:], lw=lw, color=c_l[n], label=lab_l[n], ls=ls_l[j] ) 
-#            ax2.plot( t_l, bs_l[j,n,:], lw=lw, color=c_l[n], label=lab_l[n], ls=ls_l[j] ) 
+    bootstrap( A=ts_l[0,0,:,0].tolist(), B=ts_l[0,1,:,0].tolist() )
+    sys.exit()
 
-    ymin1 = 0
-    ymax1 = 0.8
-    ymin2 = 0.0
-    ymax2 = 3.0
-    ymin_l = [ ymin1, ymin2 ]
-    ymax_l = [ ymax1, ymax2 ]
-    tit_l = [ "Threat score", "Bias score" ]
-    note = "Z={:.1f} km\n{:.1f} dBZ".format(theight/1000, thrs_dbz )
-    pnum_l = [ "(a)", "(b)", "(c)", "(d)" ] 
+def bootstrap( A=[], B=[], nmax=100 ):
+    org_dif = np.mean( A ) - np.mean( B )
 
-    xlab = "Forecast time (min)"
-    print( "chk", ts_l.shape )
+    import random
+    import statistics
 
-    for i in range( len(ax_l) ):
-        if i == 0:
-           ax = ax1
-           ii = 0 # TS
-        elif i == 1:
-           ax = ax2
-           ii = 1 # BS
-        elif i == 2:
-           ax = ax3
-           ii = 0 # TS
-        elif i == 3:
-           ax = ax4
-           ii = 1 # BS
+    dif_l = []
 
-        if i<= 1:
-           st = 0
-        else:
-           st = 1
+    G = A + B 
 
-        if ii == 0:
-           data = ts_l[st,:,:]
-           lloc = 'upper right'
-        elif ii == 1:
-           data = bs_l[st,:,:]
-           lloc = 'lower left'
+    for n in range( nmax ):
+       random.shuffle( G )
+       new_A = G[:len( A )] 
+       new_B = G[len( A ):] 
 
-        for n in range( INFO["NEXP"]) :
-            ax.plot( t_l, data[n,:], lw=lw, color=c_l[n], 
-                     label=lab_l[n], ls=ls_l[0] ) 
+       dif_ = statistics.mean( new_A ) - statistics.mean( new_B )
+       dif_l.append( dif_ )
 
-        ax.legend( fontsize=12, loc=lloc )
-        ax.grid( ls='dashed', lw=1.0 )
-        ax.set_xlim(0, 30)
-        ax.set_ylim( ymin_l[ii], ymax_l[ii] )
+    print( dif_l )
 
-        ax.text( 0.5, 1.02, tit_l[ii],
-                 fontsize=15, transform=ax.transAxes,
-                 ha='center',
-                 va='bottom' )
- 
-        ax.text( 0.0, 1.02, pnum_l[i],
-                 fontsize=14, transform=ax.transAxes,
-                 ha='left',
-                 va='bottom' )
+    import matplotlib.pyplot as plt
+    plt.hist( dif_l )
+    plt.axvline( org_dif, color='k' )
+    print( np.quantile( dif_l, [0.95,0.05] ) )
 
-        ax.text( 1.0, 1.01, note,
-                 fontsize=10, transform=ax.transAxes,
-                 ha='right',
-                 va='bottom' )
-  
-        ax.set_xlabel( xlab, fontsize=12 )
-
-
-#    ofig = "2p_scores_thinning.png"
- 
-    print( ofig )
-    if quick:
-       plt.show()
-    else:
-       odir = "pdf/"
-       os.makedirs( odir, exist_ok=True)
-       plt.savefig( os.path.join(odir, ofig), 
-                    bbox_inches="tight", pad_inches = 0.1)
-       plt.clf()
-       plt.close('all')
-
-
-
+    plt.show()
 
 ##################
 

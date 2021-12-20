@@ -83,7 +83,7 @@ def main( INFO, itime=datetime(2019,9,3,2,0), tlev=0, theight=3000, dbz_thrs_l=[
     if not ostat:
        return( None, None, None, ostat)
 
-    fcst3d, fstat,= read_fcst_grads( INFO, itime=itime, tlev=tlev, )
+    fcst3d, fstat,= read_fcst_grads( INFO, itime=itime, tlev=0, ) # persistent
 
     if not fstat:
        print( "No fcst" )
@@ -271,8 +271,8 @@ EXP = "D4_500m_CTRL_NOCLRZ"
 EXP = "D4_500m_CTRL"
 #EXP = "D4_500m_CTRL_MELT"
 #EXP = "D4_500m_CTRL_NOVR"
-EXP = "D4_500m_H8V8"
-EXP = "D4_500m_H1V1"
+#EXP = "D4_500m_H8V8"
+#EXP = "D4_500m_H1V1"
 
 theight = 3000.0
 #theight = 6000.0
@@ -288,14 +288,14 @@ etime = datetime( 2019, 8, 24, 16, 0, 0 )
 #stime = datetime( 2019, 8, 24, 15, 20, 0 )
 #etime = datetime( 2019, 8, 24, 15, 40, 0 )
 
-stime = datetime( 2019, 8, 19, 13, 0, 30 )
-stime = datetime( 2019, 8, 19, 13, 45, 0 )
-etime = datetime( 2019, 8, 19, 14, 0, 0 )
+#stime = datetime( 2019, 8, 19, 13, 0, 30 )
+#stime = datetime( 2019, 8, 19, 13, 45, 0 )
+#etime = datetime( 2019, 8, 19, 14, 0, 0 )
 #stime = etime
 
 # data should be stored in EXP/[time0]/dafcst
-#time0 = datetime( 2019, 8, 24, 15, 0, 0 )
-time0 = datetime( 2019, 8, 19, 13, 0, 0 )
+time0 = datetime( 2019, 8, 24, 15, 0, 0 )
+#time0 = datetime( 2019, 8, 19, 13, 0, 0 )
 
 tmin = 0
 tmax = 61 # max time dimension does not include FT=0
@@ -400,7 +400,7 @@ while (time <= etime):
       if REGION:
          fn_ts = "TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}_lon{3:.2f}-{4:.2f}_lat{5:.2f}-{6:.2f}.npz".format( dbz, theight, time.strftime('%H%M%S_%Y%m%d'), lons, lone, lats, late )
       else:
-         fn_ts = "20211202TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
+         fn_ts = "persistent_20211202TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
       np.savez( os.path.join(odir,fn_ts), ts=np.array(ts_l[:,i]), bs=np.array(bs_l[:,i]), 
              fa=np.array(fa_l[:,i]),
              times=ftime_l )

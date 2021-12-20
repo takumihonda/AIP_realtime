@@ -13,7 +13,7 @@ quick = False
 AVE = False
 
 USE_ARCH_DAT = True
-#USE_ARCH_DAT = False
+USE_ARCH_DAT = False
 
 
 
@@ -24,8 +24,8 @@ def main( otyp=4002,
           azm_inl=[10.0], da=1.0, 
           rskip=5 ):
 
-   data_path = "../../dat4figs_JAMES/Fig16"
-   ofig = "Fig16.pdf"
+   data_path = "../../dat4figs_JAMES/Fig17"
+   ofig = "Fig17.pdf"
    os.makedirs( data_path, exist_ok=True )
    fn = '{0:}/data.npz'.format( data_path, )
 
@@ -112,6 +112,7 @@ def main( otyp=4002,
              cor1d[ idx1d_] += cor1d_ * cnt1d_
              cnt1d[ idx1d_ ] += cnt1d_
              oerr += oerr_ * cnt1d_[ len2 ]
+             print( "check ", oerr, oerr_ )
              range1 = range_in_ * DR * 0.001 # km
 
           if ii % rskip == 0 or ii == len( range_inl ):
@@ -130,10 +131,6 @@ def main( otyp=4002,
              #if not np.isnan( cor1d ).any(): # and cnt1d[len2] > 20000: 
              pcnt += 1 
 
-             label = r'Range: {0:.1f}-{1:.1f} km, $\sigma_o$:{2:.1f} {3:}'.format( range0, 
-                                                        range1, 
-                                                        oerr/cnt1d[np_],
-                                                        unit_ )
              #print( "cor" , cor1d )
              #print( "cnt", cnt1d )
 
@@ -147,11 +144,18 @@ def main( otyp=4002,
                lc = 'k'
 
              if not USE_ARCH_DAT:
-                np.savez( fn, pdist1d_=pdist1d_, pcor1d=pcor1d )
+                sigma_o = oerr/cnt1d[np_]
+                np.savez( fn, pdist1d_=pdist1d_, pcor1d=pcor1d, sigma_o=sigma_o )
              else:
                 pcor1d = np.load( fn )['pcor1d']
                 pdist1d_ = np.load( fn )['pdist1d_']
+                sigma_o = np.load( fn )['sigma_o']
  
+             label = r'Range: {0:.1f}-{1:.1f} km, $\sigma_o$:{2:.1f} {3:}'.format( range0, 
+                                                        range1, 
+                                                        sigma_o,
+                                                        unit_ )
+
              ax1.plot( pdist1d_, pcor1d, label=label, 
                        color=lc, lw=lw )
 

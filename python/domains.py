@@ -176,11 +176,11 @@ def main( dom=1, bar=False ):
        print(x1d.shape, np.min(x1d), np.max(x1d) )
        CONT = ax1.contour( xd, yd, dist2d, 
                            levels=[20, 40, 60], zorder=1,
-                           colors='k', linewidths=0.5,
+                           colors='k', linewidths=1.5,
                            linestyles='dashed',
                           )
        ax1.clabel( CONT, CONT.levels, inline=True, #inline_spacing=1, 
-                   fontsize=16, fmt='%.0fkm', colors="k" )
+                   fontsize=16, fmt='%.0f km', colors="k" )
 
 
     if bar:
@@ -207,7 +207,7 @@ bar = True
 bar = False
 
 dom = 3
-dom = 2
+#dom = 2
 #dom = 1
 #dom = 4
 main( dom=dom, bar=bar )

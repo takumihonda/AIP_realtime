@@ -25,7 +25,7 @@ data_path = "../../dat4figs_GRL/Fig03"
 os.makedirs( data_path, exist_ok=True )
 
 USE_ARCH_DAT = False
-#USE_ARCH_DAT = True
+USE_ARCH_DAT = True
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
           CRS="ZONAL", lab_l=[], ores='500m', nvar="w" ):
@@ -56,6 +56,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
        lat2d_4 = np.load( fn )['lat']
        lon2d_4 = np.load( fn )['lon']
        mask_ = np.load( fn )['mask_']
+       print( fn )
+       sys.exit()
     else:
        lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
        mask_ = read_mask()

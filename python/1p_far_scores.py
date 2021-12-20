@@ -26,8 +26,8 @@ def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
 def main( INFO, stime_l=[], etime_l=[],
            theight=3000, thrs_dbz=15.0 ):
 
-    data_path = "../../dat4figs_JAMES/Fig15"
-    ofig = "Fig15.pdf"
+    data_path = "../../dat4figs_JAMES/Fig14"
+    ofig = "FAR.pdf"
     os.makedirs( data_path, exist_ok=True )
     fn = '{0:}/data.npz'.format( data_path, )
 
@@ -37,8 +37,6 @@ def main( INFO, stime_l=[], etime_l=[],
     ts_l = np.zeros( ( len( stime_l), INFO["NEXP"], itmax, INFO["TMAX"] )  )
     bs_l = np.zeros( ( len( stime_l), INFO["NEXP"], itmax, INFO["TMAX"] )  )
     fa_l = np.zeros( ( len( stime_l), INFO["NEXP"], itmax, INFO["TMAX"] )  )
-
-    ts_l_persist = np.zeros( ( len( stime_l), INFO["NEXP"], itmax, INFO["TMAX"] )  )
 
 #    ts_l_new = np.zeros( ( len( stime_l), INFO["NEXP"], itmax, INFO["TMAX"] )  )
 #    bs_l_new = np.zeros( ( len( stime_l), INFO["NEXP"], itmax, INFO["TMAX"] )  )
@@ -59,9 +57,6 @@ def main( INFO, stime_l=[], etime_l=[],
                    fn_ts = odir + "/20211202TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
                    ts_l[i,n,it,:], bs_l[i,n,it,:], fa_l[i,n,it,:], _ = read_ts( fn_ts )
        
-                   fn_ts_persist = odir + "/persistent_20211202TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
-                   ts_l_persist[i,n,it,:], _, _,  _ = read_ts( fn_ts_persist )
-
                    #fn_ts_new = odir + "/20211202TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
                    #ts_l_new[i,n,it,:], bs_l_new[i,n,it,:], _ = read_ts( fn_ts )
 
@@ -80,8 +75,8 @@ def main( INFO, stime_l=[], etime_l=[],
     import matplotlib.cm as cm
 
 
-    fig, ( ax1, ax2 ) = plt.subplots( 1, 2, figsize=( 11, 4 ) )
-    fig.subplots_adjust( left=0.05, bottom=0.15, right=0.98, top=0.9, 
+    fig, ( ax1) = plt.subplots( 1, 1, figsize=( 5.5, 4 ) )
+    fig.subplots_adjust( left=0.1, bottom=0.15, right=0.98, top=0.9, 
                          wspace=0.1 )
 
     # average
@@ -89,26 +84,22 @@ def main( INFO, stime_l=[], etime_l=[],
     bs_l = np.nanmean( bs_l, axis=2 )
     fa_l = np.nanmean( fa_l, axis=2 )
 
-    ts_l_persist = np.nanmean( ts_l_persist, axis=2 )
-
 #    ts_l_new = np.nanmean( ts_l_new, axis=2 )
 #    bs_l_new = np.nanmean( bs_l_new, axis=2 )
 
     lw = 2.0
     c_l = [ 'k', 'k' ]
     c_l_old = [ 'b', 'b' ]
-    ax_l = [ ax1, ax2 ]
+    ax_l = [ ax1, ]
     lab_l = [ "August 24", "August 19" ]
     ls_l = [ "solid", "dashed" ]
  
     t_l = t_l / 60 #sec 
 
     for j in range( len(stime_l) ):
-        ax1.plot( t_l, ts_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
-        ax2.plot( t_l, bs_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j]+" (Bias)", ls=ls_l[j] ) 
-        ax2.plot( t_l, fa_l[j,0,:], lw=lw, color='b', label=lab_l[j]+" (False alarm)", ls=ls_l[j] ) 
-
-        ax1.plot( t_l, ts_l_persist[j,0,:], lw=lw, color='gray', label=lab_l[j]+"\n(persistent)", ls=ls_l[j] ) 
+#        ax1.plot( t_l, ts_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
+#        ax2.plot( t_l, bs_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
+        ax1.plot( t_l, fa_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
 
 #        ax1.plot( t_l, ts_l_new[j,0,:], lw=lw, color=c_l_old[j], label=lab_l[j]+ " new", ls=ls_l[j], zorder=0 ) 
 #        ax2.plot( t_l, bs_l_new[j,0,:], lw=lw, color=c_l_old[j], label=lab_l[j]+" new", ls=ls_l[j], zorder=0 ) 
@@ -119,15 +110,15 @@ def main( INFO, stime_l=[], etime_l=[],
     ymax2 = 3.0
     ymin_l = [ ymin1, ymin2 ]
     ymax_l = [ ymax1, ymax2 ]
-    tit_l = [ "Threat score", "Bias score/False alarm ratio" ]
+    #tit_l = [ "Threat score", "Bias score" ]
+    tit_l = [ "False Alarm Ratio", "Bias score" ]
     note = "Z={:.1f} km\n{:.1f} dBZ".format(theight/1000, thrs_dbz )
     pnum_l = [ "(a)", "(b)" ] 
 
     xlab = "Forecast time (min)"
 
     for i, ax in enumerate( ax_l ):
-        #ax.legend( fontsize=12, loc='lower left' )
-        ax.legend( fontsize=12, loc='upper right' )
+        ax.legend( fontsize=12, loc='lower left' )
         ax.set_xlim(0, 30)
         ax.set_ylim( ymin_l[i], ymax_l[i] )
 

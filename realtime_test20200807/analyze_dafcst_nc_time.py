@@ -138,7 +138,7 @@ import matplotlib.dates as mdates
 #plt.plot( ftime_l )
 
 fig, ((ax)) = plt.subplots( 1, 1, figsize=( 12, 6.5 ) )
-fig.subplots_adjust(left=0.05, bottom=0.1, right=0.95, top=0.95, )
+fig.subplots_adjust(left=0.05, bottom=0.1, right=0.93, top=0.95, )
 
 # lead time
 
@@ -199,7 +199,13 @@ ax.set_xlim( stime, etime )
 print( ftime_l[0], ftime_l[-1])
 print( stime, etime )
 
+stime_fcst = datetime( 2020, 8, 1, 0, 30 )
+x_times = [ stime_fcst, 
+            stime_fcst + timedelta( minutes=10),
+            stime_fcst + timedelta( minutes=20),
+          ]
 
+ax.vlines( x=x_times, ymin=ymin_, ymax=ymax_, color='r', ls='solid', lw=0.5)
 
 ax2 = ax.twinx()
 
@@ -209,9 +215,9 @@ ymax2_ = 80.0
 ylevs2 = [ 0, 8, 16, 24, 32, 40 ]
 
 rmin = 30.0
-rmin_l = [ 1.0, 20.0, ]
+rmin_l = [ 1.0, ]
 #rmin_l = [ 5.0, ]
-cc_l = [ "cyan", "b", ]
+cc_l = [ "b", ]
 for k, rmin in enumerate( rmin_l ):
 
     rmax_l, rarea_l, jtime_l = get_JMA_rmax( rmin=rmin )
@@ -225,8 +231,8 @@ for k, rmin in enumerate( rmin_l ):
     ax2.yaxis.label.set_color( 'b' )
 #    ax2.set_xlim( stime_, etime_ )
 
-ax2.legend( bbox_to_anchor=( 0.05, 0.1), 
-             loc='lower left', fontsize=9, ).get_frame().set_alpha( 1.0 )
+ax2.legend( bbox_to_anchor=( 0.95, 0.1), 
+             loc='lower right', fontsize=9, ).get_frame().set_alpha( 1.0 )
 
 ylab2 = 'Precipitation area from JMA radar (x10$^2$km$^2$)\n(where >{0:.0f})mm h$^{{-1}}$)'.format( rmin )
 ax2.set_ylabel( ylab2, fontsize=9 )
