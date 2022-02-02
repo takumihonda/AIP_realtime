@@ -21,18 +21,18 @@ quick = True
 quick = False
 
 USE_ARCH_DAT = True
-#USE_ARCH_DAT = False
+USE_ARCH_DAT = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
 
     # If directly produce a pdf, the file size becomes very large (~22 MB)
     # As a remedy, a temporary png file is converted to pdf on Mac
     if time_l[0] == datetime(2019, 8, 24, 15, 40, 0 ):
-       data_path = "../../dat4figs_JAMES/Fig10"
-       ofig = "Fig10.png"
+       data_path = "../../dat4figs_JAMES/Fig12"
+       ofig = "Fig12.png"
     elif time_l[0] == datetime(2019, 8, 19, 13, 40, 0 ):
-       data_path = "../../dat4figs_JAMES/Fig13"
-       ofig = "Fig13.png"
+       data_path = "../../dat4figs_JAMES/Fig14"
+       ofig = "Fig14.png"
     else:
        sys.exit()
     os.makedirs( data_path, exist_ok=True )
@@ -285,7 +285,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
 #    ofig = "test.png"
 
     if not quick:
-       opath = "pdf"
+       opath = "pdf/png"
        ofig = os.path.join(opath, ofig)
        plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
        print(ofig)

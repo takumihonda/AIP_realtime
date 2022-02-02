@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 from datetime import datetime, timedelta
-from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_ga_grads_all, draw_rec_4p
+from tools_AIP import read_obs_grads, read_nc_topo, read_mask_full, read_obs_grads_latlon, read_fcst_grads, read_nc_lonlat, dist, get_cfeature, setup_grids_cartopy, prep_proj_multi_cartopy, read_ga_grads_all, draw_rec_4p, read_obs
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -19,13 +19,13 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 data_path = "../../dat4figs_GRL/Fig04"
 os.makedirs( data_path, exist_ok=True )
 
 USE_ARCH_DAT = False
-#USE_ARCH_DAT = True
+USE_ARCH_DAT = True
 
 def read_qh_grads_all( INFO, itime=datetime( 2019,8,24,15,30,0 ), typ='g'):
 
@@ -77,11 +77,10 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
        mask_, mlon2d, mlat2d = read_mask_full()
        np.savez( fn, lon=lon2d_4, lat=lat2d_4, topo=topo2d_4, mask_=mask_ )
 
-
 #    lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
     flon2d = INFO["lon2d"]
     flat2d = INFO["lat2d"]
-    mz1d, _, _ = read_obs_grads_latlon()
+#    mz1d, _, _ = read_obs_grads_latlon()
 #    mzidx = np.argmin( np.abs( mz1d - hgt_l[i] ) )
 
     mask = mask_[:22,:,:]
@@ -94,16 +93,19 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
                               figsize=(12,9),
                              )
     ax_l = [ ax1, ax2, ax3, ax4, ax5, ax6 ]
-    fig.subplots_adjust( left=0.06, bottom=0.1, right=0.99, top=0.94,
+    fig.subplots_adjust( left=0.06, bottom=0.1, right=0.99, top=0.96,
                          wspace=0.05, hspace=0.1 )
 
 
     time = datetime( 2019, 8, 24, 15, 0, 30 )
-    obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=otime )
+    #obs3d, olon2d, olat2d, oz1d = read_obs_grads( INFO, itime=otime )
+    olon2d = INFO["olon2d"]
+    olat2d = INFO["olat2d"]
+    oz1d = INFO["obsz"]
     ozidx = np.argmin( np.abs( oz1d - hgt ) )
 
-    
-
+    obs3d, _ = read_obs( utime=otime, mask=mask )
+   
 #    mzidx = np.argmin( np.abs( mz1d - hgt ) )
 
     olen2 = olat2d.shape[1] // 2
@@ -327,6 +329,8 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
           var2d = var3d[fzidx,:,:]
           x2d, y2d = fx2d, fy2d 
 
+          ozidx = np.argmin( np.abs( oz1d - hgt_l[i] ) )
+          print( "check\n", hgt_l[i], hgt, "\n" )
           ovar2d = obs3d[ozidx,:,:]
           ox2d, oy2d = ox2d_, oy2d_ 
        else:
@@ -365,7 +369,7 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
        ovar2d[ ovar2d<20.0] = np.nan
        ocmap = mcolors.ListedColormap( ['w', 'gray', ] )
        OPLOT = ax.pcolormesh( ox2d, oy2d*yfac, ovar2d,
-                             vmin=15, vmax=20, cmap=ocmap, alpha=0.1,
+                             vmin=15, vmax=20, cmap=ocmap, alpha=0.2,
                              edgecolors='face', linewidths=0.0 )
 
        ctitx_l = [ 0.03, 0.97 ]
@@ -444,14 +448,14 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
           ax.hlines( y=hgt_l[i-3]/1000, xmin=xmin, xmax=xmax, ls='dashed',
                      lw=1.5, color='gray' ) 
         
-          ax.text( xmax-0.01, hgt_l[i-3]/1000+0.1, pnum_l[i-3],
-                  va='bottom', 
-                  ha='right',
-                  transform=ax.transData, 
-                  color='k', fontsize=10, 
-                  bbox=bbox )
+#          ax.text( xmax-0.01, hgt_l[i-3]/1000+0.1, pnum_l[i-3],
+#                  va='bottom', 
+#                  ha='right',
+#                  transform=ax.transData, 
+#                  color='k', fontsize=10, 
+#                  bbox=bbox )
        else:
-          ax.text( 0.99, 0.99, 'Z={0:.1f}km'.format( hgt_l[i]/1000 ),
+          ax.text( 0.99, 0.99, 'Z={0:.1f} km'.format( hgt_l[i]/1000 ),
                   va='top', 
                   ha='right',
                   transform=ax.transAxes,
@@ -462,7 +466,7 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
                va='top', 
                ha='left',
                transform=ax.transAxes,
-               color='k', fontsize=10, 
+               color='k', fontsize=12, 
                bbox=bbox )
 
        ax.text( 0.5, 0.98, tvar,
@@ -509,18 +513,20 @@ def main( INFO, time_l=[], hgt_l=[3000.0], clat=40.0, nvar_l=["w"],
 
 #       tit = "Forecast (FT={0:.1f} min)".format( tlev*30/60 )
 #   
-    tit = 'Time-averaged analysis increment'
-    fig.suptitle( tit, fontsize=14 ) 
+#    tit = 'Time-averaged analysis increment'
+#    fig.suptitle( tit, fontsize=14 ) 
 
     cll = clat
     if CRS == "MERID":
        cll = clon
 
     ofig = "6p_ainc_crs_{0:}_cll{1:.3f}.png".format( CRS, cll, )
+    ofig = "Fig04_GRL.png"
     print(ofig)
 
     if not quick:
        opath = "png"
+       opath = "pdf_GRL"
        ofig = os.path.join(opath, ofig)
        plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
        print(ofig)
@@ -544,8 +550,28 @@ time0 = datetime( 2019, 8, 24, 15, 0, 0 )
 
 fcst_zmax = 43
 
-obsz, olon2d, olat2d = read_obs_grads_latlon()
-lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz, NEW=True )
+data_path_info = "../../dat4figs_GRL/info"
+os.makedirs( data_path_info, exist_ok=True )
+fn_info = '{0:}/data.npz'.format( data_path_info, )
+if not USE_ARCH_DAT:
+   obsz, olon2d, olat2d = read_obs_grads_latlon()
+   lon2d, lat2d, hgt3d, cz, ohgt3d = read_nc_lonlat( fcst_zmax=fcst_zmax, obsz=obsz, NEW=True )
+   np.savez( fn_info, obsz=obsz, olon2d=olon2d, olat2d=olat2d,
+                      lon2d=lon2d, lat2d=lat2d, hgt3d=hgt3d,
+                      cz=cz, ohgt3d=ohgt3d,
+            )
+else:
+   obsz = np.load( fn_info )['obsz']
+   olon2d = np.load( fn_info )['olon2d']
+   olat2d = np.load( fn_info )['olat2d']
+   lon2d = np.load( fn_info )['lon2d']
+   lat2d = np.load( fn_info )['lat2d']
+   hgt3d = np.load( fn_info )['hgt3d']
+   cz = np.load( fn_info )['cz']
+   ohgt3d = np.load( fn_info )['ohgt3d']
+
+
+
 
 INFO = { "TOP": TOP,
          "EXP": EXP,
@@ -556,6 +582,9 @@ INFO = { "TOP": TOP,
          "gx": lon2d.shape[1],
          "lon2d": lon2d,
          "lat2d": lat2d,
+         "olon2d": olon2d,
+         "olat2d": olat2d,
+         "obsz": obsz,
          "cz": cz,
        }
 

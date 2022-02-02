@@ -1,1 +1,1 @@
-2p_scores_thinning.py
+3p_scores.py

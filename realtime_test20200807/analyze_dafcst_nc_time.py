@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 quick = True
-#quick = False
+quick = False
 
 #fn_h = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_test20200807/realtime_log_dafcst_nc20200807.txt"
 fn_h = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_test20200807/honda.txt"
@@ -248,12 +248,16 @@ ax2.yaxis.set_label_coords( 1.03, 0.15 )
 
 
 ofig = "realtime0807_leadtime.png"
+ofig = "Fig07.pdf"
+ofig = "Fig07.png"
 
 print( ofig )
 if quick:
    plt.show()
 else:
    odir = "png/realtime0807"
+   odir = "pdf"
+   odir = "pdf/png"
    os.makedirs( odir, exist_ok=True)
    plt.savefig( os.path.join(odir, ofig),
                 bbox_inches="tight", pad_inches = 0.1)

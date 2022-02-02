@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 data_path = "../../dat4figs_GRL/Fig01"
 os.makedirs( data_path, exist_ok=True )
@@ -409,7 +409,7 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 
        if i % xfig == 0:
-          if i <= 5:
+          if i <= 9:
              lon_l = [ rec_lons, rec_lone ]
              lat_l = [ rec_lats, rec_late ]
              draw_rec_4p( ax, lon_l=lon_l, lat_l=lat_l, 
@@ -449,10 +449,10 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 
 #    ofig = "12p_obs_fcst_nowcast_{0:}_clon{1:.2f}_clat{2:.2f}_landscape_stime{3:}.png".format( itime.strftime('%m%d'), clon, clat, time_l[4].strftime('%m%d%H%M%S')  )
 #    print(ofig)
-    ofig = "Fig01.png"
+    ofig = "Fig01_GRL.png"
 
     if not quick:
-       opath = "GRL_pdf"
+       opath = "pdf_GRL"
        os.makedirs( opath, exist_ok=True )
        ofig = os.path.join(opath, ofig)
        plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)

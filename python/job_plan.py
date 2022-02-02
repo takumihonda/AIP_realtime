@@ -121,7 +121,7 @@ c4i = 'orange'
 # D4
 d4_node = 992
 d4_prc = d4_node*nmpi
-labd4 = "D4 DA cycle & fcst\n({0:,} MPI prc)".format( d4_prc )
+labd4 = "D4 DA cycle & fcst\n({0:,} MPI proc)".format( d4_prc )
 #stime_ = stime
 stime_ = datetime( 2020, 8, 27, 4, 0 ) - timedelta( hours=12 )
 etime_ = stime_ - timedelta( minutes=5 )
@@ -169,10 +169,10 @@ d4it = 4
 for i in range( 4 ):
 
     if i == 0:
-       labd4i = "D4 boundary\n({0:,} MPI prc, {1:} min x {2:})".format( d4i_prc, min_d4i, d4it)
-       labd3 = "D3 fcst\n({0:,} MPI prc, {1:} min)".format( d3_prc, min_d3 )
-       labd12 = "D1&D2 fcst\n({0:,} MPI prc, {1:} min x {2})".format( d12_prc, min_d12, d12it )
-       labd1 = "D1 DA cycle\n({0:,} MPI prc, {1:} min)".format( d1c_prc, min_d1c )
+       labd4i = "D4 boundary\n({0:,} MPI proc, {1:} min x {2:})".format( d4i_prc, min_d4i, d4it)
+       labd3 = "D3 fcst\n({0:,} MPI proc, {1:} min)".format( d3_prc, min_d3 )
+       labd12 = "D1&D2 fcst\n({0:,} MPI proc, {1:} min x {2})".format( d12_prc, min_d12, d12it )
+       labd1 = "D1 DA cycle\n({0:,} MPI proc, {1:} min)".format( d1c_prc, min_d1c )
     else:
        labd4i = None
        labd3 = None
@@ -233,6 +233,7 @@ ax1.text( 0.5, 1.01, tit,
           va='bottom' )
 
 ofig = "1p_job_schedule.png"
+ofig = "pdf/png/Fig06.png"
     
 print( ofig )
 if quick:

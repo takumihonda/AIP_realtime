@@ -80,8 +80,8 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
        ofig = "Fig13.png"
     else:
        #sys.exit()
-       data_path = "../../dat4figs_JAMES/tmp"
-       ofig = "tmp.png"
+       data_path = "../../dat4figs_JAMES/Fig08"
+       ofig = "Fig08.png"
     os.makedirs( data_path, exist_ok=True )
 
     # radar location
@@ -334,12 +334,12 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
 #                    transform=data_crs )
 
 #    ofig = "6p_obs_fcst_" + itime.strftime('%m%d') + ".png"
+    ofig = "Fig08.png"
     print(ofig)
 
-#    ofig = "test.png"
 
     if not quick:
-       opath = "pdf"
+       opath = "pdf/png"
        ofig = os.path.join(opath, ofig)
        plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
        print(ofig)

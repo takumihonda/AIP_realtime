@@ -198,6 +198,7 @@ ax1.text( 0.5, 1.01, tit,
           va='bottom' )
 
 ofig = "1p_job_schedule.png"
+ofig = "pdf/Fig06.pdf"
     
 print( ofig )
 if quick:

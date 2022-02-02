@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-#quick = False
+quick = False
 
 data_path = "../../dat4figs_GRL/Fig03"
 os.makedirs( data_path, exist_ok=True )
@@ -56,8 +56,6 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
        lat2d_4 = np.load( fn )['lat']
        lon2d_4 = np.load( fn )['lon']
        mask_ = np.load( fn )['mask_']
-       print( fn )
-       sys.exit()
     else:
        lon2d_4, lat2d_4, topo2d_4 = read_nc_topo( dom=4 )
        mask_ = read_mask()
@@ -407,10 +405,14 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], clat=40.0, clon=139.75,
        cll = clon
 
     ofig = "9p_obs_fcst_w_crs_{0:}_{1:}_cll{2:.3f}_{3:}.png".format(  itime.strftime('%m%d'), CRS, cll, time_l[3].strftime('%m%d%H%M%S') )
+
+    ofig = "Fig03_GRL.pdf"
+
     print(ofig)
 
     if not quick:
        opath = "png"
+       opath = "pdf_GRL"
        ofig = os.path.join(opath, ofig)
        plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
        print(ofig)

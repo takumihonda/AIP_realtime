@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from tools_AIP import read_obs, read_nc_lonlat, read_fcst_grads, read_obs_grads_latlon, read_fcst_grads_all
 
 quick = False
-quick = True
+#quick = True
 
 data_path = "../../dat4figs_GRL/Fig02"
 os.makedirs( data_path, exist_ok=True )
@@ -88,7 +88,7 @@ import matplotlib.cm as cm
 
 
 fig, (ax1) = plt.subplots(1, 1, figsize=(7,5) )
-fig.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.92, )
+fig.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.96, )
 
 # obs
 ax1.plot( otime_l, obs_l, color=cobs, linewidth=lw_obs, linestyle=ls_obs )
@@ -194,17 +194,17 @@ ax1.text( xmax0_+dx_*2, y_jma, 'JMA nowcast',
 #---
 
 
-ax1.text( 0.5, 1.01, r'Maximum rainfall intensity (mm h$^{-1}$)',
-          color='k',
-          fontsize=14, transform=ax1.transAxes,
-          ha='center',
-          va='bottom' )
+#ax1.text( 0.5, 1.01, r'Maximum rainfall intensity (mm h$^{-1}$)',
+#          color='k',
+#          fontsize=14, transform=ax1.transAxes,
+#          ha='center',
+#          va='bottom' )
 
-ax1.text( 1.0, 1.01, 'Z={0:.0f} km'.format( theight/1000.0 ),
+ax1.text( 0.99, 0.99, 'Z={0:.0f} km'.format( theight/1000.0 ),
           color='k',
           fontsize=11, transform=ax1.transAxes,
           ha='right',
-          va='bottom' )
+          va='top' )
 
 
 ax1.xaxis.set_major_locator( mdates.MinuteLocator(interval=5) )
@@ -216,11 +216,12 @@ ax1.set_ylim( ymin, ymax )
 ax1.set_xlabel( 'Time (UTC)', fontsize=12 )
 ax1.set_ylabel( r'Maximum rainfall intensity (mm h$^{-1}$)', fontsize=12 )
 
-ofig = "1p_rainmax_lon{0:.2f}-{1:.2f}_lat{2:.2f}-{3:.2f}_z{4:.0f}.png".format( lons, lone, lats, late, theight )
+#ofig = "1p_rainmax_lon{0:.2f}-{1:.2f}_lat{2:.2f}-{3:.2f}_z{4:.0f}.pdf".format( lons, lone, lats, late, theight )
+ofig = "Fig02_GRL.pdf".format( lons, lone, lats, late, theight )
 print(ofig)
 
 if not quick:
-   opath = "png"
+   opath = "pdf_GRL"
    ofig = os.path.join(opath, ofig)
    plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
    print(ofig)

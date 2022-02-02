@@ -13,7 +13,7 @@ quick = False
 AVE = False
 
 USE_ARCH_DAT = True
-USE_ARCH_DAT = False
+#USE_ARCH_DAT = False
 
 
 

@@ -955,8 +955,11 @@ def setup_grids_cartopy( ax, xticks=np.array([]), yticks=np.array([]), lw=0.5,
 
 def prep_proj_multi_cartopy( fig, xfig=1, yfig=1, proj='none', latitude_true_scale=35.0, central_longitude=130.0, central_latitude=30.0 ):
 
-    if proj == 'none' or 'PlateCarree':
+    if proj == 'PlateCarree':
        projection = ccrs.PlateCarree( central_longitude=central_longitude, )
+
+    elif proj == 'none':
+       projection = None
 
     elif proj == 'merc':
        projection = ccrs.Mercator( latitude_true_scale=latitude_true_scale, ) 

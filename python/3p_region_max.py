@@ -8,13 +8,13 @@ from datetime import datetime, timedelta
 from tools_AIP import read_obs, read_mask, read_nc_lonlat, read_fcst_grads, read_obs_grads_latlon, read_fcst_grads_all
 
 quick = False
-quick = True
+#quick = True
 
 data_path = "../../dat4figs_GRL/FigS02"
 os.makedirs( data_path, exist_ok=True )
 
 USE_ARCH_DAT = False
-#USE_ARCH_DAT = True
+USE_ARCH_DAT = True
 
 
 ###########
@@ -250,10 +250,13 @@ tit = 'SCALE-LETKF forecast'
 fig.suptitle( tit, fontsize=14)
 
 ofig = "3p_max_lon{0:.2f}-{1:.2f}_lat{2:.2f}-{3:.2f}.png".format( lons, lone, lats, late, )
+ofig = "FigS02_GRL.pdf"
 print(ofig)
+
 
 if not quick:
    opath = "png"
+   opath = "pdf_GRL"
    ofig = os.path.join(opath, ofig)
    plt.savefig(ofig,bbox_inches="tight", pad_inches = 0.1)
    print(ofig)

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
-data_path = "../../dat4figs_JAMES/Fig06"
+data_path = "../../dat4figs_JAMES/Fig10"
 os.makedirs( data_path, exist_ok=True )
 
 USE_ARCH_DAT = True
@@ -12,7 +12,7 @@ USE_ARCH_DAT = True
 
 quick_hist = False
 quick_bar = True
-quick_bar = False
+#quick_bar = False
 
 
 def d4_computation_time_nparray( top='' ):
@@ -419,7 +419,7 @@ def plot_bar_2p( dic={}, ftimes=np.array([]) ):
                  ha='left',
                  va='bottom' )
 
-    ofig = 'pdf/Fig06.pdf'
+    ofig = 'pdf/Fig10.pdf'
     print( ofig )
     if quick_bar:
        plt.show()

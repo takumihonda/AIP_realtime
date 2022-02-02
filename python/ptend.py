@@ -20,8 +20,8 @@ USE_ARCH_DAT = True
 
 def main( INFO, itime_l=[], EXP_l=[], tit_l=[] ):
 
-    data_path = "../../dat4figs_JAMES/Fig17"
-    ofig = "Fig17.pdf"
+    data_path = "../../dat4figs_JAMES/Fig18"
+    ofig = "Fig18.pdf"
     os.makedirs( data_path, exist_ok=True )
     fn = '{0:}/data.npz'.format( data_path, )
 
