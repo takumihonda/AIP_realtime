@@ -417,7 +417,9 @@ def desroz_diag_R( dat_a, dat_b ):
 
     return( np.sqrt( np.mean(dat) ) )
 
-def read_obs( utime=datetime(2019,9,3,2,0,0), mask=np.array([]) ):
+def read_obs( utime=datetime(2019,9,3,2,0,0), mask=np.array([]), AC=False ):
+
+    # AC=True: attenuation corrected obs
 
     jtime = utime + timedelta(hours=9)
     jsec = jtime.second
@@ -432,9 +434,15 @@ def read_obs( utime=datetime(2019,9,3,2,0,0), mask=np.array([]) ):
     for sec in range( 0, 30, 1 ):
         jtime2 = itime + timedelta( seconds=sec )
         #fn = os.path.join("/lfs01/otsuka/_OLD_DATA12_/nowcast_pawr/saitama/obs/500m_new/",
-        fn = os.path.join("/data_ballantine02/miyoshi-t/otsuka/nowcast_pawr/saitama/obs/500m/",
-                          jtime2.strftime('%Y/%m/%d/%H/%M/%S'),
-                          "rain_cart_0002.nc")
+        if AC:
+           fn = os.path.join("/data_ballantine02/miyoshi-t/otsuka/nowcast_pawr/saitama/obs/500mKdpR/",
+                             jtime2.strftime('%Y/%m/%d/%H/%M/%S'),
+                             "rain_cart_0002.nc")
+        else:
+           fn = os.path.join("/data_ballantine02/miyoshi-t/otsuka/nowcast_pawr/saitama/obs/500m/",
+                             jtime2.strftime('%Y/%m/%d/%H/%M/%S'),
+                             "rain_cart_0002.nc")
+
         if os.path.isfile( fn ):
            OBS_EXIST = True
            break
@@ -450,6 +458,7 @@ def read_obs( utime=datetime(2019,9,3,2,0,0), mask=np.array([]) ):
        print( fn )
        sys.exit()
 
+    print( fn )
     obs = nc.variables['rain'][0,:,:,:]
     nc.close()
 
@@ -775,10 +784,11 @@ def read_oerr_npz( range_inl=[1.0], elv_inl=[5.0], dr=1.0, de=1.0, mode="az",
    
     return( cor1d, cnt1d, oerr, x1d )
 
-def read_fcst_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True, nvar="p", ):
+def read_fcst_grads_all( INFO, fn=None, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True, nvar="p", gz=60 ):
 
-    fn = os.path.join( INFO["FCST_DIR"],
-                       itime.strftime('fcst_all_%Y%m%d-%H%M%S.grd') )
+    if fn is None:
+       fn = os.path.join( INFO["FCST_DIR"],
+                          itime.strftime('fcst_all_%Y%m%d-%H%M%S.grd') )
 
     print( fn )
     try:
@@ -790,7 +800,7 @@ def read_fcst_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True
        sys.exit()
 
     # tlev starts from "0" (not from "1")
-    gz = 60
+#    gz = 60
     gx = INFO["gx"]
     gy = INFO["gy"]
 
@@ -842,7 +852,7 @@ def read_fcst_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), tlev=0 , FT0=True
 
     return( input3d )
 
-def read_ga_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), nvar="p", typ="g" ):
+def read_ga_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), nvar="p", typ="g", gz=60 ):
     # read guess/analsis ensemble mean  
 
     if typ == "g":
@@ -862,7 +872,6 @@ def read_ga_grads_all( INFO, itime=datetime(2019,9,3,2,0,0), nvar="p", typ="g" )
        return( None, False )
        sys.exit()
 
-    gz = 60
     gx = INFO["gx"]
     gy = INFO["gy"]
 
@@ -1006,7 +1015,16 @@ def dbz2rain( dbz ):
     return( np.power( 10, ( dbz*0.1 - const_ ) / beta_ ) )
     #return( np.power( np.power( 10, dbz*0.1) / 200.0, 1.0/1.6 ) ) 
 
-def read_ga_grads_dbz( INFO, itime=datetime(2019,9,3,2,0,0), typ="g" ):
+def rain2dbz( rain ):
+    # Suezawa
+    B_ = 115.7
+    beta_ = 1.681
+    const_ = np.log10( B_ )
+    dbz = np.log10( rain )
+    dbz = ( dbz * beta_ + const_ ) * 10
+    return( dbz )
+
+def read_ga_grads_dbz( INFO, itime=datetime(2019,9,3,2,0,0), typ="g", VR=False, gz=60 ):
     # read guess/analsis ensemble mean  
 
     if typ == "g":
@@ -1023,24 +1041,20 @@ def read_ga_grads_dbz( INFO, itime=datetime(2019,9,3,2,0,0), typ="g" ):
     except:
        print("Failed to open")
        print( fn )
-       return( None, False )
        sys.exit()
+       return( None, False )
 
 #    print( fn )
-    gz = 60
     gx = INFO["gx"]
     gy = INFO["gy"]
 
     rec3d = gx*gy*gz
     rec2d = gx*gy
 
-    # u, v, w, t, p, qv, qc, qr, qi, qs, qg
-    nv3d = 11
-    # PW PRCP
-    nv2d = 0
-
     nv2d_ = 0
     nv3d_ = 0
+    if VR:
+       nv3d_ = 1
 
     rec = rec3d * nv3d_ + rec2d * nv2d_
 
@@ -1050,6 +1064,8 @@ def read_ga_grads_dbz( INFO, itime=datetime(2019,9,3,2,0,0), typ="g" ):
        input3d = np.reshape( tmp3d, (gz,gy,gx) )
     except:
        input3d = None
+       print( "failed to read" )
+       sys.exit()
 
     return( input3d )
 
@@ -1102,6 +1118,150 @@ def calc_fss( ng=0, thrs=0.0, fcst2d=np.array([]), obs2d=np.array([]) ):
     fss_ = 1 - ( mse_ / mse_ref_ )
 
     return( fss_ )
+
+def get_cz():
+    # real-time system in 2022
+    cz = [ 55, 165, 275, 385, 495, 608.08, 727.4924, 853.592, 986.7532, 
+    1127.371, 1275.864, 1432.673, 1598.262, 1773.125, 1957.78, 2152.776, 
+    2358.692, 2576.139, 2805.763, 3048.247, 3304.309, 3574.711, 3860.255, 
+    4161.79, 4480.21, 4816.462, 5171.544, 5546.511, 5942.476, 6360.614, 
+    6802.168, 7268.449, 7760.842, 8280.809, 8829.893, 9409.727, 10022.03, 
+    10668.62, 11351.42, 12072.46, 12842.8, 13642.8, 14442.8, 15242.8, 
+    16042.8 ]
+
+    return( np.array( cz ) )
+
+def read_fcst_nc( fn='', fstime=datetime( 2019, 8, 24, 15, 10, 0 ),
+             vtime=datetime( 2019, 8, 24, 15, 10, 0 ), 
+             height=3000.0, VERT=False, clat=36.1, clon=136.1, 
+             nvar='Reflectivity' ):
+
+    ftsec_ = ( vtime - fstime ).total_seconds()
+
+    nc = Dataset( fn, "r", format="NETCDF4" )
+    var4d = nc.variables[nvar][:]
+    lon1d = nc.variables['Longitude'][:]
+    lat1d = nc.variables['Latitude'][:]
+    z1d = nc.variables['Height'][:]
+    ftimes = nc.variables['time'][:]
+    nc.close()
+
+    tlev = np.argmin( np.abs( ftimes - ftsec_ ) )
+
+
+    if not VERT:
+       zlev = np.argmin( np.abs( z1d - height ) )
+
+       return( var4d[tlev,:,:,zlev], lon1d, lat1d )
+    else:
+       if clat > 0.0:
+          ylev = np.argmin( np.abs( lat1d - clat ) )
+          return( var4d[tlev,ylev,:,:], lon1d, z1d*0.001 )
+       elif clon > 0.0:
+          xlev = np.argmin( np.abs( lon1d - clon ) )
+          return( var4d[tlev,:,xlev,:], lat1d, z1d*0.001 )
+
+def read_obs_nc( fn='', height=3000.0, dz=100.0, DBZ=False,
+                 VERT=False, clat=36.1, clon=136.1, dll=0.05, otyp='z' ):
+
+
+    nc = Dataset( fn, "r", format="NETCDF4" )
+    lon = nc.variables['lon'][:]
+    lat = nc.variables['lat'][:]
+    lev = nc.variables['lev'][:]
+    dat = nc.variables['dat'][:]
+    elm = nc.variables['elm'][:]
+
+    att = nc.__dict__
+
+    nc.close()
+
+    if otyp == 'z':
+       otyp_ = 4001
+    elif otyp == 'cz':
+       otyp_ = 4004
+    elif otyp == 'vr':
+       otyp_ = 4002
+
+    print( dat.shape )
+    if not VERT:
+       dat = dat[ ( np.abs( lev - height ) < dz ) * ( elm == otyp_ ) ]
+       lon = lon[ ( np.abs( lev - height ) < dz ) * ( elm == otyp_ ) ]
+       lat = lat[ ( np.abs( lev - height ) < dz ) * ( elm == otyp_ ) ]
+   
+       lev = lev[ ( np.abs( lev - height ) < dz ) * ( elm == otyp_ ) ]
+    else:
+       if clat > 0.0:
+          dat = dat[ ( np.abs( lat - clat ) < dll ) * ( elm == otyp_ ) ]
+          lon = lon[ ( np.abs( lat - clat ) < dll ) * ( elm == otyp_ ) ]
+          lev = lev[ ( np.abs( lat - clat ) < dll ) * ( elm == otyp_ ) ]
+   
+          lat = lat[ ( np.abs( lat - clat ) < dll ) * ( elm == otyp_ ) ]
+       elif clon > 0.0:
+          dat = dat[ ( np.abs( lon - clon ) < dll ) * ( elm == otyp_ ) ]
+          lat = lat[ ( np.abs( lon - clon ) < dll ) * ( elm == otyp_ ) ]
+          lev = lev[ ( np.abs( lon - clon ) < dll ) * ( elm == otyp_ ) ]
+   
+          lon = lon[ ( np.abs( lon - clon ) < dll ) * ( elm == otyp ) ]
+
+    if not DBZ and otyp == "z":
+       dat = 10 * np.log10( np.where( dat>0.0001, dat, 0.0001 ) )
+
+    return( dat, lon, lat, lev, att['Radar_lon'], att['Radar_lat'] )
+
+def set_cmap_pawr_scat( otyp='z', DIF=False ):
+    import matplotlib.colors as mcolors
+    from matplotlib.colors import BoundaryNorm
+
+
+    if otyp == 'z':
+       if DIF:
+          levels = np.array( [ -15, -10, -5, -2, -1, 1, 2, 5, 10, 15] )
+          cmap = plt.cm.get_cmap("BrBG")
+       else:
+          levels= np.array( [ 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65 ] )
+          cmap = mcolors.ListedColormap(['cyan', 'b', 'dodgerblue',
+                                         'lime','yellow',
+                                         'orange', 'red', 'firebrick', 'magenta',
+                                          'purple'])
+       unit = '(dBZ)'
+       norm = BoundaryNorm( levels, ncolors=cmap.N, clip=False)
+       #vmin = None
+       #vmax = None
+       norm = None
+       vmin = np.min( levels )
+       vmax = np.max( levels )
+       cmap.set_under('w', alpha=0.5)
+       cmap.set_under('mistyrose', alpha=1.0 )
+       tvar = 'Radar reflectivity'
+
+    elif otyp == 'vr':
+       #levels = np.arange( -40, 44, 4 )
+       #levels = np.array( [ -20, -15, -10, -5, -1, 1, 5, 10, 15, 20 ] ) 
+       levels = np.array( [ -15, -10, -5, -1, 1, 5, 10, 15, ] ) 
+       levels = np.array( [  -5, -1, 1, 5,] ) 
+       levels = np.array( [ -15,  -12, -9, -6, -3, -2, -1, -0.5, 0.5, 1,  2, 3, 6, 9, 12, 15 ] ) 
+       if DIF:
+          levels = np.array( [ -15, -10, -5, -1, 1, 5, 10, 15, ] ) 
+          levels = np.array( [ -6, -3, -2, -1, 0, 1, 2, 3, 6] ) 
+       cmap = plt.cm.get_cmap("RdBu_r")
+       #cmap = plt.cm.get_cmap("Spectral_r")
+       unit = r'(m s$^{{-1}}$)'
+       cmap.set_under('gray', alpha=0.1)
+       vmin = np.min( levels )
+       vmax = np.max( levels )
+#       cmap.set_under('gray', alpha=0.1)
+#       cmap.set_under('magenta', alpha=1.0)
+       cmap.set_under('aqua', alpha=1.0)
+
+       #norm = None
+       norm = BoundaryNorm( levels, ncolors=cmap.N, clip=False)
+       tvar = 'Doppler velocity'
+
+#    cmap.set_bad( color='gray', alpha=0.5 )
+    cmap.set_over('gray', alpha=1.0)
+
+    return( unit, cmap, levels, norm, vmin, vmax, tvar )
 
 #############################
 if __name__ == "__main__":

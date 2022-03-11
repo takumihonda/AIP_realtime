@@ -4,7 +4,14 @@ import numpy as np
 from datetime import datetime, timedelta
 
 quick = True
-quick = False
+#quick = False
+
+USE_ARCH_DAT = True
+USE_ARCH_DAT = False
+
+data_path = "../../dat4figs_JAMES/Fig07"
+os.makedirs( data_path, exist_ok=True )
+ofig = "Fig07.png"
 
 #fn_h = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_test20200807/realtime_log_dafcst_nc20200807.txt"
 fn_h = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_SAFE/realtime_test20200807/honda.txt"
@@ -37,17 +44,30 @@ def get_JMA_rmax( rmin=30.0 ):
     etime_ = datetime( 2020, 8,  7, 0 )
 
 
-    of = "../python/JMA_rmax_rmin{0:.0f}_{1:}_{2:}.npz".format( rmin, 
-                                            stime_.strftime( '%Y%m%d' ),    
-                                            etime_.strftime( '%Y%m%d' ),    
-                                          )
+    fn_JMA = '{0:}/data_JMA.npz'.format( data_path ) 
+    if USE_ARCH_DAT:
+       data = np.load( fn_JMA, allow_pickle=True )
+       
+       rmax_l = data["rmax_l"]
+       rarea_l = data["rarea_l"]
+       time_l = data["time_l"]
 
-    data = np.load( of, allow_pickle=True )
-    
-    rmax_l = data["rmax_l"]
-    rarea_l = data["rarea_l"]
-    time_l = data["time_l"]
-    
+    else:
+       of = "../python/JMA_rmax_rmin{0:.0f}_{1:}_{2:}.npz".format( rmin, 
+                                               stime_.strftime( '%Y%m%d' ),    
+                                               etime_.strftime( '%Y%m%d' ),    
+                                             )
+   
+       data = np.load( of, allow_pickle=True )
+       
+       rmax_l = data["rmax_l"]
+       rarea_l = data["rarea_l"]
+       time_l = data["time_l"]
+ 
+       np.savez( fn_JMA, rmax_l=rmax_l )   
+       np.savez( fn_JMA, rarea_l=rarea_l )   
+       np.savez( fn_JMA, time_l=time_l )   
+
     # UTC2JST
     time_l += timedelta( hours=9 )
 
@@ -122,13 +142,23 @@ def read_files( fn="", ftime_l=[],
 
 ##
 
+fn = '{0:}/data.npz'.format( data_path ) 
 
-lt_l = read_files( fn=fn_a, ftime_l=ftime_l, stime=stime, etime=etime, AMEMIYA=True )
-lt_l = read_files( fn=fn_h, ftime_l=ftime_l, stime=stime, etime=etime, AMEMIYA=True )
+if not USE_ARCH_DAT:
 
-ftime_l = np.array( ftime_l )
-lt_l = np.array( lt_l )
+   lt_l = read_files( fn=fn_a, ftime_l=ftime_l, stime=stime, etime=etime, AMEMIYA=True )
+   lt_l = read_files( fn=fn_h, ftime_l=ftime_l, stime=stime, etime=etime, AMEMIYA=True )
+   
+   ftime_l = np.array( ftime_l )
+   lt_l = np.array( lt_l )
 
+   np.savez( fn, lt_l=lt_l, ftime_l=ftime_l )
+
+else:
+
+   data = np.load( fn, allow_pickle=True )
+   lt_l = data['lt_l']
+   ftime_l = data['ftime_l']
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -247,9 +277,9 @@ ax2.tick_params(axis='y', colors='b')
 ax2.yaxis.set_label_coords( 1.03, 0.15 )
 
 
-ofig = "realtime0807_leadtime.png"
-ofig = "Fig07.pdf"
-ofig = "Fig07.png"
+#ofig = "realtime0807_leadtime.png"
+#ofig = "Fig07.pdf"
+#ofig = "Fig07.png"
 
 print( ofig )
 if quick:

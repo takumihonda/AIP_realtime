@@ -8,7 +8,7 @@ from datetime import timedelta
 from tools_AIP import read_dat, read_oerr_npz
 
 quick = True
-quick = False
+#quick = False
 
 AVE = False
 

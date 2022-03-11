@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 data_path = "../../dat4figs_GRL/Fig01"
 os.makedirs( data_path, exist_ok=True )
@@ -245,8 +245,11 @@ def main( INFO, time_l=[], hgt=3000.0, tlev_l=[], lab_l=[], CRS=False,
 #       ax.coastlines( color='k', linestyle='solid', linewidth=10.5, zorder=1 )
       
        if lab_ == "obs":
-          obs3d, _ = read_obs( utime=itime, mask=mask )
-#          np.savez( fn, obs3d=obs3d )
+          if not USE_ARCH_DAT:
+             obs3d, _ = read_obs( utime=itime, mask=mask )
+             np.savez( fn, obs3d=obs3d )
+          else:
+             obs3d = np.load( fn )['obs3d']
 #          if not USE_ARCH_DAT:
 #          #obs3d, _, _, _ = read_obs_grads( INFO, itime=itime )
 #             obs3d, _ = read_obs( utime=itime, mask=mask )

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 quick = False
-#quick = True
+quick = True
 
 nmpi = 64
 

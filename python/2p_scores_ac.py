@@ -7,8 +7,8 @@ import sys
 quick = True
 #quick = False
 
-USE_ARCH_DAT = True
-#USE_ARCH_DAT = False
+#USE_ARCH_DAT = True
+USE_ARCH_DAT = False
 
 
 def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
@@ -17,29 +17,36 @@ def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
     ts_l = data['ts'] 
     bs_l = data['bs'] 
     time_l = data['times'] 
+    fss_l = data['fss'] 
+    ng_l = data['ng_l'] 
 
 
-    return( ts_l, bs_l, time_l )
+    return( ts_l, bs_l, time_l, fss_l, ng_l )
  
 
 def main( INFO, stime_l=[], etime_l=[],
-           theight=3000, thrs_dbz=15.0, lab_l=[]):
+           theight=3000, thrs_dbz=15.0, lab_l=[], AC=False,
+           exp_l=[], nglev=1 ):
 
-    data_path = "../../dat4figs_JAMES/Fig16_20211209"
-    ofig = "Fig16_20211209.pdf"
-    os.makedirs( data_path, exist_ok=True )
-    fn = '{0:}/data.npz'.format( data_path, )
+#    data_path = "../../dat4figs_JAMES/Fig16_20211209"
+#    ofig = "Fig16_20211209.pdf"
+#    os.makedirs( data_path, exist_ok=True )
+#    fn = '{0:}/data.npz'.format( data_path, )
 
     itmax = int( ( etime_l[0] - stime_l[0] ).total_seconds()/30.0 + 1 )
 
-    ts_l = np.zeros( ( len( stime_l), INFO["NEXP"], itmax, INFO["TMAX"] )  )
-    bs_l = np.zeros( ( len( stime_l), INFO["NEXP"], itmax, INFO["TMAX"] )  )
+    ts_l = np.zeros( ( len( stime_l), len( exp_l ), itmax, INFO["TMAX"] )  )
+    bs_l = np.zeros( ( len( stime_l), len( exp_l ), itmax, INFO["TMAX"] )  )
 
     t_l = np.arange( 0, 30*INFO["TMAX"], 30 )
 
+    ng_l = [ 0, 1, 2, 3, 4, 6, ]
+    fss_l = np.zeros( ( len( stime_l), len( exp_l ), itmax, INFO["TMAX"], len( ng_l ) ) )
+    fss_l[:] = np.nan
+
     for i in range( len( stime_l ) ):
 
-        fn = '{0:}/data{1:}.npz'.format( data_path, i )
+#        fn = '{0:}/data{1:}.npz'.format( data_path, i )
 
         if not USE_ARCH_DAT:
 
@@ -47,17 +54,22 @@ def main( INFO, stime_l=[], etime_l=[],
            time = stime_l[i]
            while time <= etime_l[i]:
        
-               for n in range( INFO["NEXP"]) :
-                   odir = "ts_npz/" + INFO["EXP" + str(n+1)]
-                   #fn_ts = odir + "/TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
-                   fn_ts = odir + "/20211202TS_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
-                   ts_l[i,n,it,:], bs_l[i,n,it,:], _ = read_ts( fn_ts )
+               for n in range( len( exp_l ) ) :
+#                   odir = "ts_npz/" + INFO["EXP" + str(n+1)]
+
+                   if AC:
+                      odir = "ts_npz/{0:}_acObs".format( exp_l[n] )
+                   else:
+                      odir = "ts_npz/{0:}_noacObs".format( exp_l[n] )
+
+                   fn_ts = odir + "/20220216_ac_thrs{0:.1f}dbz_z{1:.1f}_i{2:}.npz".format( thrs_dbz, theight, time.strftime('%H%M%S_%Y%m%d') )
+                   ts_l[i,n,it,:], bs_l[i,n,it,:], _,  fss_l[i,n,it,:,:], ng_l = read_ts( fn_ts )
                    print( fn_ts, ts_l[i,n,it,0] )
        
                it += 1
                time += timedelta( seconds=30 ) 
 
-           np.savez( fn, ts_l=ts_l[i,:,:,:],  bs_l=bs_l[i,:,:,:] )
+#           np.savez( fn, ts_l=ts_l[i,:,:,:],  bs_l=bs_l[i,:,:,:] )
         else:
 
            ts_l[i,:,:,:] = np.load( fn )["ts_l"]
@@ -74,13 +86,14 @@ def main( INFO, stime_l=[], etime_l=[],
 #                         wspace=0.1, hspace=0.3 )
 
 
-    fig, ( ax1, ax2 ) = plt.subplots( 1, 2, figsize=( 11, 4 ) )
+    #fig, ( ax1, ax2, ax3 ) = plt.subplots( 1, 3, figsize=( 11, 4 ) )
+    fig, ( ax1, ax2, ) = plt.subplots( 1, 2, figsize=( 11, 4 ) )
     fig.subplots_adjust( left=0.05, bottom=0.15, right=0.98, top=0.9, 
                          wspace=0.1 )
 
     print( ts_l.shape )
     # count sample
-    for i in range( 3 ):
+    for i in range( len( exp_l ) ):
         tmp = ts_l[:,i,:,0]
         nnan = len( tmp[ np.isnan( tmp )] ) 
         print( i, "Nan: ", nnan )
@@ -88,10 +101,12 @@ def main( INFO, stime_l=[], etime_l=[],
     # average
     ts_l = np.nanmean( ts_l, axis=2 )
     bs_l = np.nanmean( bs_l, axis=2 )
+    nglev = 1
+    fss_l = np.nanmean( fss_l[:,:,:,:,nglev], axis=2 )
 
     lw = 2.0
-    c_l = [ 'r', 'k', 'b' ]
-    ax_l = [ ax1, ax2 ]
+    c_l = [ 'k', 'r' ]
+    ax_l = [ ax1, ax2, ] #ax3 ]
 #    lab_l = [ "August 24", "August 19" ]
     ls_l = [ "solid", "solid", "solid" ]
 #    ls_l = [ "solid", "dashed" ]
@@ -107,9 +122,12 @@ def main( INFO, stime_l=[], etime_l=[],
     ymax1 = 0.8
     ymin2 = 0.0
     ymax2 = 3.0
-    ymin_l = [ ymin1, ymin2 ]
-    ymax_l = [ ymax1, ymax2 ]
-    tit_l = [ "Threat score", "Bias score" ]
+    ymin3 = 0.0
+    ymax3 = 1.0
+
+    ymin_l = [ ymin1, ymin2, ymin3 ]
+    ymax_l = [ ymax1, ymax2, ymax3 ]
+    tit_l = [ "Threat score", "Bias score", "FSS" ]
     note = "Z={:.1f} km\n{:.1f} dBZ".format(theight/1000, thrs_dbz )
     pnum_l = [ "(a)", "(b)", "(c)", "(d)" ] 
 
@@ -125,12 +143,12 @@ def main( INFO, stime_l=[], etime_l=[],
            ii = 1 # BS
         elif i == 2:
            ax = ax3
-           ii = 0 # TS
+           ii = 2 # FSS
         elif i == 3:
            ax = ax4
            ii = 1 # BS
 
-        if i<= 1:
+        if i<= 2:
            st = 0
         else:
            st = 1
@@ -140,6 +158,9 @@ def main( INFO, stime_l=[], etime_l=[],
            lloc = 'upper right'
         elif ii == 1:
            data = bs_l[st,:,:]
+           lloc = 'lower left'
+        elif ii == 2:
+           data = fss_l[st,:,:]
            lloc = 'lower left'
 
         for n in range( INFO["NEXP"]) :
@@ -169,7 +190,7 @@ def main( INFO, stime_l=[], etime_l=[],
         ax.set_xlabel( xlab, fontsize=12 )
 
 
-#    ofig = "2p_scores_thinning.png"
+    ofig = "TESTTT2p_scores_thinning.png"
  
     print( ofig )
     if quick:
@@ -202,69 +223,11 @@ TOP = "/data_ballantine02/miyoshi-t/honda/SCALE-LETKF/AIP_D4_VERIFY"
 
 tmax = 61
 
-EXP1 = None
-LAB1 = None
-EXP2 = None
-LAB2 = None
-EXP3 = None
-LAB3 = None
-EXP4 = None
-LAB4 = None
-EXP5 = None
-LAB5 = None
-EXP6 = None
-LAB6 = None
-EXP7 = None
-LAB7 = None
-EXP8 = None
-LAB8 = None
 
-
-
-lab_l = [
-        "H1V1",
-        "H4V4 (CTRL)",
-        "H8V8",
-        ]
-
-nexp = 3
-
-EXP1 = "D4_500m_H1V1"
-LAB1 = "D4_500m_H1V1"
-
-EXP2 = "D4_500m_CTRL"
-LAB2 = "D4_500m_CTRL"
-
-EXP3 = "D4_500m_H8V8"
-LAB3 = "D4_500m_H8V8"
-
-#EXP2 = EXP1
-#LAB2 = LAB1
-#EXP3 = EXP1
-#LAB3 = LAB1
-#EXP4 = EXP1
-#LAB4 = LAB1
-#EXP5 = EXP1
-#LAB5 = LAB1
+nexp = 2
 
 INFO = { "TOP": TOP,
          "NEXP": nexp,
-         "EXP1": EXP1,
-         "EXP2": EXP2,
-         "EXP3": EXP3,
-         "EXP4": EXP4,
-         "EXP5": EXP5,
-         "EXP6": EXP6,
-         "EXP7": EXP7,
-         "EXP8": EXP8,
-         "LAB1": LAB1,
-         "LAB2": LAB2,
-         "LAB3": LAB3,
-         "LAB4": LAB4,
-         "LAB5": LAB5,
-         "LAB6": LAB6,
-         "LAB7": LAB7,
-         "LAB8": LAB8,
          "TMAX": tmax,
        }
 
@@ -276,6 +239,7 @@ thrs_dbz = 30.0
 
 stime1 = datetime( 2019, 8, 24, 15, 0, 30)
 etime1 = datetime( 2019, 8, 24, 16, 0, 0)
+#etime1 = stime1
 
 stime2 = datetime( 2019, 8, 19, 13, 0, 30)
 etime2 = datetime( 2019, 8, 19, 14, 0, 0)
@@ -284,5 +248,17 @@ stime_l = [ stime1, stime2 ]
 etime_l = [ etime1, etime2 ]
 
 
-main( INFO, stime_l=stime_l, etime_l=etime_l, theight=theight, thrs_dbz=thrs_dbz, lab_l=lab_l )
+stime_l = [ stime1, stime2 ]
+AC = True
+exp_l = [ 'd4', 'd4_500m_ac', ]
+#exp_l = [ 'd4', 'd4_500m_ac_vr', ]
+
+lab_l = [
+        "CTRL",
+        "TEST",
+        ]
+
+nglev = 2
+
+main( INFO, stime_l=stime_l, etime_l=etime_l, theight=theight, thrs_dbz=thrs_dbz, lab_l=lab_l, AC=AC, exp_l=exp_l, nglev=nglev )
 

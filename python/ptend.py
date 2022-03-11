@@ -13,7 +13,7 @@ from scipy.interpolate import griddata
 
 
 quick = True
-quick = False
+#quick = False
 
 USE_ARCH_DAT = True
 #USE_ARCH_DAT = False

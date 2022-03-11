@@ -8,7 +8,7 @@ quick = True
 #quick = False
 
 USE_ARCH_DAT = True
-USE_ARCH_DAT = False
+#USE_ARCH_DAT = False
 
 def read_ts( fn_ts, time=datetime(2019,6,10,8,10) ):
     data = np.load( fn_ts, allow_pickle=True )

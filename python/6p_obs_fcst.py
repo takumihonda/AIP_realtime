@@ -18,10 +18,10 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 USE_ARCH_DAT = True
-USE_ARCH_DAT = False
+#USE_ARCH_DAT = False
 
 def main( INFO, time_l=[], hgt=3000.0, tlev_l=[] ):
 
@@ -348,7 +348,7 @@ INFO = { "TOP": TOP,
 
 
 itime = datetime( 2019, 8, 19, 13, 30 )
-itime = datetime( 2019, 8, 24, 15, 30 )
+#itime = datetime( 2019, 8, 24, 15, 30 )
 
 tlev1 = 20
 tlev2 = 40
