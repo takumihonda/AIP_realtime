@@ -19,7 +19,7 @@ from cartopy.mpl.geoaxes import GeoAxes
 GeoAxes._pcolormesh_patched = Axes.pcolormesh
 
 quick = True
-quick = False
+#quick = False
 
 data_path = "../../dat4figs_GRL/Fig04"
 os.makedirs( data_path, exist_ok=True )

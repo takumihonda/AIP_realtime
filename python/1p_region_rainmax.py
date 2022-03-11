@@ -8,11 +8,15 @@ from datetime import datetime, timedelta
 from tools_AIP import read_obs, read_nc_lonlat, read_fcst_grads, read_obs_grads_latlon, read_fcst_grads_all
 
 quick = False
-#quick = True
+quick = True
 
 data_path = "../../dat4figs_GRL/Fig02"
 os.makedirs( data_path, exist_ok=True )
 
+fn = '{0:}/data.npz'.format( data_path, )
+
+USE_ARCH_DAT = False
+#USE_ARCH_DAT = True
 
 
 ###########
@@ -62,12 +66,20 @@ late = 36.1
 lons = 139.7
 lone = 139.8
 
-fn_obs = "obs_rainmax_z{0:.1f}_lon{1:.2f}-{2:.2f}_lat{3:.2f}-{4:.2f}.npz".format( theight, lons, lone, lats, late )
+if not USE_ARCH_DAT:
 
-data = np.load( os.path.join( odir, fn_obs ), allow_pickle=True  )
-obs_l = data['rmax']
-otime_l = data['times']
+   fn_obs = "obs_rainmax_z{0:.1f}_lon{1:.2f}-{2:.2f}_lat{3:.2f}-{4:.2f}.npz".format( theight, lons, lone, lats, late )
+   
+   data = np.load( os.path.join( odir, fn_obs ), allow_pickle=True  )
+   obs_l = data['rmax']
+   otime_l = data['times']
 
+   np.savez( fn, rmax=obs_l, times=otime_l )
+else:
+
+   data = np.load( fn, allow_pickle=True  )
+   obs_l = data['rmax']
+   otime_l = data['times']
 
 ymax = 120
 ymin = 0

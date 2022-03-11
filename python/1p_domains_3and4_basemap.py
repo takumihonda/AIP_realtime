@@ -13,7 +13,7 @@ data_path = "../../dat4figs_GRL/FigS01-2"
 os.makedirs( data_path, exist_ok=True )
 
 USE_ARCH_DAT = False
-#USE_ARCH_DAT = True
+USE_ARCH_DAT = True
 
 
 def prep_map( ax, method='merc',lon_0=139.609, lat_0=35.861, 
