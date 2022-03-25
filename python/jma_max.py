@@ -35,7 +35,7 @@ rarea_l = []
 
 rmin = 30.0 # mm/h
 rmin = 20.0 # mm/h
-#rmin = 1.0 # mm/h
+rmin = 1.0 # mm/h
 #rmin = 5.0 # mm/h
 
 #of = "JMA_rmax_rmin{0:.0f}.npz".format( rmin )    

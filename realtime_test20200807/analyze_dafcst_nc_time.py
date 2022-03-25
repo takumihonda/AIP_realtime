@@ -7,7 +7,7 @@ quick = True
 #quick = False
 
 USE_ARCH_DAT = True
-USE_ARCH_DAT = False
+#USE_ARCH_DAT = False
 
 data_path = "../../dat4figs_JAMES/Fig07"
 os.makedirs( data_path, exist_ok=True )
@@ -44,9 +44,10 @@ def get_JMA_rmax( rmin=30.0 ):
     etime_ = datetime( 2020, 8,  7, 0 )
 
 
-    fn_JMA = '{0:}/data_JMA.npz'.format( data_path ) 
+    fn_JMA = '{0:}/data_JMA_{1:.0f}.npz'.format( data_path, rmin ) 
     if USE_ARCH_DAT:
        data = np.load( fn_JMA, allow_pickle=True )
+       print( data.files )
        
        rmax_l = data["rmax_l"]
        rarea_l = data["rarea_l"]
@@ -64,9 +65,7 @@ def get_JMA_rmax( rmin=30.0 ):
        rarea_l = data["rarea_l"]
        time_l = data["time_l"]
  
-       np.savez( fn_JMA, rmax_l=rmax_l )   
-       np.savez( fn_JMA, rarea_l=rarea_l )   
-       np.savez( fn_JMA, time_l=time_l )   
+       np.savez( fn_JMA, rmax_l=rmax_l, rarea_l=rarea_l, time_l=time_l  )   
 
     # UTC2JST
     time_l += timedelta( hours=9 )
@@ -260,6 +259,7 @@ for k, rmin in enumerate( rmin_l ):
     ax2.tick_params( axis='y', labelsize=8 ) 
     ax2.yaxis.label.set_color( 'b' )
 #    ax2.set_xlim( stime_, etime_ )
+
 
 ax2.legend( bbox_to_anchor=( 0.95, 0.1), 
              loc='lower right', fontsize=9, ).get_frame().set_alpha( 1.0 )
