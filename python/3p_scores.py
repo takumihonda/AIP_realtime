@@ -5,7 +5,7 @@ import os
 import sys
 
 quick = True
-#quick = False
+quick = False
 
 USE_ARCH_DAT = True
 #USE_ARCH_DAT = False
@@ -68,12 +68,14 @@ def main( INFO, stime_l=[], etime_l=[],
                it += 1
                time += timedelta( seconds=30 ) 
    
-           np.savez( fn, ts_l=ts_l[i,:,:,:],  bs_l=bs_l[i,:,:,:], fa_l=fa_l[i,:,:,:] )
+           np.savez( fn, ts_l=ts_l[i,:,:,:],  bs_l=bs_l[i,:,:,:], fa_l=fa_l[i,:,:,:],
+                     ts_l_persist=ts_l_persist[i,:,:,:] )
         else:
 
            ts_l[i,:,:,:] = np.load( fn )["ts_l"]
            bs_l[i,:,:,:] = np.load( fn )["bs_l"]
            fa_l[i,:,:,:] = np.load( fn )["fa_l"]
+           ts_l_persist[i,:,:,:] = np.load( fn )["ts_l_persist"]
 
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
@@ -108,7 +110,7 @@ def main( INFO, stime_l=[], etime_l=[],
         ax2.plot( t_l, bs_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
         ax3.plot( t_l, fa_l[j,0,:], lw=lw, color=c_l[j], label=lab_l[j], ls=ls_l[j] ) 
 
-        ax1.plot( t_l, ts_l_persist[j,0,:], lw=lw, color='gray', label=lab_l[j]+"\n(persistent)", ls=ls_l[j] ) 
+        ax1.plot( t_l, ts_l_persist[j,0,:], lw=lw, color='b', label=lab_l[j]+"\n(persistent)", ls=ls_l[j] ) 
 
 #        ax1.plot( t_l, ts_l_new[j,0,:], lw=lw, color=c_l_old[j], label=lab_l[j]+ " new", ls=ls_l[j], zorder=0 ) 
 #        ax2.plot( t_l, bs_l_new[j,0,:], lw=lw, color=c_l_old[j], label=lab_l[j]+" new", ls=ls_l[j], zorder=0 ) 

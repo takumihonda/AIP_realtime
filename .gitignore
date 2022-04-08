@@ -133,3 +133,4 @@ realtime_20200825/ts_npz/*
 *.pdf
 log*
 *.npz
+.DS_Store

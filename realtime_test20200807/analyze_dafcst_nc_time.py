@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 quick = True
-#quick = False
+quick = False
 
 USE_ARCH_DAT = True
 #USE_ARCH_DAT = False
@@ -264,7 +264,7 @@ for k, rmin in enumerate( rmin_l ):
 ax2.legend( bbox_to_anchor=( 0.95, 0.1), 
              loc='lower right', fontsize=9, ).get_frame().set_alpha( 1.0 )
 
-ylab2 = 'Precipitation area from JMA radar (x10$^2$km$^2$)\n(where >{0:.0f})mm h$^{{-1}}$)'.format( rmin )
+ylab2 = 'Precipitation area from JMA radar (x10$^2$km$^2$)\n(where >{0:.0f} mm h$^{{-1}}$)'.format( rmin )
 ax2.set_ylabel( ylab2, fontsize=9 )
 
 ax2.xaxis.set_minor_locator(mdates.HourLocator(byhour=range(0, 24, 6), tz=None) )
