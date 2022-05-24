@@ -1,7 +1,6 @@
 import numpy as np
 import sys
 import os
-from netCDF4 import Dataset
 
 from datetime import datetime, timedelta
 
@@ -16,7 +15,7 @@ os.makedirs( data_path, exist_ok=True )
 fn = '{0:}/data.npz'.format( data_path, )
 
 USE_ARCH_DAT = False
-#USE_ARCH_DAT = True
+USE_ARCH_DAT = True
 
 
 ###########

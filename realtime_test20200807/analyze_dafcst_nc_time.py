@@ -200,7 +200,7 @@ ax.set_ylim( ymin_, ymax_ )
 
 ax.vlines( ftime_l[ np.isnan( lt_l ) ], ymin=ymin_, ymax=ymax_, color='gray', lw=0.01, alpha=0.5 )
 
-ylab = "Forecast lead time (minute)"
+ylab = "Lead time (minute)"
 ax.set_ylabel( ylab, fontsize=13 )
 
 xlab = "Forecast initial time (JST)"
