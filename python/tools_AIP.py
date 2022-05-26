@@ -5,9 +5,9 @@ import sys
 #from netCDF4 import Dataset
 import matplotlib.pyplot as plt
 
-#import cartopy.feature as cfeature
-#import cartopy.crs as ccrs
-#from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
+import cartopy.feature as cfeature
+import cartopy.crs as ccrs
+from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.ticker as mticker
 
 
@@ -958,6 +958,7 @@ def setup_grids_cartopy( ax, xticks=np.array([]), yticks=np.array([]), lw=0.5,
           xfs = fs
        if yfs < 0:
           yfs = fs
+          fc = 'w'
 
        gl.xlabel_style = {'size': xfs, 'color': fc, }
        gl.ylabel_style = {'size': yfs, 'color': fc, }

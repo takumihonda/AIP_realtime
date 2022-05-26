@@ -397,6 +397,8 @@ hgt3d = np.load( fn_info )['hgt3d']
 cz = np.load( fn_info )['cz']
 ohgt3d = np.load( fn_info )['ohgt3d']
 
+sys.exit()
+
 INFO = { "TOP": TOP,
          "EXP": EXP,
          "time0": time0,
